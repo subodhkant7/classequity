@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-11-04T21:51:09.957Z",
+  "parentAssistant": {
+    "source": "Gemini · school-grounded",
+    "model": "gemini-2.5-flash-lite",
+    "returnedText": true
+  },
+  "quotation": {
+    "model": "gemini-2.5-flash-lite",
+    "validated": true,
+    "tiers": [
+      {
+        "min": 1,
+        "cents": 3200
+      },
+      {
+        "min": 20,
+        "cents": 2700
+      },
+      {
+        "min": 30,
+        "cents": 2300
+      }
+    ],
+    "uncertainties": [],
+    "administratorReviewRequired": true
+  },
+  "financialAssistant": {
+    "model": "gemini-2.5-flash-lite",
+    "verified": true,
+    "returnedOutput": true
+  }
+}

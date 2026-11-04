@@ -1,0 +1,17 @@
+{
+  "localDate": "2026-11-05",
+  "framework": "AG Studio 3.1.0 createAiHarness + directLlmRunner",
+  "provider": "Gemini account-discovered Flash Lite",
+  "httpTurns": 2,
+  "turnStatuses": [
+    200,
+    200
+  ],
+  "toolCalled": "build_financial_view",
+  "visibleCreatedPage": "AI \u00b7 Trip funding comparison",
+  "nativeChartCanvasRendered": true,
+  "financialStateChanged": false,
+  "privateAssistanceDataProvided": false,
+  "note": "Observed through the real browser UI and authenticated server adapter; no payment operations executed.",
+  "recordedAt": "2026-11-04T22:09:48.950347+00:00"
+}
