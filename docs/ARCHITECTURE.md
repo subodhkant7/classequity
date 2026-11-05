@@ -35,3 +35,13 @@ Claim → database commit → provider mutation → independent readback → ver
 Studio's genuine Agent Framework uses a focused `directLlmRunner` agent with validated aggregate-summary and native-report presentation tools in the browser. Its Gemini boundary is authenticated server-side, rate-limited, and given only aggregate school finance. It can change report presentation; it has no payment, consent, pricing, or support-mutation tools. Uploaded quotes are untrusted extraction input and cannot directly activate a price policy.
 
 The controlled real sandbox lifecycle now verifies this ledger definition: one $1 capture, a duplicate request leaving one capture, and one completed full $1 refund. Independent readbacks and actual Studio refreshes retained the $0.54 fee, leaving −$0.54 net. `financial-lifecycle-evidence.json` distinguishes that real sandbox observation from synthetic/concurrency fixtures. Public HTTPS/webhook delivery remains outside the deployed system.
+
+## Public experience and simulation boundary
+
+The presentation layer adds `/how-it-works`, `/demo` and `/technology` beside the redesigned homepage. Components are isolated under `src/components/showcase/`; `src/lib/showcase.ts` contains immutable anonymous fixtures and presentation helpers that call the existing `seatPrice`, `funding` and `seatCoverage` functions. No financial domain formula, server state machine, authorization check or database schema is changed for visual convenience.
+
+The six-chapter tour keeps interaction state in React only. Recorded Gemini extraction and PayPal sandbox evidence are labeled separately from local illustrations. No token, provider identifier or recipient mapping is embedded. The actual Studio component accepts a presentation flag that uses fixed synthetic aggregates, omits cloud AI configuration and skips saved-state reads/writes. Authenticated use retains its existing adapter and persistence.
+
+`CE_PREVIEW_ISOLATED=true` selects `.next-experience` for local QA to avoid interfering with the normal development server. QA uses a separate local PGlite path and APP_URL/port. Public pages themselves require no database connection or provider credentials. Production/public deployment is outside this phase.
+
+`scripts/start-showcase.mjs` offers a one-command loopback preview on port 3100. It initializes only the local preview fixture database and blanks provider keys in the child environment. Existing environment files and shared credentials are unchanged; sandbox operator entry has a temporary unadvertised password. The operational server/authentication code itself is unchanged.

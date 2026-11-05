@@ -2,71 +2,62 @@
 
 **Every child belongs on the trip. Every payment is accounted for.**
 
-An implemented school-activity coordination MVP for the PayPal AI Hackathon 2026: group pricing, parent consent, confidential support, voluntary sponsorship, PayPal sandbox checkout, WhatsApp communication, Gemini document intelligence, and genuine editable AG Studio analytics.
+School activity coordination with consent-bounded group pricing, private support, verified sandbox accounting and genuine editable financial intelligence. Built for the PayPal AI Hackathon 2026; no adoption or real-school impact is claimed.
 
-## Run
+## Open the experience
 
-Node **22.23.1**, npm. Existing local credentials are in ignored `.env` (do not paste or commit it). For a fresh checkout:
+Node 22 and npm, then:
 
 ```sh
 npm ci
-cp .env.example .env
-# Configure SESSION_SECRET, ADMIN_PASSWORD and optional provider credentials privately.
-npm run db:migrate
-npm run db:seed
-npm run dev
+npm run showcase
 ```
 
-Open **http://localhost:3000**. Interactive demo → School admin, Finance admin, Teacher, or Parent. All demo money and identities are synthetic. Sandbox workspace uses the private `ADMIN_PASSWORD`; parents use short-lived single-use invitations. Use the exact APP_URL origin: localhost and 127.0.0.1 are different for CSRF.
+Open **http://localhost:3100**. The command initializes a separate local PGlite preview, uses a private build directory and disables providers in that process; stored credentials and the shared ledger are untouched. The public homepage, `/how-it-works`, `/demo` and `/technology` need no login, database or provider credentials. The six-chapter tour runs in browser memory. It never creates orders, captures, refunds, messages, invitations or database records. Recorded provider evidence and illustrative AI responses are clearly distinguished.
 
-Empty DATABASE_URL locally uses durable PostgreSQL-compatible PGlite under `.data/postgres`. Production requires PostgreSQL. This workspace is connected to the already-existing free Render `classequity-db`; its initially empty schema was inspected before the non-destructive migration and seed. No duplicate database or paid upgrade was created.
+The existing functional application is linked through `/login`. Its persisted workflows require a privately configured SESSION_SECRET and database/seed; sandbox operator access also requires ADMIN_PASSWORD. Existing credentials remain in ignored `.env`; never paste or commit them. Public exploration does not require changing them.
 
-## Product paths
+## Explore
 
-| Route                   | Experience                                                                                     |
-| ----------------------- | ---------------------------------------------------------------------------------------------- |
-| `/`                     | Public product introduction and interactive demo                                               |
-| `/login`                | Synthetic role demo / protected sandbox operator entry                                         |
-| `/dashboard`            | School overview and net funding readiness                                                      |
-| `/trips`, `/trips/[id]` | Create/edit trip, pricing tiers, invitations, price freeze, quote upload/review                |
-| `/registrations`        | Searchable synthetic registration list, no aid mapping                                         |
-| `/sponsorship`          | Permitted aggregate community-funding information                                              |
-| `/parent`               | Registration, consent, private support requests, sponsorship, checkout, receipts and assistant |
-| `/invite/[token]`       | Expiring one-use family session invitation                                                     |
-| `/finance`              | Restricted assistance decisions, payment reconciliation, refunds, audit export, funded demo    |
-| `/analytics`            | Actual AG Studio 3.1 report and Gemini Agent Framework                                         |
-| `/messages`             | Clearly labeled WhatsApp simulator and permitted reminders                                     |
-| `/settings`             | School identity and truthful integration readiness                                             |
+| Route                                  | Experience                                                                                        |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `/`                                    | Illustrated product story, real pricing control, four pillars and three AI workflow explanations  |
+| `/how-it-works`                        | Deterministic pricing calculator, assistance/funding simulator and payment-state explorer         |
+| `/demo`                                | Six interactive chapters: plan, quote review, families, private support, payments, real AG Studio |
+| `/technology`                          | Integration roles, architecture and honest evidence/release boundaries                            |
+| `/login`                               | Separate role-based fictional workspace / protected sandbox entry                                 |
+| `/dashboard`, `/trips`, `/trips/[id]`  | Planning, quotations, consented pricing and financial readiness                                   |
+| `/registrations`, `/sponsorship`       | Safe registration/aggregate contribution views                                                    |
+| `/finance`                             | Restricted allocations, reconciliation, authorized treasury records and refunds                   |
+| `/parent`                              | Own registration, consent, support, checkout, receipts and assistant                              |
+| `/messages`, `/analytics`, `/settings` | Communication, actual Studio and integration/workspace configuration                              |
 
-`/api/[...path]` provides authenticated, scoped application services; `/api/webhooks/paypal`, `/api/webhooks/twilio`, `/api/webhooks/twilio/status` authenticate provider callbacks. `/api/export` exports aggregate reconciliation CSV.
+The product’s authoritative financial definitions remain unchanged. At 30 seats, $23 each costs $690; the configured $32 baseline is $270 higher. The initial synthetic cohort has $553 gross, $20.70 fees and $532.30 net, with a $157.70 gap. A pledge is not cash, approved assistance is not free vendor cost, unknown fees block readiness, and refunds can leave retained costs.
 
-## Financial outcome
+## Actual evidence
 
-30 × $23 = **$690** required. 25 ordinary family obligations = **$575**, five approved fully supported seats = **$115**, and sponsorship commitments = **$115**. Initial synthetic captured gross is **$553**, fees **$20.70**, net available **$532.30**, remaining gap **$157.70**. Commitments, registrations and PayPal approvals are not completed money. The separate fully-funded simulation explicitly completes synthetic captures and adds a synthetic school fee reserve. Integer cents are authoritative; no cross-family payment atomicity is claimed.
+PayPal sandbox OAuth, the authorized $1 capture/duplicate/full-refund lifecycle, Gemini generation/extraction/report-agent use and actual AG Studio rendering have evidence in `docs/`. The $1 payment was already captured when lifecycle verification began; a repeated request retained one capture, then one full refund completed. PayPal retained $0.54, leaving −$0.54 net. This is a recorded sandbox verification, not a real school contribution. No provider transaction occurs in the public tour or in this visual-polish phase.
 
-## Verify
+Twilio account authentication is verified; actual WhatsApp delivery is not. Existing Render PostgreSQL is hosted; the web application is **not deployed**. Genuine public signed webhook delivery remains blocked on canonical HTTPS and registration. Shared-password operator access and broader production/audit/treasury controls still need hardening.
+
+## Verify without touching shared data
 
 ```sh
 npm run typecheck
 npm run lint
 npm test
 npm run build
-npx playwright install chromium
-npm run test:e2e
-npm run integrations:check
-render blueprints validate render.yaml --output json
+npm run secrets:check
 ```
 
-Unit/service tests use isolated in-memory PGlite, not the shared Render database. Browser tests use whichever database the local running app is configured to use and avoid real charges. `scripts/verify-ai.ts` performs bounded real Gemini checks using a fictional vendor quote. Never automate sandbox buyer credentials or approval.
+See [the local demo guide](docs/DEMO_GUIDE.md) for isolated PGlite setup on **http://localhost:3100**. Use its DATABASE_URL='', LOCAL_DATABASE_DIR and E2E_BASE_URL settings when running `npm run test:e2e`. All browser mutations then stay in local synthetic QA records. Do not point presentation regression tests at the shared Render database. No integration smoke command, provider mutation or shared migration is needed for this phase.
 
-## Provider status and deployment
+Tests include the retained 39 financial/domain/service/Twilio cases plus six presentation cases. Browser tests exercise real pages, local tour controls, native AG chart/grid, role authorization, consent flows, mobile/reduced-motion behavior and native dialog/drawer focus. Captures live in ignored `output/playwright/showcase/`; the test JSON report is `output/playwright/results.json`.
 
-PayPal sandbox OAuth, Twilio account authentication, and Gemini Flash Lite generation have actual provider evidence. One genuine PayPal sandbox order was created with explicit approval; it awaits human buyer approval. No capture/refund or real WhatsApp delivery is claimed. Public HTTPS webhook registration remains required. See evidence JSON and the implementation report for the precise verified scope.
+## Documentation and review drafts
 
-`render.yaml` is validated and creates a **free web service only**, reusing the existing database via a privately configured connection URL. Do not create another database or upgrade a plan. GitHub source must stay private. Hosting/source push depend on GitHub authentication; see `docs/IMPLEMENTATION_REPORT.md` for current completion status.
+[Product story](docs/PRODUCT_STORY.md) · [Website content / claim audit](docs/WEBSITE_CONTENT.md) · [Design system](docs/VISUAL_DESIGN_SYSTEM.md) · [Interactive demo guide](docs/DEMO_GUIDE.md) · [Acceptance](docs/DEMO_ACCEPTANCE.md) · [Hackathon readiness](docs/HACKATHON_READINESS.md) · [Submission draft](docs/SUBMISSION_DRAFT.md) · [Architecture](docs/ARCHITECTURE.md) · [Financial closure](docs/FINANCIAL_WORKFLOW_CLOSURE.md) · [PayPal](docs/PAYPAL_INTEGRATION.md) · [APIMatic](docs/APIMATIC_INTEGRATION.md) · [AG Studio](docs/AG_STUDIO_INTEGRATION.md) · [Security](docs/SECURITY.md).
 
-## Documentation
+No video preparation or storyboard is included, following the explicit instruction that the user will prepare their own demo. No submission, deployment, merge or repository-visibility change is authorized in this phase.
 
-[Architecture](docs/ARCHITECTURE.md) · [Environment](docs/ENVIRONMENT.md) · [PayPal](docs/PAYPAL_INTEGRATION.md) · [Twilio](docs/TWILIO_INTEGRATION.md) · [APIMatic evidence](docs/APIMATIC_INTEGRATION.md) · [AG Studio](docs/AG_STUDIO_INTEGRATION.md) · [Security](docs/SECURITY.md) · [3-minute demo](docs/DEMO_GUIDE.md) · [Submission draft](docs/SUBMISSION_DRAFT.md) · [Implementation report](docs/IMPLEMENTATION_REPORT.md).
-
-Application source is MIT; commercial AG Studio/Grid/Charts dependencies retain their vendor licence terms. The supplied Studio trial is used only as its licence permits. This is a synthetic-data hackathon demo, not escrow or a regulated/nonprofit payment service.
+Application source is MIT. Original illustrations/social assets are authored for ClassEquity; installed commercial AG dependencies retain their vendor terms. Public presentation uses real AG components with a vendor trial watermark when no license is applied; it does not grant production licensing rights.
