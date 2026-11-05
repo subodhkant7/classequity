@@ -89,8 +89,8 @@ try {
       configuredLocally: !!process.env.PAYPAL_WEBHOOK_ID,
       publicClassEquityService: false,
     },
-    captureVerified: false,
-    refundVerified: false,
+    financialVerificationScope:
+      'This command inspects orders/configuration only. See financial-lifecycle-evidence.json for independently verified capture, duplicate and refund results.',
   };
   await writeFile(
     'docs/financial-provider-evidence.json',

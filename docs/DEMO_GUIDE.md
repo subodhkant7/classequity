@@ -14,7 +14,7 @@ Start `npm run dev`, open http://localhost:3000, choose Explore the demo. Use fi
 
 **2:15–2:35 — Communication and document intelligence.** Open Communication, clearly identify WhatsApp SIMULATOR, ask the price and deadline in English/Hindi, then get a secure parent link. Show the quote-upload/review workflow with `public/sample-vendor-quote.svg` exported to PNG or another fictional USD quote. AI extraction is reviewed before activation; never upload hardship data.
 
-**2:35–3:00 — The outcome.** In finance, run the fully funded simulation: it completes synthetic captures and records an audited synthetic school contribution for fees and refunded seat costs. Explain that real sandbox checkout has OAuth and order creation verified, requires human buyer approval, and captures/refunds/webhooks must be verified separately. End with exact shortfall-to-funded mechanics, not fabricated real-school impact.
+**2:35–3:00 — The outcome.** In finance, run the fully funded simulation: it completes synthetic captures and records an audited synthetic school contribution for fees and refunded seat costs. Explain that the authorized USD 1 sandbox capture and full refund are independently verified, with duplicate capture protection and a retained USD 0.54 fee; genuine public webhook delivery remains unverified. End with exact shortfall-to-funded mechanics, not fabricated real-school impact.
 
 ## Sandbox handoff
 
@@ -35,3 +35,5 @@ Receipts with missing fee data say “Accounting pending.” Funding reserves th
 The independent-worker command `npm run test:financial:concurrency` requires the dedicated PostgreSQL connection. It uses an isolated temporary schema and a loopback fake provider, including deliberate process kills. It makes no PayPal mutations. Evidence is redacted in `docs/financial-concurrency-evidence.json`.
 
 See `FINANCIAL_WORKFLOW_CLOSURE.md` for current order availability, the private buyer handoff, exact verification classifications and hosted HTTPS blockers. Original order creation alone is not a captured payment demonstration.
+
+The authorized one-dollar sandbox lifecycle is complete (`financial-lifecycle-evidence.json`). Its payment was already captured when verification started; the duplicate application request made no additional charge. Finance issued one full refund. Show the actual retained $0.54 fee and −$0.54 final net rather than describing the refunded seat as funded. No additional financial test is authorized by that completed run.

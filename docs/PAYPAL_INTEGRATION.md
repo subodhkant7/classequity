@@ -38,6 +38,6 @@ A canonical full-event SHA-256 digest binds provider/event ID. Identical process
 
 ## Actual verification boundary
 
-See `financial-provider-evidence.json`, `financial-concurrency-evidence.json` and `FINANCIAL_WORKFLOW_CLOSURE.md`. OAuth and original order creation are genuinely verified; captures/refunds and genuine signed public delivery require separate evidence. Provider-fake tests are not PayPal transaction proof. Render has no ClassEquity web service; no callback was registered against localhost or a placeholder.
+See `financial-provider-evidence.json`, `financial-concurrency-evidence.json` and `FINANCIAL_WORKFLOW_CLOSURE.md`. OAuth, order creation, a human-approved USD 1 capture, duplicate-request safety and one completed full USD 1 refund are genuinely verified in `financial-lifecycle-evidence.json`. The capture was already complete when verification began; no new charge was initiated. Actual Studio refreshes show the retained USD 0.54 fee and negative net after refund. Genuine signed public delivery remains unverified. Provider-fake tests are not PayPal transaction proof. Render has no ClassEquity web service; no callback was registered against localhost or a placeholder.
 
 Contracts: [PayPal idempotency](https://developer.paypal.com/api/rest/reference/idempotency/), [Payments v2](https://developer.paypal.com/api/payments/v2), [webhook verification](https://developer.paypal.com/api/rest/webhooks/rest/). Installed model/controller sources and `paypal-plan.md` establish exact SDK property names.

@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-05T05:20:46.741Z",
+  "checkedAt": "2026-11-05T06:07:48.764Z",
   "provider": "PayPal sandbox",
   "inspection": "read-only order and webhook configuration lookup; no order creation, capture or refund",
   "schema": {
@@ -11,8 +11,8 @@
     ],
     "financialCounts": {
       "operations": "35",
-      "captures": "28",
-      "refunds": "0"
+      "captures": "29",
+      "refunds": "1"
     }
   },
   "orderInspections": [
@@ -29,11 +29,11 @@
     {
       "label": "closure verification",
       "available": true,
-      "status": "PAYER_ACTION_REQUIRED",
+      "status": "COMPLETED",
       "currency": "USD",
       "cents": 100,
       "matchesStoredObligation": true,
-      "captures": 0
+      "captures": 1
     }
   ],
   "previousOriginalObservation": {
@@ -49,6 +49,5 @@
     "configuredLocally": false,
     "publicClassEquityService": false
   },
-  "captureVerified": false,
-  "refundVerified": false
+  "financialVerificationScope": "This command inspects orders/configuration only. See financial-lifecycle-evidence.json for independently verified capture, duplicate and refund results."
 }
