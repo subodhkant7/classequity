@@ -1,5 +1,5 @@
 'use client';
-import { useHydrated } from './use-hydrated';
+import { useHydrated } from '../use-hydrated';
 import { useState } from 'react';
 import { FileSearch, MessageCircle, ChartNoAxesCombined, ArrowUpRight, Check } from 'lucide-react';
 import Link from 'next/link';

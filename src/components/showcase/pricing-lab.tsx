@@ -1,5 +1,5 @@
 'use client';
-import { useHydrated } from './use-hydrated';
+import { useHydrated } from '../use-hydrated';
 import { useState } from 'react';
 import { ArrowDown, Check } from 'lucide-react';
 import { money } from '@/lib/domain';

@@ -2413,3 +2413,13 @@ body {
     gap: 9px;
   }
 }
+/* Keep the identity and sign-out controls within the navigation surface on short screens. */
+.shell .sidebar {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+@media (max-height: 800px) {
+  .shell .sidebar-note {
+    display: none;
+  }
+}

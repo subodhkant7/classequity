@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useHydrated } from '@/components/use-hydrated';
 import Link from 'next/link';
 import { ArrowRight, GraduationCap, ShieldCheck, Wallet, Users } from 'lucide-react';
 import { Brand } from '@/components/brand';
@@ -7,6 +8,7 @@ import Museum from '@/components/museum';
 import { Button, Field, Notice, api } from '@/components/ui';
 import type { Role } from '@/lib/domain';
 export default function Login() {
+  const hydrated = useHydrated();
   const [mode, setMode] = useState<'demo' | 'sandbox'>('demo');
   const [role, setRole] = useState<Role>('admin');
   const [password, setPassword] = useState('');
@@ -35,6 +37,7 @@ export default function Login() {
           <p>Choose a role to explore Oakwood Academy, our fictional demo school.</p>
           <div className="tabs">
             <button
+              disabled={!hydrated}
               className={mode === 'demo' ? 'active' : ''}
               onClick={() => {
                 setMode('demo');
@@ -44,6 +47,7 @@ export default function Login() {
               Interactive demo
             </button>
             <button
+              disabled={!hydrated}
               className={mode === 'sandbox' ? 'active' : ''}
               onClick={() => {
                 setMode('sandbox');
@@ -103,6 +107,7 @@ export default function Login() {
                 <button
                   key={r.id}
                   type="button"
+                  disabled={!hydrated}
                   aria-pressed={role === r.id}
                   className={`role-option ${role === r.id ? 'active' : ''}`}
                   onClick={() => setRole(r.id as Role)}
@@ -128,7 +133,7 @@ export default function Login() {
               </Field>
             )}
             {error && <Notice error>{error}</Notice>}
-            <Button type="submit">
+            <Button type="submit" disabled={!hydrated}>
               {mode === 'demo' ? 'Enter the demo' : 'Open sandbox workspace'}{' '}
               <ArrowRight size={15} />
             </Button>

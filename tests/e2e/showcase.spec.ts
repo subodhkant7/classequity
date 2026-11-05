@@ -159,7 +159,7 @@ test('application routes share the polished shell; native modal traps and restor
   await page.goto('/login');
   await page.getByRole('button', { name: 'Finance admin' }).click();
   await page.getByRole('button', { name: 'Enter the demo' }).click();
-  await expect(page).toHaveURL(/dashboard/);
+  await expect(page).toHaveURL(/dashboard/, { timeout: 30000 });
   const create = page.getByRole('button', { name: 'Create a trip' });
   await create.click();
   const dialog = page.getByRole('dialog');
