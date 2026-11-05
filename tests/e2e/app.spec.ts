@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+const base = process.env.E2E_BASE_URL || 'http://localhost:3000';
 async function login(page: import('@playwright/test').Page, role = 'School admin') {
   await page.goto('/login');
   await page.getByRole('button', { name: new RegExp(role) }).click();
@@ -57,7 +58,7 @@ test('teacher and parent authorization boundaries are enforced by API', async ({
   await page.getByRole('button', { name: 'My payments & receipts' }).click();
   await expect(page.getByRole('heading', { name: 'My payments & receipts' })).toBeVisible();
   response = await page.request.post('/api/payments/order', {
-    headers: { Origin: 'http://localhost:3000' },
+    headers: { Origin: base },
     data: { obligationId: 'demo-obligation-1' },
   });
   expect(response.status()).toBe(404);
@@ -96,7 +97,7 @@ test('new trip, single-use invitation, registration consent, private support, fr
   await expect(page).toHaveURL(/\/trips\/[^/]+/, { timeout: 30000 });
   const tripId = new URL(page.url()).pathname.split('/').at(-1)!;
   const issued = await page.request.post(`/api/trips/${tripId}/invite`, {
-    headers: { Origin: 'http://localhost:3000' },
+    headers: { Origin: base },
     data: {},
   });
   expect(issued.ok()).toBe(true);
@@ -126,7 +127,7 @@ test('new trip, single-use invitation, registration consent, private support, fr
   const restricted = await info.json();
   expect(restricted.allocations).toHaveLength(1);
   const decision = await financePage.request.post('/api/assistance/approve', {
-    headers: { Origin: 'http://localhost:3000' },
+    headers: { Origin: base },
     data: { id: restricted.allocations[0].id, cents: 1600 },
   });
   expect(decision.ok()).toBe(true);
@@ -153,7 +154,7 @@ test('fully assisted seat coverage follows recorded treasury funds in the financ
 }) => {
   test.setTimeout(120000);
   await login(page, 'Finance admin');
-  const origin = { Origin: 'http://localhost:3000' };
+  const origin = { Origin: base };
   const created = await page.request.post('/api/trips', {
     headers: origin,
     data: {

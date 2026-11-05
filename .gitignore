@@ -9,3 +9,7 @@ test-results/
 *.tsbuildinfo
 .DS_Store
 output/
+
+.next-experience/
+
+.playwright-cli/

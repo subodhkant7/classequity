@@ -24,7 +24,15 @@ async function scan(dir) {
     }
   }
 }
-for (const dir of ['src', 'docs', 'scripts', 'tests', 'public', '.next/static'])
+for (const dir of [
+  'src',
+  'docs',
+  'scripts',
+  'tests',
+  'public',
+  '.next/static',
+  '.next-experience/static',
+])
   try {
     await scan(dir);
   } catch {}

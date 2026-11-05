@@ -139,6 +139,7 @@ export default function Parent({
           ].map((t) => (
             <button
               className={tab === t.id ? 'active' : ''}
+              disabled={!d}
               key={t.id}
               onClick={() => setTab(t.id)}
             >

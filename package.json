@@ -16,7 +16,8 @@
     "integrations:check": "tsx scripts/check-integrations.ts",
     "format": "prettier --write src scripts tests docs",
     "secrets:check": "node scripts/scan-secrets.mjs",
-    "test:financial:concurrency": "tsx scripts/verify-financial-concurrency.ts"
+    "test:financial:concurrency": "tsx scripts/verify-financial-concurrency.ts",
+    "showcase": "node scripts/start-showcase.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.15",
