@@ -109,3 +109,5 @@ Production builds use Next's supported Webpack compiler because Turbopack's CSS 
 | Buyer approval / capture / refund / public signed delivery | BLOCKED — separate human authorization/approval and HTTPS deployment required                          |
 
 All application changes are IMPLEMENTED and LOCALLY TESTED. Database schema is applied to the existing hosted database. No ClassEquity website is DEPLOYED and no live financial operation occurred.
+
+CI initially exposed a pre-existing lockfile placement mismatch for esbuild/picomatch under normal peer resolution, while the local machine defaulted to legacy peer resolution. The lockfile was regenerated with CI's normal resolution. Comparing package-name/version sets before and after showed no additions, removals or version changes; only placement/metadata changed. `npm ci --dry-run --legacy-peer-deps=false --ignore-scripts` passed. Final remote CI status is reported with the PR handoff.
