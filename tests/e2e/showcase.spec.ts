@@ -184,6 +184,8 @@ test('application routes share the polished shell; native modal traps and restor
   ]) {
     await page.goto(path);
     await expect(page.locator('main').first()).toBeVisible();
+    await expect(page.locator('.main .loading')).toHaveCount(0, { timeout: 30000 });
+    await expect(page.locator('.main h1').first()).toBeVisible();
     await expect(page.getByText('Unable to complete this request.')).toHaveCount(0);
     await page.screenshot({
       path: `output/playwright/showcase/workspace-${path.replaceAll('/', '-')}.png`,
