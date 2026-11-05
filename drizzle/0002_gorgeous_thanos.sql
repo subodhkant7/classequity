@@ -1,0 +1,2 @@
+ALTER TABLE "ce_paypal_captures" ADD COLUMN "pending_refund_cents" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "ce_refund_operations" ADD COLUMN "verified_at" timestamp with time zone;

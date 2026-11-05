@@ -25,13 +25,7 @@ import {
   safeRegistrations,
 } from '@/server/data';
 import * as services from '@/server/services';
-import {
-  capturePayment,
-  paymentOrder,
-  reconcile,
-  refundPayment,
-  settleOperation,
-} from '@/server/payments';
+import { capturePayment, paymentOrder, reconcile, refundPayment } from '@/server/payments';
 import { assistant, extractQuote, studioTurn } from '@/server/integrations/gemini';
 import {
   secureLink,
@@ -41,7 +35,7 @@ import {
   simulateMessage,
 } from '@/server/messaging';
 import { twiml, verifyTwilio } from '@/server/integrations/twilio';
-import { verifyPaypalWebhook } from '@/server/integrations/paypal';
+import { paypalWebhook } from '@/server/paypal-webhooks';
 import { quoteSchema } from '@/lib/domain';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -293,9 +287,27 @@ async function dispatch(req: NextRequest, path: string[]) {
     );
   }
   if (route === 'payments/refund') {
-    return json(
-      await refundPayment(a, z.object({ captureId: z.string() }).parse(await body(req)).captureId),
-    );
+    const v = z
+      .object({
+        captureId: z.string(),
+        cents: z.number().int().positive().optional(),
+        clientKey: z.string().min(1).max(150).optional(),
+      })
+      .parse(await body(req));
+    if (v.cents && !v.clientKey)
+      throw new AppError('Partial refunds require a stable client identity.');
+    return json(await refundPayment(a, v.captureId, v.cents, v.clientKey));
+  }
+  if (route === 'finance/contribution') {
+    const v = z
+      .object({
+        tripId: z.string(),
+        cents: z.number().int().positive(),
+        source: z.string(),
+        evidence: z.string(),
+      })
+      .parse(await body(req));
+    return json(await services.schoolContribution(a, v.tripId, v));
   }
   if (route === 'assistant') {
     const v = z
@@ -426,77 +438,7 @@ async function dispatch(req: NextRequest, path: string[]) {
 async function webhook(req: NextRequest, route: string) {
   if (req.method !== 'POST') throw new AppError('POST required', 405);
   if (route === 'webhooks/paypal') {
-    const raw = await req.text();
-    if (raw.length > 250000) throw new AppError('Payload too large', 413);
-    const event = z
-      .object({
-        id: z.string(),
-        event_type: z.string(),
-        resource: z.record(z.string(), z.unknown()),
-      })
-      .parse(JSON.parse(raw));
-    if (!(await verifyPaypalWebhook(req.headers, event)))
-      throw new AppError('Webhook signature rejected', 401);
-    const [claim] = await db
-      .insert(s.inbox)
-      .values({ id: services.uid(), provider: 'paypal', eventId: event.id, status: 'PROCESSING' })
-      .onConflictDoNothing({ target: [s.inbox.provider, s.inbox.eventId] })
-      .returning();
-    if (!claim) {
-      const [previous] = await db
-        .select()
-        .from(s.inbox)
-        .where(and(eq(s.inbox.provider, 'paypal'), eq(s.inbox.eventId, event.id)));
-      if (previous.status === 'PROCESSED') return json({ received: true, duplicate: true });
-      throw new AppError('Event is pending reconciliation', 503);
-    }
-    try {
-      const orderId = (
-        event.resource.supplementary_data as { related_ids?: { order_id?: string } } | undefined
-      )?.related_ids?.order_id;
-      let ops = orderId
-        ? await db.select().from(s.operations).where(eq(s.operations.orderId, orderId))
-        : [];
-      if (!ops.length && typeof event.resource.id === 'string') {
-        const [cap] = await db
-          .select()
-          .from(s.captures)
-          .where(eq(s.captures.providerId, event.resource.id));
-        if (cap)
-          ops = await db.select().from(s.operations).where(eq(s.operations.id, cap.operationId));
-      }
-      if (!ops.length && typeof event.resource.id === 'string') {
-        const [refund] = await db
-          .select()
-          .from(s.refunds)
-          .where(eq(s.refunds.providerId, event.resource.id));
-        if (refund) {
-          const [cap] = await db
-            .select()
-            .from(s.captures)
-            .where(eq(s.captures.id, refund.captureId));
-          if (cap)
-            ops = await db.select().from(s.operations).where(eq(s.operations.id, cap.operationId));
-        }
-      }
-      const relatedCapture = (
-        event.resource.supplementary_data as { related_ids?: { capture_id?: string } } | undefined
-      )?.related_ids?.capture_id;
-      if (!ops.length && relatedCapture) {
-        const [cap] = await db
-          .select()
-          .from(s.captures)
-          .where(eq(s.captures.providerId, relatedCapture));
-        if (cap)
-          ops = await db.select().from(s.operations).where(eq(s.operations.id, cap.operationId));
-      }
-      for (const op of ops) if (op.mode === 'sandbox') await settleOperation(op.id);
-      await db.update(s.inbox).set({ status: 'PROCESSED' }).where(eq(s.inbox.id, claim.id));
-      return json({ received: true });
-    } catch (e) {
-      await db.delete(s.inbox).where(eq(s.inbox.id, claim.id));
-      throw e;
-    }
+    return json(await paypalWebhook(req));
   }
   if (route === 'webhooks/twilio' || route === 'webhooks/twilio/status') {
     const raw = await req.text();

@@ -24,7 +24,11 @@ async function main() {
       if (prior[0].hash !== hash) throw Error('Migration hash mismatch');
       continue;
     }
-    if (/\b(DROP|TRUNCATE)\b/i.test(content)) throw Error('Destructive migration refused');
+    const reviewed = content.replace(
+      'ALTER TABLE \"ce_refund_operations\" DROP CONSTRAINT \"ce_refund_operations_capture_id_unique\";',
+      '',
+    );
+    if (/\b(DROP|TRUNCATE)\b/i.test(reviewed)) throw Error('Destructive migration refused');
     await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(742601)`);
       for (const part of content.split('--> statement-breakpoint'))

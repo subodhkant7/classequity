@@ -10,12 +10,15 @@ const keys = [
 ];
 const values = keys.map((k) => ({ k, v: process.env[k] })).filter((x) => x.v && x.v.length > 10);
 const hits = [];
+const checkout =
+  /https:\/\/(?:www\.)?sandbox\.paypal\.com\/(?:checkoutnow|webapps\/hermes)[^\s\"'<>]*[?&](?:token|ba_token)=[A-Za-z0-9-]+/;
 async function scan(dir) {
   for (const e of await readdir(dir, { withFileTypes: true })) {
     const p = `${dir}/${e.name}`;
     if (e.isDirectory()) await scan(p);
     else {
       const text = await readFile(p, 'utf8');
+      if (checkout.test(text)) hits.push({ path: p, key: 'PAYPAL_APPROVAL_URL' });
       for (const secret of values)
         if (text.includes(secret.v)) hits.push({ path: p, key: secret.k });
     }

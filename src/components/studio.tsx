@@ -90,7 +90,7 @@ class DomainWidget {
     });
     const caption = document.createElement('p');
     caption.textContent = integrity
-      ? 'unresolved independent payment operations'
+      ? `unresolved payment operations · ${d.totals.feePending} fee accounts pending`
       : funding
         ? `funding gap · ${money(d.totals.net)} net confirmed`
         : `per seat · ${d.registrationCount} verified registrations`;
@@ -100,8 +100,8 @@ class DomainWidget {
       ? `${d.payments.filter((p) => p.status === 'COMPLETED').length} captured · ${d.payments.filter((p) => p.status === 'FAILED').length} failed · ${d.payments.filter((p) => p.status === 'REFUNDED').length} refunded · ${d.payments.filter((p) => p.status === 'UNKNOWN').length} unknown`
       : funding
         ? d.totals.ready
-          ? 'Net funding covers all seats and fees.'
-          : `Required: ${money(d.totals.required)}. Pending, failed and unknown results never count as confirmed.`
+          ? `Net funding covers all ${d.coverage.coveredSeats} seats and fees. ${d.mode === 'demo' ? 'Synthetic demonstration.' : 'Sandbox captures / finance-attested treasury.'}`
+          : `Required: ${money(d.totals.required)}. ${d.coverage.coveredSeats} covered, ${d.coverage.parentPaidSeats} parent paid, ${d.coverage.fullyAssistedSeats} fully assisted. Fee accounts pending: ${d.totals.feePending}; reserved ${money(d.totals.feeReserve)}.`
         : next
           ? `${next.min - d.registrationCount} more registrations unlock ${money(next.cents)} seats, with ${money((d.seatCents - next.cents) * next.min)} projected cohort savings. Consent and price freeze required.`
           : 'Best configured tier unlocked. A frozen price cannot silently increase after withdrawals.';
@@ -162,7 +162,7 @@ const initial: AgReportState<Registry> = {
       },
     },
     {
-      id: 'Funding & confirmed seats',
+      id: 'Funding & covered seats',
       widgets: {
         funding: {
           type: 'column-chart-grouped',
@@ -176,9 +176,15 @@ const initial: AgReportState<Registry> = {
           type: 'bar-chart-grouped',
           dataMapping: {
             categoryKey: [{ id: 'trips.trip' }],
-            valueKey: [sum('trips.registered'), sum('trips.confirmedSeats')],
+            valueKey: [
+              sum('trips.registered'),
+              sum('trips.parentPaidSeats'),
+              sum('trips.fullyAssistedSeats'),
+              sum('trips.confirmedSeats'),
+              sum('trips.unresolvedSeats'),
+            ],
           },
-          format: format('Registered vs financially confirmed seats'),
+          format: format('Registered vs financially covered seats'),
         },
       },
       widgetLayout: { funding: at(0, 0, 14, 20), seats: at(14, 0, 10, 20) },
@@ -206,6 +212,14 @@ const initial: AgReportState<Registry> = {
               { id: 'trips.trip' },
               { id: 'trips.registered' },
               { id: 'trips.confirmedSeats' },
+              { id: 'trips.parentPaidSeats' },
+              { id: 'trips.fullyAssistedSeats' },
+              { id: 'trips.unresolvedSeats' },
+              { id: 'trips.feePending' },
+              { id: 'trips.feeReserveUsd' },
+              { id: 'trips.refundReserveUsd' },
+              { id: 'trips.schoolContributionUsd' },
+              { id: 'trips.source' },
               { id: 'trips.pricing' },
             ],
           },
@@ -391,6 +405,14 @@ export default function Studio({ overview, license }: { overview: Overview; lice
             trip: d.trip.name,
             registered: d.registrationCount,
             confirmedSeats: d.confirmedSeats,
+            outstandingObligationCents: d.outstandingObligationCents,
+            parentPaidSeats: d.coverage.parentPaidSeats,
+            fullyAssistedSeats: d.coverage.fullyAssistedSeats,
+            unresolvedSeats: d.coverage.unresolvedSeats,
+            feePending: d.totals.feePending,
+            feeReserveUsd: d.totals.feeReserve / 100,
+            refundReserveUsd: d.totals.refundReserve / 100,
+            schoolContributionUsd: d.totals.schoolCents / 100,
             requiredUsd: d.totals.required / 100,
             grossUsd: d.totals.gross / 100,
             feesUsd: d.totals.fees / 100,
@@ -400,9 +422,10 @@ export default function Studio({ overview, license }: { overview: Overview; lice
             sponsorCommittedUsd: d.totals.sponsorCommitted / 100,
             unresolved: d.totals.unresolved,
             pricing: d.snapshot ? 'Frozen' : 'Estimate',
-            source: d.payments.some((p) => p.mode === 'demo')
-              ? 'SIMULATED'
-              : 'Sandbox provider records',
+            source:
+              d.mode === 'demo'
+                ? 'SIMULATED'
+                : 'Sandbox captures and finance-attested school contributions',
           })),
         },
         {
@@ -493,6 +516,14 @@ export default function Studio({ overview, license }: { overview: Overview; lice
                 trip: d.trip.name,
                 registrations: d.registrationCount,
                 confirmedSeats: d.confirmedSeats,
+                outstandingObligationCents: d.outstandingObligationCents,
+                parentPaidSeats: d.coverage.parentPaidSeats,
+                fullyAssistedSeats: d.coverage.fullyAssistedSeats,
+                unresolvedSeats: d.coverage.unresolvedSeats,
+                feePending: d.totals.feePending,
+                feeReserveUsd: d.totals.feeReserve / 100,
+                refundReserveUsd: d.totals.refundReserve / 100,
+                schoolContributionUsd: d.totals.schoolCents / 100,
                 seatCents: d.seatCents,
                 requiredCents: d.totals.required,
                 netCents: d.totals.net,
@@ -519,7 +550,7 @@ export default function Studio({ overview, license }: { overview: Overview; lice
           execute: (args, ctx) => {
             const definitions = {
               comparison: { source: 'Trip comparison', id: 'AI · Trip funding comparison' },
-              funding: { source: 'Funding & confirmed seats', id: 'AI · Funding assurance' },
+              funding: { source: 'Funding & covered seats', id: 'AI · Funding assurance' },
               pricing: { source: 'Group pricing progress', id: 'AI · Group pricing' },
               payments: { source: 'Payment reconciliation', id: 'AI · Payment reconciliation' },
             };
@@ -596,6 +627,7 @@ export default function Studio({ overview, license }: { overview: Overview; lice
               const studio = apiRef.current;
               if (studio) {
                 studio.setState(initial);
+                setState(initial);
                 setPageId(initial.selectedPageId);
               }
             }}

@@ -117,14 +117,25 @@ describe('persistent workflow and authorization', () => {
     const after = await data.tripData(finance, 'demo-science');
     expect(after.totals.net).toBe(before.totals.net - 2300);
     expect(after.totals.refunds).toBe(2300);
-    await expect(payments.refundPayment(finance, 'demo-capture-1')).rejects.toBeDefined();
+    expect(await payments.refundPayment(finance, 'demo-capture-1')).toMatchObject({
+      duplicate: true,
+      status: 'COMPLETED',
+    });
   });
   it('resolves full-funding simulation with an explicit synthetic fee reserve', async () => {
     await service.fullyFundedDemo(finance, 'demo-science');
     const d = await data.tripData(finance, 'demo-science');
     expect(d.totals.gap).toBe(0);
     expect(d.totals.unresolved).toBe(0);
-    expect(d.trip.reserveCents).toBe(d.totals.fees + d.totals.refunds);
+    expect(d.totals.schoolCents).toBe(d.totals.fees + d.totals.refunds);
+    expect(d.trip.reserveCents).toBe(0);
+    expect(d.coverage).toEqual({
+      parentPaidSeats: 24,
+      fullyAssistedSeats: 5,
+      coveredSeats: 30,
+      unresolvedSeats: 0,
+    });
+    expect(d.contributions[0]).toMatchObject({ mode: 'demo', authorizedBy: 'demo-finance' });
     expect(d.totals.ready).toBe(true);
   });
   it('persists the sandbox claim before calling create and keeps stable identity on an ambiguous response', async () => {
@@ -153,24 +164,29 @@ describe('persistent workflow and authorization', () => {
       kind: 'SPONSOR',
       cents: 2300,
     });
+    await db.update(s.trips).set({ state: 'FROZEN' }).where(eq(s.trips.id, 'sandbox-science'));
     let storedKey = '';
-    const create = vi.spyOn(paypal, 'create').mockImplementation(async (_cents, _ob, key) => {
-      const [claim] = await db
-        .select()
-        .from(s.operations)
-        .where(eq(s.operations.obligationId, 'sandbox-test-obligation'));
-      expect(claim.status).toBe('CREATING');
-      expect(claim.requestKey).toBe(key);
-      if (storedKey) expect(key).toBe(storedKey);
-      storedKey = key;
-      throw new ProviderFailure(true, 'TRANSPORT');
-    });
+    const create = vi
+      .spyOn(paypal, 'create')
+      .mockImplementation(async (_cents, _ob, key, tripId) => {
+        expect(tripId).toBe('sandbox-science');
+        const [claim] = await db
+          .select()
+          .from(s.operations)
+          .where(eq(s.operations.obligationId, 'sandbox-test-obligation'));
+        expect(claim.status).toBe('CREATING');
+        expect(claim.requestKey).toBe(key);
+        if (storedKey) expect(key).toBe(storedKey);
+        storedKey = key;
+        throw new ProviderFailure(true, 'TRANSPORT');
+      });
     await expect(payments.paymentOrder(sandbox, 'sandbox-test-obligation')).rejects.toMatchObject({
       ambiguous: true,
     });
     await expect(payments.paymentOrder(sandbox, 'sandbox-test-obligation')).rejects.toMatchObject({
-      ambiguous: true,
+      status: 409,
     });
+    expect(create).toHaveBeenCalledTimes(1);
     const ops = await db
       .select()
       .from(s.operations)

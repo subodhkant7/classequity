@@ -123,6 +123,8 @@ export async function seed() {
                   providerId: `SIM-CAPTURE-${n + 1}`,
                   cents: 2300,
                   feeCents: 85,
+                  feeKnown: true,
+                  provenance: 'SYNTHETIC',
                   status: 'COMPLETED',
                 });
           }
@@ -165,6 +167,8 @@ export async function seed() {
                 providerId: `SIM-SPONSOR-CAPTURE-${n + 1}`,
                 cents,
                 feeCents: n === 0 ? 200 : 85,
+                feeKnown: true,
+                provenance: 'SYNTHETIC',
                 status: 'COMPLETED',
               });
         }

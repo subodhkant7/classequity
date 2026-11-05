@@ -1,4 +1,4 @@
-import { randomUUID, randomBytes } from 'node:crypto';
+import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db';
@@ -338,11 +338,37 @@ export async function fullyFundedDemo(a: Actor, id: string) {
           providerId: `SIM-${uid()}`,
           cents: ob.cents,
           feeCents: 85,
+          feeKnown: true,
+          provenance: 'SYNTHETIC',
           status: 'COMPLETED',
         });
       }
     }
-    await tx.update(s.trips).set({ reserveCents: reserve }).where(eq(s.trips.id, id));
+    const prior = await tx
+      .select()
+      .from(s.contributions)
+      .where(and(eq(s.contributions.tripId, id), eq(s.contributions.mode, 'demo')));
+    const needed = Math.max(0, reserve - prior.reduce((n, c) => n + c.cents, 0));
+    if (needed > 0) {
+      const contributionId = uid();
+      await tx.insert(s.contributions).values({
+        id: contributionId,
+        tripId: id,
+        mode: 'demo',
+        cents: needed,
+        source: 'Demonstration treasury',
+        evidence: 'Synthetic fee and refund reserve; no actual funds',
+        authorizedBy: a.userId,
+      });
+      await tx.insert(s.audit).values({
+        id: uid(),
+        schoolId: a.schoolId,
+        userId: a.userId,
+        action: 'SYNTHETIC_SCHOOL_CONTRIBUTION',
+        entityId: contributionId,
+        detail: { cents: needed, tripId: id },
+      });
+    }
   });
   await record(a, 'FULLY_FUNDED_SIMULATION', id, {
     note: 'Synthetic captures and simulated school reserve for fees and refunded seat costs. No PayPal funds moved.',
@@ -360,4 +386,43 @@ export async function createSchool(a: Actor, name: string) {
   });
   await record({ ...a, schoolId: id }, 'SCHOOL_CREATED', id);
   return id;
+}
+
+export async function schoolContribution(a: Actor, tripId: string, input: unknown) {
+  roles(a, ['finance']);
+  await ownTrip(a, tripId);
+  const v = z
+    .object({
+      cents: z.number().int().positive().max(10000000),
+      source: z.string().trim().min(3).max(160),
+      evidence: z.string().trim().min(8).max(500),
+    })
+    .parse(input);
+  const id =
+    'treasury-' +
+    createHash('sha256')
+      .update(JSON.stringify([tripId, a.mode, v.source, v.evidence]))
+      .digest('hex');
+  await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(s.contributions)
+      .values({ ...v, id, tripId, mode: a.mode, authorizedBy: a.userId })
+      .onConflictDoNothing({ target: s.contributions.id })
+      .returning();
+    if (!inserted) {
+      const [prior] = await tx.select().from(s.contributions).where(eq(s.contributions.id, id));
+      if (prior.cents !== v.cents)
+        throw new AppError('Treasury reference already recorded with another amount.', 409);
+      return;
+    }
+    await tx.insert(s.audit).values({
+      id: uid(),
+      schoolId: a.schoolId,
+      userId: a.userId,
+      action: a.mode === 'demo' ? 'SYNTHETIC_SCHOOL_CONTRIBUTION' : 'SCHOOL_CONTRIBUTION_ATTESTED',
+      entityId: id,
+      detail: { tripId, cents: v.cents, source: v.source, evidence: v.evidence, mode: a.mode },
+    });
+  });
+  return { id };
 }

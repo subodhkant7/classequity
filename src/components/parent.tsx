@@ -424,8 +424,9 @@ export default function Parent({
                                 Gross amount: {money(receipt.cents)} · Status: {receipt.status}
                               </p>
                               <p>
-                                Processing fee: {money(receipt.feeCents)} · Refunded:{' '}
-                                {money(receipt.refundedCents)}
+                                Processing fee:{' '}
+                                {receipt.feeKnown ? money(receipt.feeCents) : 'Accounting pending'}{' '}
+                                · Refunded: {money(receipt.refundedCents)}
                               </p>
                             </div>
                           )}

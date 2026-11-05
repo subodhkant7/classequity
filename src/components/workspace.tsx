@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import type { Actor } from '@/server/auth';
 import type { dashboardData, financeData, safeRegistrations } from '@/server/data';
-import { money, type Tier, quoteSchema } from '@/lib/domain';
+import { money, minor, type Tier, quoteSchema } from '@/lib/domain';
 import { Badge, Button, Empty, Field, Modal, Notice, api } from './ui';
 import Museum from './museum';
 const Studio = dynamic(() => import('./studio'), {
@@ -88,7 +88,7 @@ function Metric({
 }
 function FundingCard({ d }: { d: Trip }) {
   const percent = d.totals.required
-    ? Math.min(100, Math.round((d.totals.net / d.totals.required) * 100))
+    ? Math.max(0, Math.min(100, Math.round((d.totals.net / d.totals.required) * 100)))
     : 0;
   return (
     <div className="card funding-card">
@@ -104,7 +104,7 @@ function FundingCard({ d }: { d: Trip }) {
       </div>
       <div className="funding-rows">
         <div>
-          <span>Confirmed captures</span>
+          <span>{d.mode === 'demo' ? 'Simulated captures' : 'Verified sandbox captures'}</span>
           <strong>{money(d.totals.gross)}</strong>
         </div>
         <div>
@@ -117,12 +117,42 @@ function FundingCard({ d }: { d: Trip }) {
             <span>− {money(d.totals.refunds)}</span>
           </div>
         )}
-        {d.trip.reserveCents > 0 && (
+        {d.totals.schoolCents > 0 && (
           <div>
-            <span>School reserve · simulated</span>
-            <span>+ {money(d.trip.reserveCents)}</span>
+            <span>
+              School contribution · {d.mode === 'demo' ? 'simulated' : 'finance attested'}
+            </span>
+            <span>+ {money(d.totals.schoolCents)}</span>
           </div>
         )}
+        {d.totals.feePending > 0 && (
+          <div>
+            <span>Fee accounting pending · {d.totals.feePending}</span>
+            <span>− {money(d.totals.feeReserve)} reserved</span>
+          </div>
+        )}
+        {d.totals.refundReserve > 0 && (
+          <div>
+            <span>Pending refund reserve</span>
+            <span>− {money(d.totals.refundReserve)}</span>
+          </div>
+        )}
+        <div>
+          <span>Seats covered / registered</span>
+          <strong>
+            {d.coverage.coveredSeats} / {d.registrationCount}
+          </strong>
+        </div>
+        <div>
+          <span>Parent paid · fully assisted</span>
+          <span>
+            {d.coverage.parentPaidSeats} · {d.coverage.fullyAssistedSeats}
+          </span>
+        </div>
+        <div>
+          <span>Seats with unresolved funding</span>
+          <span>{d.coverage.unresolvedSeats}</span>
+        </div>
         <div>
           <span>Net funds available</span>
           <strong>{money(d.totals.net)}</strong>
@@ -818,7 +848,7 @@ export default function Workspace({
             <Metric
               label="Students registered"
               value={String(d.registrationCount)}
-              foot={`${d.confirmedSeats} seats have a completed payment`}
+              foot={`${d.coverage.coveredSeats} seats have recorded funding coverage`}
               icon={Users}
               color="#eeedf9"
             />
@@ -994,7 +1024,7 @@ export default function Workspace({
                   </div>
                   <div className="mini-stat">
                     <strong>{d.confirmedSeats}</strong>
-                    <small>Seats with a completed payment</small>
+                    <small>Seats with recorded funding coverage</small>
                   </div>
                 </div>
                 <h3>Registration is a commitment to participate.</h3>
@@ -1452,7 +1482,13 @@ export default function Workspace({
                         <td>
                           <Badge tone={statusTone(o.status)}>{readable(o.status)}</Badge>
                         </td>
-                        <td>{o.capture ? money(o.capture.feeCents) : '—'}</td>
+                        <td>
+                          {o.capture
+                            ? o.capture.feeKnown
+                              ? money(o.capture.feeCents)
+                              : 'Accounting pending'
+                            : '—'}
+                        </td>
                         <td>
                           <div className="flex">
                             <Button
@@ -1467,24 +1503,65 @@ export default function Workspace({
                               <RefreshCw size={12} />
                               Reconcile
                             </Button>
-                            {o.capture?.status === 'COMPLETED' && (
-                              <Button
-                                variant="danger"
-                                onClick={() => {
-                                  if (
-                                    window.confirm(
-                                      `Authorize a full ${money(o.cents)} ${a.mode === 'demo' ? 'simulated' : 'sandbox'} refund? Processing fees may remain deducted.`,
+                            {o.capture &&
+                              ['COMPLETED', 'PARTIALLY_REFUNDED'].includes(o.capture.status) && (
+                                <Button
+                                  variant="danger"
+                                  onClick={() => {
+                                    if (
+                                      window.confirm(
+                                        `Authorize a ${money(o.capture!.cents - o.capture!.refundedCents)} ${a.mode === 'demo' ? 'simulated' : 'sandbox'} refund? Processing fees may remain deducted.`,
+                                      )
                                     )
-                                  )
-                                    return run(
-                                      () => api('payments/refund', { captureId: o.capture!.id }),
-                                      'Refund operation recorded. Provider completion is verified through readback.',
+                                      return run(
+                                        () =>
+                                          api('payments/refund', {
+                                            captureId: o.capture!.id,
+                                            cents: o.capture!.cents - o.capture!.refundedCents,
+                                            clientKey: `ui-${o.capture!.id}-${o.capture!.refundedCents}-remaining`,
+                                          }),
+                                        'Refund operation recorded. Provider completion is verified through readback.',
+                                      );
+                                  }}
+                                >
+                                  Refund remaining
+                                </Button>
+                              )}
+                            {o.capture &&
+                              ['COMPLETED', 'PARTIALLY_REFUNDED'].includes(o.capture.status) && (
+                                <Button
+                                  variant="ghost"
+                                  onClick={() => {
+                                    const value = window.prompt(
+                                      'Partial refund amount in USD (for example 1.00)',
                                     );
-                                }}
-                              >
-                                Refund
-                              </Button>
-                            )}
+                                    if (!value) return;
+                                    let cents: number;
+                                    try {
+                                      cents = minor(value);
+                                    } catch {
+                                      return window.alert('Enter an exact USD amount.');
+                                    }
+                                    if (
+                                      !window.confirm(
+                                        `Authorize a ${money(cents)} ${a.mode} refund?`,
+                                      )
+                                    )
+                                      return;
+                                    return run(
+                                      () =>
+                                        api('payments/refund', {
+                                          captureId: o.capture!.id,
+                                          cents,
+                                          clientKey: `ui-${o.capture!.id}-${o.capture!.refundedCents}-${cents}`,
+                                        }),
+                                      'Refund recorded; reconcile for verified status.',
+                                    );
+                                  }}
+                                >
+                                  Partial refund
+                                </Button>
+                              )}
                           </div>
                         </td>
                       </tr>
@@ -1492,6 +1569,67 @@ export default function Workspace({
                   </tbody>
                 </table>
               </div>
+            </section>
+            <section className="card">
+              <h2>School contributions</h2>
+              <p>
+                Record an authorized treasury contribution.{' '}
+                {a.mode === 'demo'
+                  ? 'These records are synthetic.'
+                  : 'These are finance attestations, separately identified from PayPal captures.'}
+              </p>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = e.currentTarget;
+                  const f = new FormData(form);
+                  let cents: number;
+                  try {
+                    cents = minor(String(f.get('amount')));
+                  } catch {
+                    return window.alert('Enter an exact USD amount.');
+                  }
+                  return run(async () => {
+                    await api('finance/contribution', {
+                      tripId: d.trip.id,
+                      cents,
+                      source: f.get('source'),
+                      evidence: f.get('evidence'),
+                    });
+                    form.reset();
+                  }, 'Authorized contribution and audit recorded.');
+                }}
+              >
+                <Field label="USD amount">
+                  <input name="amount" required inputMode="decimal" placeholder="0.00" />
+                </Field>
+                <Field label="Funding source">
+                  <input
+                    name="source"
+                    required
+                    minLength={3}
+                    maxLength={160}
+                    placeholder="Approved school treasury allocation"
+                  />
+                </Field>
+                <Field label="Authorization / receipt reference">
+                  <input
+                    name="evidence"
+                    required
+                    minLength={8}
+                    maxLength={500}
+                    placeholder="Approval and received-funds reference"
+                  />
+                </Field>
+                <Button type="submit">Record authorized contribution</Button>
+              </form>
+              {finance?.contributions.map((c) => (
+                <p key={c.id}>
+                  {money(c.cents)} · {c.source} ·{' '}
+                  {c.mode === 'demo' ? 'Synthetic' : 'Finance attested'} ·{' '}
+                  {new Date(c.createdAt).toLocaleDateString()}
+                </p>
+              ))}
             </section>
             {a.mode === 'demo' && (
               <div className="ai-banner">
