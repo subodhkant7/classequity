@@ -14,7 +14,7 @@ Start `npm run dev`, open http://localhost:3000, choose Explore the demo. Use fi
 
 **2:15–2:35 — Communication and document intelligence.** Open Communication, clearly identify WhatsApp SIMULATOR, ask the price and deadline in English/Hindi, then get a secure parent link. Show the quote-upload/review workflow with `public/sample-vendor-quote.svg` exported to PNG or another fictional USD quote. AI extraction is reviewed before activation; never upload hardship data.
 
-**2:35–3:00 — The outcome.** In finance, run the fully funded simulation: it completes synthetic captures and explicitly adds a simulated school reserve for fees and refunded seat costs. Explain that real sandbox checkout has OAuth verified, requires human buyer approval, and captures/refunds/webhooks must be verified separately. End with exact shortfall-to-funded mechanics, not fabricated real-school impact.
+**2:35–3:00 — The outcome.** In finance, run the fully funded simulation: it completes synthetic captures and records an audited synthetic school contribution for fees and refunded seat costs. Explain that real sandbox checkout has OAuth and order creation verified, requires human buyer approval, and captures/refunds/webhooks must be verified separately. End with exact shortfall-to-funded mechanics, not fabricated real-school impact.
 
 ## Sandbox handoff
 
@@ -25,3 +25,13 @@ Start `npm run dev`, open http://localhost:3000, choose Explore the demo. Use fi
 5. Deploy public HTTPS before registering real PayPal/Twilio webhook URLs. Pair and opt in to WhatsApp before sending a permitted test.
 
 The seed is non-destructive and does not reset demo mutations. Run funded/refund/payment demos thoughtfully. To get an untouched demo without deleting existing records, use a separate local PGlite path and seed it; never reset the shared Render database. `docs/integration-evidence.json` records actual provider credential/generation checks. Seed SIM-* capture IDs are never real PayPal transactions.
+
+## Financial closure demonstration
+
+Use the finance Funding assurance card to distinguish registered, parent-paid, fully assisted and covered seats. A zero-parent-obligation seat starts uncovered until captured sponsor money or an authorized treasury entry supplies its cost. The new School contributions form records source, positive USD amount and an authorization/receipt reference; demo entries remain synthetic. Reusing the same reference does not duplicate money. Never describe a treasury attestation as a PayPal capture.
+
+Receipts with missing fee data say “Accounting pending.” Funding reserves the uncertain capture and cannot become ready. Finance supports partial refunds and refunding the remaining balance; duplicates reuse a stable identity and unresolved amounts remain reserved. Do not run these against sandbox money without the separately approved test plan.
+
+The independent-worker command `npm run test:financial:concurrency` requires the dedicated PostgreSQL connection. It uses an isolated temporary schema and a loopback fake provider, including deliberate process kills. It makes no PayPal mutations. Evidence is redacted in `docs/financial-concurrency-evidence.json`.
+
+See `FINANCIAL_WORKFLOW_CLOSURE.md` for current order availability, the private buyer handoff, exact verification classifications and hosted HTTPS blockers. Original order creation alone is not a captured payment demonstration.

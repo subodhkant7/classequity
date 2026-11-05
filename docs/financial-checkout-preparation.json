@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-11-05T05:19:34.832Z",
+  "provider": "PayPal sandbox",
+  "reason": "Original order readback returned INVALID_RESOURCE_ID; original records preserved without assuming an unpaid outcome",
+  "fictionalObligation": "Avery Sandbox Closure Example — Financial closure verification",
+  "currency": "USD",
+  "cents": 100,
+  "orderCreated": true,
+  "status": "AWAITING_APPROVAL",
+  "buyerApprovalCompleted": false,
+  "captureVerified": false,
+  "refundVerified": false,
+  "privateHandoff": ".data/financial-closure-checkout.json"
+}

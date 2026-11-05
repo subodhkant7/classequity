@@ -6,7 +6,7 @@ The official starter https://github.com/paypaldev/hackathon-paypal-ag-grid-boile
 
 ## Report
 
-Financial overview, group-pricing progress, registered vs financially confirmed seats, sponsorship commitments/funding, pending/failed/unknown payment counts, reconciliation, and comparison across available trips. No historical trip record is fabricated. The report page selector chooses these actual AG report pages. Native AG Grid and chart widgets remain editable. Group Unlock, Funding Assurance, and Payment Integrity are custom widgets using the documented native component interface registered through createWidgets; they display trusted aggregate application context. Their core financial meaning is intentionally fixed; new AI-built analytical views use the native schema-enabled widgets.
+Financial overview, group-pricing progress, registered, parent-paid, fully assisted, covered and unresolved seats, sponsorship commitments/funding, pending/failed/unknown payment counts, reconciliation, and comparison across available trips. No historical trip record is fabricated. The report page selector chooses these actual AG report pages. Native AG Grid and chart widgets remain editable. Group Unlock, Funding Assurance, and Payment Integrity are custom widgets using the documented native component interface registered through createWidgets; they display trusted aggregate application context. Their core financial meaning is intentionally fixed; new AI-built analytical views use the native schema-enabled widgets.
 
 Only aggregate sources reach Studio: trip financial summaries, operation status counts, and pricing tiers. No student/parent names, phones, aid eligibility, allocation IDs or recipient mapping exist in a Studio table or tool result. Display dollars are derived from authoritative integer cents. Presentation state is per-user/per-school in ce_dashboard_configuration. It cannot change authoritative financial data.
 
@@ -23,3 +23,9 @@ Actual custom-widget rendering and real framework requests are checked through P
 The supplied key validated as a Studio Pro with AI v3 trial, expiry December 19, 2026. The supplied trial is client-side licensing data intentionally delivered only to authenticated analytics users. It is not a provider API secret. The trial's legal scope/expiry should be checked before judging or any public release; this application does not grant new rights.
 
 Sources: https://www.ag-grid.com/studio/react/installation/ ; https://www.ag-grid.com/studio/react/quick-start/ ; https://www.ag-grid.com/studio/react/custom-widgets/ ; https://www.ag-grid.com/studio/react/ai-quickstart/ .
+
+## Corrected financial projections
+
+The native “Funding & covered seats” chart and pricing grid expose registered, parent-paid, fully assisted, covered and unresolved counts. Fee-pending counts, fee/refund reserves and school contribution totals appear as separate fields, together with source labels. The custom assurance/integrity widgets show corrected coverage and fee uncertainty. A completed payment with missing fees remains completed in status counts while available funds stay reserved.
+
+Both the server aggregate projection and the official Agent Framework summary tool use the same persisted ledger calculations. Treasury references, authorizers and individual allocation mappings remain excluded. The agent's authority is unchanged: read aggregates and alter report presentation only. Saved reports may retain their old page labels; “Restore starter report” installs the revised native field mappings.

@@ -1,25 +1,43 @@
 # PayPal sandbox integration
 
-Implementation: `src/server/integrations/paypal.ts`, `src/server/payments.ts`, and the authenticated API dispatcher. APIMatic-generated `@paypal/paypal-server-sdk` 2.5.0 supplies typed Orders/Payments controllers, serializers, OAuth caching and error classes. The implementation never selects Production. The narrow REST extension covers webhook verification, which these controllers do not expose.
+`src/server/integrations/paypal.ts` uses the installed APIMatic-generated official `@paypal/paypal-server-sdk` 2.5.0. Production mode is never selected. Orders and Payments use typed controllers, cached OAuth, a 20-second timeout and no SDK mutation retries. The webhook verification endpoint uses a narrow authenticated REST adapter.
 
-## Browser journey
+## Owned obligation and checkout
 
-Sign in to the sandbox workspace with the privately configured ADMIN_PASSWORD. Create a trip or use the sandbox science trip. Issue a single-use parent invitation. In a separate browser session, redeem it, register a fictional student, and consent to the current price. The school freezes exact pricing after reviewing any finance-only support allocations. The parent opens My payments, clicks PayPal sandbox checkout, and a server-created exact USD order redirects to PayPal. A human signs in with a personal sandbox buyer, approves, returns, then clicks Finalize approved payment. The server verifies the order's amount/currency/custom ID against the owned immutable obligation before capture, then reads the capture back. The finance desk can reconcile and authorize a full refund; refund completion is read back separately.
+The server checks tenant/payer ownership, positive integer cents, a frozen matching snapshot and latest accepted parent consent. Browser prices are ignored. A unique operation and UUID request key commit before order creation. Only CREATED may claim CREATING. Failed, in-progress or UNKNOWN creations are not automatically resubmitted. A missing order ID after an ambiguous create requires merchant investigation, including outside PayPal's idempotency retention period.
 
-No stored sandbox buyer password is read or automated. No live financial operations exist. Demo checkout calls only the labeled simulator.
+The approval URL must have the exact sandbox PayPal HTTPS origin. Parent checkout reuses a recorded awaiting-approval order. A human signs in and approves with their sandbox personal account; the application never receives or automates buyer credentials. Captures and refunds require the separately authorized test steps. A returned approval URL or HTTP success does not prove a payment.
 
-## Operation safety
+## Capture and readback
 
-One unique operation per obligation is stored before a provider call. Create and capture are claimed with conditional status updates. Create uses the stored request key; capture uses that same logical identity with a stable suffix. Provider timeouts and decode/5xx failures remain UNKNOWN. Capture catch attempts readback before surfacing uncertainty. Unknown creates can retry the same key within six hours; never change identities after ambiguity. CREATING/CAPTURING after a process crash require finance investigation; there is no autonomous background reconciler in this initial pass. Admins explicitly reconcile from the finance desk and verified webhooks trigger readback.
+The validated order must have its expected ID, one purchase unit, obligation custom ID, USD currency and exact frozen amount. Its unique capture ID must match capture GET; the related order ID must also agree when present. Association is established by the capture's membership in that validated order, even when the optional supplementary order field is absent. Multiple unexpected captures fail integrity validation.
 
-Captures must match amount/currency, order custom ID, and related order where supplied. Merchant OAuth scope keeps the app first-party. Pending captures do not count; absent processing fees keep a payment unresolved. Full refund claims are unique per capture. A lost refund response without a provider refund ID requires merchant investigation; it cannot silently create a fresh refund. External partial refunds without a verified amount are conservatively reserved and remain unresolved.
+Before capture, a conditional update records CAPTURING, a dedicated UUID capture key and `capture_requested_at`. That marker is irreversible: no readback can reopen APPROVED for a second mutation. UNKNOWN always means readback/investigation. A crash after the claim but before the provider call can leave an unexecuted claim; availability is deliberately sacrificed for safety. Reconciliation cannot infer that retrying a write is safe. A CAPTURING claim older than two minutes with no visible capture becomes UNKNOWN. There is no automated background reconciler.
 
-## Webhooks
+All readbacks use operation versions. The version compare-and-swap must win inside the same transaction before capture/refund evidence is written. A competing mutation/readback invalidates older work. Provider update timestamps reject older capture evidence; completed/partially refunded/refunded/reversed states and known fees cannot be downgraded by a lagging response. STALE_READBACK is retriable read-only work.
 
-After public HTTPS exists, register `/api/webhooks/paypal` in the same sandbox app and save PAYPAL_WEBHOOK_ID. Subscribe to applicable capture completion/pending/denial/refund/reversal events and refund completion/pending/failure events. No webhook is registered against localhost or a placeholder. The endpoint verifies PayPal transmission headers with PayPal's verification API, uses a three-day replay window and unique inbox event ID, then reads the provider resource. Prices or payment states from an unsigned browser/webhook cannot update the ledger. Unmatched verified events do not create obligations.
+## Payment completion versus fee knowledge
 
-## Evidence and remaining verification
+The SDK marks `sellerReceivableBreakdown` and `paypalFee` optional. Valid completed captures persist as COMPLETED even without them. Capture identity, amount, provider provenance, readback time, fee knowledge and funding availability are separate fields. `fee_known=false` makes the stored zero fee a placeholder, never an assertion that the fee is zero. UI receipts say “Accounting pending.” Platform fees are included when supplied in USD. Missing/foreign fee data reserves the remaining capture and blocks readiness. Later readback can resolve fees without repeating capture.
 
-`docs/integration-evidence.json` records OAuth 200; no capture or refund has been executed. `scripts/sandbox-order.ts` is prepared for a genuine order-creation smoke test. Automatic approval review initially required specific approval. The user approved it, and a genuine $32 USD sandbox order was then created, awaiting human approval. See `docs/sandbox-order-evidence.json`. No capture occurred. Buyer-approved purchase, capture, refund, webhook delivery, merchant/payer edge cases, and external partial-refund readback remain unverified. See the final implementation report for the current status; never present seeded SIM-* IDs as PayPal transactions.
+Demo captures have SYNTHETIC provenance. Only matching-mode PAYPAL_SANDBOX captures with a readback timestamp enter sandbox totals. School treasury attestations are separately labeled; they are not PayPal captures. No record is described as a live payment.
 
-Contracts: https://developer.paypal.com/docs/api/orders/v2/ ; https://developer.paypal.com/docs/api/payments/v2/ ; https://developer.paypal.com/api/rest/webhooks/rest/ ; APIMatic contract sheet `paypal-plan.md`.
+## Full and partial refunds
+
+Only finance can authorize a refund against an owned verified capture. Each refund has an immutable requested amount, unique client identity, UUID provider request key and authorizer. Operation/capture row locks reserve the remaining balance before any request; pending and unknown amounts cannot be refunded again. Reusing a client identity returns its existing operation; changing its amount fails. Multiple partial refunds and a remaining-balance refund are supported.
+
+The refund POST carries its amount and the local claim ID as `customId`. A POST result identifies a refund; independent GET checks ID, USD amount and capture association before completion enters the ledger. Completed refund evidence cannot regress to pending. Reconciliation discovers refunds listed on the order and matches `customId`, recovering a lost response/provider ID after process death. An authenticated refund notification can supply an additional ID for verified readback. If neither order readback nor a verified notification reveals that ID, UNKNOWN stays reserved and requires merchant investigation. No blind refund replay exists.
+
+External full refunds/reversals consume the capture balance. External partial refunds with unavailable amounts reserve the remaining capture and block readiness. Known fees remain deducted after refunds/reversals.
+
+## Signed webhook inbox
+
+`POST /api/webhooks/paypal` bounds streamed UTF-8 body bytes to 250,000, requires JSON and validates bounded PayPal transport headers, certificate URL, algorithm and transmission time (three days past/five minutes future). The **complete original parsed event** goes to PayPal's verification API before any business schema extracts fields. No raw request/body/headers are logged or persisted.
+
+A canonical full-event SHA-256 digest binds provider/event ID. Identical processed deliveries are acknowledged without reapplication; an identity collision fails. Durable two-minute processing leases, ownership tokens, attempts and retryable error records recover worker crashes. A failure retains its inbox record; no delete-and-forget path exists. Concurrent live claims return 503. Unknown financial events are retained for investigation/retry, not marked successfully reconciled. Unrelated authenticated event types are ignored explicitly. Events trigger fresh order/capture/refund readback, never direct financial state updates from event names.
+
+## Actual verification boundary
+
+See `financial-provider-evidence.json`, `financial-concurrency-evidence.json` and `FINANCIAL_WORKFLOW_CLOSURE.md`. OAuth and original order creation are genuinely verified; captures/refunds and genuine signed public delivery require separate evidence. Provider-fake tests are not PayPal transaction proof. Render has no ClassEquity web service; no callback was registered against localhost or a placeholder.
+
+Contracts: [PayPal idempotency](https://developer.paypal.com/api/rest/reference/idempotency/), [Payments v2](https://developer.paypal.com/api/payments/v2), [webhook verification](https://developer.paypal.com/api/rest/webhooks/rest/). Installed model/controller sources and `paypal-plan.md` establish exact SDK property names.

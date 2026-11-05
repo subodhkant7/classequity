@@ -1,0 +1,54 @@
+{
+  "checkedAt": "2026-11-05T05:20:46.741Z",
+  "provider": "PayPal sandbox",
+  "inspection": "read-only order and webhook configuration lookup; no order creation, capture or refund",
+  "schema": {
+    "tableCount": 25,
+    "migrations": [
+      "0000_kind_stranger.sql",
+      "0001_natural_skaar.sql",
+      "0002_gorgeous_thanos.sql"
+    ],
+    "financialCounts": {
+      "operations": "35",
+      "captures": "28",
+      "refunds": "0"
+    }
+  },
+  "orderInspections": [
+    {
+      "label": "original",
+      "available": false,
+      "status": "UNAVAILABLE",
+      "providerCode": "INVALID_RESOURCE_ID",
+      "currency": "USD",
+      "cents": 3200,
+      "matchesStoredObligation": null,
+      "captures": null
+    },
+    {
+      "label": "closure verification",
+      "available": true,
+      "status": "PAYER_ACTION_REQUIRED",
+      "currency": "USD",
+      "cents": 100,
+      "matchesStoredObligation": true,
+      "captures": 0
+    }
+  ],
+  "previousOriginalObservation": {
+    "checkedAt": "2026-11-04T23:03:46.798Z",
+    "status": "PAYER_ACTION_REQUIRED",
+    "matchesStoredObligation": true,
+    "cents": 3200,
+    "captures": 0
+  },
+  "webhookConfiguration": {
+    "readStatus": 200,
+    "registeredCount": 0,
+    "configuredLocally": false,
+    "publicClassEquityService": false
+  },
+  "captureVerified": false,
+  "refundVerified": false
+}
