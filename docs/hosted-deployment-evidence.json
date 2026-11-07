@@ -1,10 +1,10 @@
 {
-  "checkedAt": "2026-11-07T14:28:08.971Z",
+  "checkedAt": "2026-11-07T16:21:16.281Z",
   "status": "DEPLOYED \u2014 SANDBOX HOSTED WEBHOOK VERIFIED",
   "appUrl": "https://classequity.onrender.com",
   "webhookUrl": "https://classequity.onrender.com/api/webhooks/paypal",
   "startingCommit": "a0db0b0a8aae9e2a908ac91ff5150538fb3cea11",
-  "deployedCommit": "03dafab57ed17b0de9d501a2228904ea73373d09",
+  "deployedCommit": "e673ad86537315167037f877386be6a9ede599ad",
   "branch": "codex/hosted-webhook-verification",
   "draftPr": "https://github.com/subodhkant7/classequity/pull/3",
   "render": {
@@ -13,8 +13,8 @@
     "project": "none; confirmed workspace-level resources",
     "autoDeploy": false,
     "previews": false,
-    "deployId": "dep-dbnhk5jrjlhs738rciag",
-    "liveAt": "2026-11-07T12:33:32.658641Z",
+    "deployId": "dep-dbnkuf3m8hqs73cgouj0",
+    "liveAt": "2026-11-07T16:20:08.956476Z",
     "restartAt": "2026-11-07T09:39:20.728389Z",
     "postRestartHealthy": true,
     "naturalIdleWakeObserved": false
@@ -37,7 +37,9 @@
     "originalEvidenceCount": 1,
     "originalEvidenceFingerprint": "c27a2eb43767fa2a0826a98d68e29e299bb912cde75062e481dfe22ac9a5347c",
     "sandboxLedgerUnchangedAcrossFinalRedeploy": true,
-    "originalEvidenceUnchangedAfterNewCaptureAndRefund": true
+    "originalEvidenceUnchangedAfterNewCaptureAndRefund": true,
+    "preservationAfterFinalReleaseCheckedAt": "2026-11-07T16:21:16.281Z",
+    "entireSandboxLedgerFingerprintAfterFinalRelease": "e01c895d5157b0bb196d256c0f18a3dfb43be8cec976cd08f50107927c515d21"
   },
   "configuration": {
     "canonicalAppUrl": true,
@@ -107,7 +109,7 @@
     "report": "output/playwright/hosted-results.json",
     "currencyPrecisionVerified": true,
     "loadingIndicatorsVisibleAtCapture": false,
-    "fullRunRuntimeCommit": "a61375f32a7e69d9c8c53f20676dfa7d909a6811",
+    "fullRunRuntimeCommit": "e673ad86537315167037f877386be6a9ede599ad",
     "followUpRestrictedStudioPassed": true,
     "followUpRuntimeCommit": "03dafab57ed17b0de9d501a2228904ea73373d09",
     "newSandboxStudioAfterRefund": {
@@ -116,7 +118,10 @@
       "feeCents": 54,
       "netCents": -54,
       "actualNativeGridVisible": true
-    }
+    },
+    "fullRunStartedAt": "2026-11-07T16:21:15.375Z",
+    "fullRunDurationMs": 66539.643,
+    "financialLifecycleStudioRuntimeCommit": "03dafab57ed17b0de9d501a2228904ea73373d09"
   },
   "automated": {
     "unitServiceTests": 60,
@@ -127,8 +132,8 @@
     "localBrowserTests": 12,
     "completeCi": "PASS",
     "ciChecks": "https://github.com/subodhkant7/classequity/pull/3/checks",
-    "ciCommit": "03dafab57ed17b0de9d501a2228904ea73373d09",
-    "ciUrl": "https://github.com/subodhkant7/classequity/actions/runs/42372803656",
+    "ciCommit": "e673ad86537315167037f877386be6a9ede599ad",
+    "ciUrl": "https://github.com/subodhkant7/classequity/actions/runs/42390565933",
     "productionBrowserTests": 12,
     "financialConcurrencyScenarios": 6
   },

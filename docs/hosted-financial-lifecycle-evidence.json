@@ -1,6 +1,6 @@
 {
-  "checkedAt": "2026-11-07T12:51:15.082Z",
-  "fictionalObligation": "Morgan Sandbox Webhook Example — Hosted webhook verification",
+  "checkedAt": "2026-11-07T14:28:08.971Z",
+  "fictionalObligation": "Morgan Sandbox Webhook Example \u2014 Hosted webhook verification",
   "currency": "USD",
   "cents": 100,
   "authorization": "User explicitly authorized one USD 1 sandbox capture, idempotent duplicate-request check and one full refund up to USD 1",
@@ -118,8 +118,11 @@
       "readbackStatus": "APPROVED"
     }
   ],
-  "status": "SANDBOX HOSTED WEBHOOK VERIFIED — approval, capture, full refund and genuine duplicate delivery",
+  "status": "SANDBOX HOSTED WEBHOOK VERIFIED \u2014 approval, capture, full refund and genuine duplicate delivery",
   "genuineWebhookDeliveryVerified": true,
   "genuineSignatureVerificationVerified": true,
-  "genuineCaptureAndRefundRedeliveryVerified": true
+  "genuineCaptureAndRefundRedeliveryVerified": true,
+  "financialLifecycleCheckedAt": "2026-11-07T12:51:15.082Z",
+  "redeliveryCheckedAt": "2026-11-07T14:28:08.971Z",
+  "runtimeCommit": "03dafab57ed17b0de9d501a2228904ea73373d09"
 }

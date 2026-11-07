@@ -8,7 +8,7 @@ Registered endpoint: https://classequity.onrender.com/api/webhooks/paypal
 
 Branch: `codex/hosted-webhook-verification`; [draft PR #3](https://github.com/subodhkant7/classequity/pull/3), targeting the experience branch. Repository remains private; PR #1 and #2 remain unmerged. Starting baseline: `a0db0b0a8aae9e2a908ac91ff5150538fb3cea11`.
 
-The financial verification ran on deployed receiver commit `03dafab57ed17b0de9d501a2228904ea73373d09`. Final public-copy release commit and exact final Git/CI revisions are recorded in the delivery report and deployment evidence. No financial domain formula, provider state transition or schema migration was changed to obtain this result.
+The financial verification ran on deployed receiver commit `03dafab57ed17b0de9d501a2228904ea73373d09`. The final public-copy release is live on `e673ad86537315167037f877386be6a9ede599ad` (Render deploy `dep-dbnkuf3m8hqs73cgouj0`). Database-ready health readback reports that exact SHA. The final Git documentation revision is recorded in the delivery report. No financial domain formula, provider state transition or schema migration was changed to obtain this result.
 
 ## Genuine verification outcome
 
@@ -59,7 +59,7 @@ Subscribed supported types: CHECKOUT.ORDER.APPROVED; PAYMENT.CAPTURE.COMPLETED, 
 
 ## Verification and remaining limits
 
-Local typecheck, lint, 60 unit/service tests, build and secret scan pass. CI retains six independent-process financial concurrency scenarios against ephemeral PostgreSQL and all 12 browser flows against the built production server. The complete nine-check hosted run covered 390px/reduced motion, authorization/CSRF/secure cookies, tour isolation and native Studio. Targeted genuine Studio refreshes were additionally observed after capture and refund. Exact final CI result is available through [PR #3 checks](https://github.com/subodhkant7/classequity/pull/3/checks) and the delivery report.
+Local typecheck, lint, 60 unit/service tests, build and secret scan pass. CI retains six independent-process financial concurrency scenarios against ephemeral PostgreSQL and all 12 browser flows against the built production server. The complete nine-check hosted run covered 390px/reduced motion, authorization/CSRF/secure cookies, tour isolation and native Studio. Targeted genuine Studio refreshes were additionally observed after capture and refund. The complete release CI passed on `e673ad86537315167037f877386be6a9ede599ad`: [verified run](https://github.com/subodhkant7/classequity/actions/runs/42390565933). All nine hosted tests then passed against that exact deployed runtime, with zero skips. Final documentation-commit checks remain visible in [PR #3 checks](https://github.com/subodhkant7/classequity/pull/3/checks).
 
 A readable private PostgreSQL custom-format backup was created before deployment; restoration is not yet tested. The free database expires **December 4, 2026 at 20:48 UTC / December 5 at 02:18 IST**. Preserve the private backup before expiry; no paid upgrade or replacement database was created. The preservation inspector selects the exact historical operation identity, so the second transaction's identical USD 1/54-cent outcome cannot contaminate the original-evidence fingerprint.
 
