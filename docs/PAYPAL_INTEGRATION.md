@@ -1,5 +1,7 @@
 # PayPal sandbox integration
 
+Hosted follow-up: the free HTTPS application is at https://classequity.onrender.com and its exact sandbox callback is `/api/webhooks/paypal`. Registration/readback and genuine signature/delivery proof are recorded separately in [HOSTED_WEBHOOK_VERIFICATION.md](HOSTED_WEBHOOK_VERIFICATION.md); the historical verification section below describes the earlier financial phase. No new capture/refund is implied by deployment or registration.
+
 `src/server/integrations/paypal.ts` uses the installed APIMatic-generated official `@paypal/paypal-server-sdk` 2.5.0. Production mode is never selected. Orders and Payments use typed controllers, cached OAuth, a 20-second timeout and no SDK mutation retries. The webhook verification endpoint uses a narrow authenticated REST adapter.
 
 ## Owned obligation and checkout
@@ -31,6 +33,8 @@ The refund POST carries its amount and the local claim ID as `customId`. A POST 
 External full refunds/reversals consume the capture balance. External partial refunds with unavailable amounts reserve the remaining capture and block readiness. Known fees remain deducted after refunds/reversals.
 
 ## Signed webhook inbox
+
+The hosted release adds explicit supported-event recognition (`src/lib/paypal-webhook-events.ts`), including Payments v2 DECLINED and applicable v1 DENIED. Verified unknown financial events remain RETRYABLE/503. A provider verification outage is 503, distinct from a rejected signature (401). After authoritative readback, inbox completion and redacted reconciliation audit evidence commit together. The existing ledger engine and financial formulas are unchanged. `scripts/configure-paypal-webhook.ts` defaults to read-only inspection; its explicit registration action checks exact hosted commit/readiness, compares supported event types, reuses an exact registration, and privately saves the ID. It has no payment/capture/refund operation and no mock simulator action.
 
 `POST /api/webhooks/paypal` bounds streamed UTF-8 body bytes to 250,000, requires JSON and validates bounded PayPal transport headers, certificate URL, algorithm and transmission time (three days past/five minutes future). The **complete original parsed event** goes to PayPal's verification API before any business schema extracts fields. No raw request/body/headers are logged or persisted.
 

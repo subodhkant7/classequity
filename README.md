@@ -38,7 +38,9 @@ The product’s authoritative financial definitions remain unchanged. At 30 seat
 
 PayPal sandbox OAuth, the authorized $1 capture/duplicate/full-refund lifecycle, Gemini generation/extraction/report-agent use and actual AG Studio rendering have evidence in `docs/`. The $1 payment was already captured when lifecycle verification began; a repeated request retained one capture, then one full refund completed. PayPal retained $0.54, leaving −$0.54 net. This is a recorded sandbox verification, not a real school contribution. No provider transaction occurs in the public tour or in this visual-polish phase.
 
-Twilio account authentication is verified; actual WhatsApp delivery is not. Existing Render PostgreSQL is hosted; the web application is **not deployed**. Genuine public signed webhook delivery remains blocked on canonical HTTPS and registration. Shared-password operator access and broader production/audit/treasury controls still need hardening.
+The sandbox application is hosted at **[classequity.onrender.com](https://classequity.onrender.com)** on a free, manually deployed Render service with the existing PostgreSQL database. Hosting and webhook registration are separate from genuine signature/delivery proof: see [hosted verification](docs/HOSTED_WEBHOOK_VERIFICATION.md) for the exact status and deployed commit. Twilio WhatsApp delivery remains unverified and its credentials are not provisioned on this host. Shared-password operator access and broader production/audit/treasury controls still need hardening.
+
+Public `/demo` uses local synthetic state and never calls application/provider APIs. Open demo workspace roles use simulated payments/messages and grounded local parent answers; hosted cloud Gemini tools require restricted sandbox access. No production payment mode is available.
 
 ## Verify without touching shared data
 
@@ -52,12 +54,12 @@ npm run secrets:check
 
 See [the local demo guide](docs/DEMO_GUIDE.md) for isolated PGlite setup on **http://localhost:3100**. Use its DATABASE_URL='', LOCAL_DATABASE_DIR and E2E_BASE_URL settings when running `npm run test:e2e`. All browser mutations then stay in local synthetic QA records. Do not point presentation regression tests at the shared Render database. No integration smoke command, provider mutation or shared migration is needed for this phase.
 
-Tests include the retained 39 financial/domain/service/Twilio cases plus six presentation cases. Browser tests exercise real pages, local tour controls, native AG chart/grid, role authorization, consent flows, mobile/reduced-motion behavior and native dialog/drawer focus. Captures live in ignored `output/playwright/showcase/`; the test JSON report is `output/playwright/results.json`.
+Tests retain the original financial/domain/service/Twilio and presentation cases and add hosted configuration, migration repeatability and webhook boundaries. Browser tests exercise real pages, local tour controls, native AG chart/grid, role authorization, consent flows, mobile/reduced-motion behavior and native dialog/drawer focus. Captures live in ignored `output/playwright/showcase/`; the test JSON report is `output/playwright/results.json`. The separate production smoke suite uses `E2E_HOSTED_URL=https://classequity.onrender.com E2E_BASE_URL=https://classequity.onrender.com npx playwright test -c playwright.hosted.config.ts`; it never invokes payment mutations. Its restricted Studio check requires private local administrator configuration and disables traces/video.
 
 ## Documentation and review drafts
 
 [Product story](docs/PRODUCT_STORY.md) · [Website content / claim audit](docs/WEBSITE_CONTENT.md) · [Design system](docs/VISUAL_DESIGN_SYSTEM.md) · [Interactive demo guide](docs/DEMO_GUIDE.md) · [Acceptance](docs/DEMO_ACCEPTANCE.md) · [Hackathon readiness](docs/HACKATHON_READINESS.md) · [Submission draft](docs/SUBMISSION_DRAFT.md) · [Architecture](docs/ARCHITECTURE.md) · [Financial closure](docs/FINANCIAL_WORKFLOW_CLOSURE.md) · [PayPal](docs/PAYPAL_INTEGRATION.md) · [APIMatic](docs/APIMATIC_INTEGRATION.md) · [AG Studio](docs/AG_STUDIO_INTEGRATION.md) · [Security](docs/SECURITY.md).
 
-No video preparation or storyboard is included, following the explicit instruction that the user will prepare their own demo. No submission, deployment, merge or repository-visibility change is authorized in this phase.
+No video preparation or storyboard is included, following the explicit instruction that the user will prepare their own demo. The hosted follow-up authorizes the free sandbox deployment and webhook configuration; it does not authorize PR merges, repository publication, hackathon submission or any new capture/refund without separate exact-amount approval.
 
 Application source is MIT. Original illustrations/social assets are authored for ClassEquity; installed commercial AG dependencies retain their vendor terms. Public presentation uses real AG components with a vendor trial watermark when no license is applied; it does not grant production licensing rights.

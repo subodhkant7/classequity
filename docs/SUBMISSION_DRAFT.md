@@ -26,7 +26,7 @@ Real editable native reports, custom Group Unlock/Funding Assurance/Payment Inte
 
 ## APIMatic, Twilio and Render
 
-APIMatic PayPal/Twilio Context Plugins informed API contracts, authentication, errors and idempotency. The installed official PayPal SDK is APIMatic-generated; differences from the plugins’ separate Git-source SDKs are documented. APIMatic is not a runtime processor. Twilio supports the messaging/secure-link integration, but real delivery remains unverified. Render currently hosts the existing PostgreSQL database; the website is not deployed.
+APIMatic PayPal/Twilio Context Plugins informed API contracts, authentication, errors and idempotency. The installed official PayPal SDK is APIMatic-generated; differences from the plugins’ separate Git-source SDKs are documented. APIMatic is not a runtime processor. Twilio supports the messaging/secure-link integration, but real delivery remains unverified. Render hosts the free HTTPS application at https://classequity.onrender.com and the existing PostgreSQL database. Hosted deployment and sandbox webhook registration are separate from genuine signed event proof; consult `HOSTED_WEBHOOK_VERIFICATION.md` before making a delivery claim.
 
 ## Innovation
 

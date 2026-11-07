@@ -30,7 +30,7 @@ Primary entry is **Explore Interactive Demo**, which opens `/demo` without login
 | Recorded AI report replay                            | A local replay of a native report template, clearly labeled; actual prior Gemini tool execution is in `docs/studio-agent-evidence.json`                     |
 | Twilio                                               | Adapter/authentication verified; live message delivery unverified                                                                                           |
 | APIMatic                                             | Contract-guided development and generated PayPal SDK, not a runtime payment processor                                                                       |
-| Render                                               | Existing hosted PostgreSQL; web hosting/public HTTPS delivery pending                                                                                       |
+| Render                                               | Free HTTPS application and existing PostgreSQL; signed webhook delivery remains a separately recorded verification gate                                     |
 
 No impact statistics, testimonials, customer logos, partnerships, compliance certifications or AI payment-authority claims are used. Integration names identify actual tooling; they do not imply endorsement. Source links point into the private repository and require access.
 
