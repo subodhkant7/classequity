@@ -16,6 +16,7 @@
     "integrations:check": "tsx scripts/check-integrations.ts",
     "format": "prettier --write src scripts tests docs",
     "secrets:check": "node scripts/scan-secrets.mjs",
+    "release:check": "tsx scripts/check-hosted-release.ts",
     "test:financial:concurrency": "tsx scripts/verify-financial-concurrency.ts",
     "showcase": "node scripts/start-showcase.mjs"
   },

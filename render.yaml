@@ -6,8 +6,10 @@ services:
     runtime: node
     plan: free
     region: singapore
-    buildCommand: npm ci --include=dev && npm run build
-    startCommand: npm run db:migrate && npm run db:seed && npm start
+    branch: codex/hosted-webhook-verification
+    # Existing schema is checked without writes. Migrations/seeding are controlled separately.
+    buildCommand: npm ci --include=dev && npm run release:check && npm run build
+    startCommand: npm start
     healthCheckPath: /api/health
     autoDeployTrigger: off
     envVars:
@@ -25,6 +27,8 @@ services:
         sync: false
       - key: DEMO_MODE
         value: 'true'
+      - key: HOSTED_RESTRICT_PUBLIC_AI
+        value: 'true'
       - key: PAYPAL_ENV
         value: sandbox
       - key: PAYPAL_CLIENT_ID
@@ -33,12 +37,7 @@ services:
         sync: false
       - key: PAYPAL_WEBHOOK_ID
         sync: false
-      - key: TWILIO_ACCOUNT_SID
-        sync: false
-      - key: TWILIO_AUTH_TOKEN
-        sync: false
-      - key: TWILIO_WHATSAPP_FROM
-        sync: false
+      # Live Twilio delivery is outside this phase; do not provision its credentials.
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL

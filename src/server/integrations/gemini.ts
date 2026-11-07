@@ -8,7 +8,16 @@ import { db } from '@/db';
 import { assessments, registrations } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { uid } from '../services';
+import { providerAiAllowed } from '@/lib/hosted-config';
 let modelsPromise: Promise<string[]> | undefined;
+function requireProviderAi(a: Actor) {
+  if (!providerAiAllowed(a.mode))
+    throw new AppError(
+      'Live Gemini is available in the restricted sandbox workspace. The public guided tour includes recorded AI examples.',
+      403,
+      'PUBLIC_PROVIDER_DISABLED',
+    );
+}
 function ai() {
   if (!process.env.GEMINI_API_KEY)
     throw new AppError('Gemini is not configured. The grounded local assistant is available.', 503);
@@ -77,7 +86,7 @@ export async function assistant(
     language === 'hi'
       ? `${t.name}: ${t.destination}। यात्रा ${t.date} को है। ${regs.length} पंजीकरण, समूह का अनुमानित मूल्य ${money(price)}। भुगतान की अंतिम तिथि ${t.deadline} है। अपनी स्थिति और सहमति के लिए सुरक्षित पैरेंट पोर्टल खोलें।`
       : `${t.name} visits ${t.destination} on ${t.date}. There are ${regs.length} registrations; the group seat price is ${money(price)} (${t.state === 'FROZEN' ? 'finalized' : 'estimated'}). Payment is due ${t.deadline}. Open your secure parent portal for your own registration, consent, and payment status.`;
-  if (!useAI || !process.env.GEMINI_API_KEY)
+  if (!useAI || !providerAiAllowed(a.mode) || !process.env.GEMINI_API_KEY)
     return { text: local, source: 'Grounded local assistant', model: null };
   try {
     const model = await selectedModel();
@@ -98,6 +107,7 @@ export async function assistant(
 }
 export async function extractQuote(a: Actor, file: File) {
   roles(a, ['admin', 'finance']);
+  requireProviderAi(a);
   await quota(`quote:${a.schoolId}`, 8);
   if (file.size > 6 * 1024 * 1024 || file.size < 8)
     throw new AppError('Upload a PDF, PNG, or JPEG under 6 MB.');
@@ -166,6 +176,7 @@ function partsFor(item: AgLlmRequest['input'][number], names: Map<string, string
 }
 export async function studioTurn(a: Actor, request: AgLlmRequest): Promise<AgLlmResponse> {
   roles(a, ['admin', 'finance', 'teacher']);
+  requireProviderAi(a);
   await quota(`studio:${a.schoolId}`, 80);
   const aggregate = await aggregateData(a);
   const model = await selectedModel();

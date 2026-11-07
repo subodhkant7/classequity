@@ -40,6 +40,15 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:synthetic-ci-postgres-password@localhost:5432/classequity
       - run: npm run db:migrate && npm run db:seed
+      - name: Verify read-only hosted release preflight against CI PostgreSQL
+        run: npm run db:migrate && npm run db:seed && npm run release:check
+        env:
+          DATABASE_URL: postgres://postgres:synthetic-ci-postgres-password@localhost:5432/classequity
+          APP_URL: https://ci.example.test
+          PAYPAL_CLIENT_ID: synthetic-ci-client
+          PAYPAL_CLIENT_SECRET: synthetic-ci-secret
+          GEMINI_API_KEY: synthetic-ci-key
+          HOSTED_RESTRICT_PUBLIC_AI: 'true'
       - run: npm run build
       - run: npm run secrets:check
       - run: npx playwright install --with-deps chromium

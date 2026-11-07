@@ -37,6 +37,7 @@ import {
 import { twiml, verifyTwilio } from '@/server/integrations/twilio';
 import { paypalWebhook } from '@/server/paypal-webhooks';
 import { quoteSchema } from '@/lib/domain';
+import { sql } from 'drizzle-orm';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const json = (value: unknown) =>
@@ -66,7 +67,19 @@ async function dispatch(req: NextRequest, path: string[]) {
   const route = path.join('/');
   if (route.startsWith('webhooks/')) return webhook(req, route);
   if (req.method !== 'GET') await sameOrigin();
-  if (route === 'health') return json({ status: 'ok', application: 'ClassEquity' });
+  if (route === 'health') {
+    try {
+      await db.execute(sql`SELECT 1`);
+    } catch {
+      throw new AppError('Service is not ready. Please retry.', 503, 'NOT_READY');
+    }
+    return json({
+      status: 'ok',
+      application: 'ClassEquity',
+      database: 'ready',
+      commit: process.env.RENDER_GIT_COMMIT ?? null,
+    });
+  }
   if (route === 'auth/login' && req.method === 'POST') {
     const v = z
       .object({
