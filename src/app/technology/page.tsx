@@ -66,7 +66,7 @@ const systems = [
       ? 'The application runs over HTTPS on a free Render web service with the existing PostgreSQL ledger. Hosting and webhook registration do not prove signed event delivery; that gate is recorded separately in the verification documentation.'
       : 'The existing hosted PostgreSQL stores the application ledger. Public HTTPS deployment and genuine signed webhook delivery are separate verification gates.',
     source: 'src/db/schema.ts',
-    doc: 'FINANCIAL_WORKFLOW_CLOSURE.md',
+    doc: 'HOSTED_WEBHOOK_VERIFICATION.md',
   },
 ];
 export default function Technology() {
@@ -116,14 +116,14 @@ export default function Technology() {
               <span className="local-label">{s.tag}</span>
               <p>{s.copy}</p>
               <a
-                href={`https://github.com/subodhkant7/classequity/blob/codex/hackathon-experience-polish/${s.source}`}
+                href={`https://github.com/subodhkant7/classequity/blob/codex/hosted-webhook-verification/${s.source}`}
                 target="_blank"
                 rel="noreferrer"
               >
                 Source: <code>{s.source}</code> ↗
               </a>
               <a
-                href={`https://github.com/subodhkant7/classequity/blob/codex/hackathon-experience-polish/docs/${s.doc}`}
+                href={`https://github.com/subodhkant7/classequity/blob/codex/hosted-webhook-verification/docs/${s.doc}`}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -159,8 +159,11 @@ export default function Technology() {
           <div>
             <h3>Still to verify before release</h3>
             <p>
-              Public HTTPS deployment and genuine signed PayPal callbacks. Real WhatsApp delivery.
-              Production identity, treasury controls, audit hardening and operational monitoring.
+              {process.env.RENDER_EXTERNAL_URL
+                ? 'Genuine signed PayPal callbacks. '
+                : 'Public HTTPS deployment and genuine signed PayPal callbacks. '}
+              Real WhatsApp delivery. Production identity, treasury controls, audit hardening and
+              operational monitoring.
             </p>
           </div>
         </div>

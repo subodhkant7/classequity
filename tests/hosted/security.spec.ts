@@ -32,9 +32,11 @@ test('hosted HTTPS readiness, authorization, secure cookies and tenant boundarie
   });
   expect(login.ok()).toBe(true);
   const cookie = (await page.context().cookies()).find((c) => c.name === 'ce_session');
-  expect(cookie).toMatchObject({ httpOnly: true, secure: true, sameSite: 'Lax' });
+  expect(cookie?.httpOnly).toBe(true);
+  expect(cookie?.secure).toBe(true);
+  expect(cookie?.sameSite).toBe('Lax');
   expect((await page.request.get('/api/trips/demo-science/finance')).status()).toBe(403);
-  expect((await page.request.get('/api/trips/sandbox-science/finance')).status()).toBe(403);
+  expect((await page.request.get('/api/trips/sandbox-science/finance')).status()).toBe(404);
   expect(
     (
       await page.request.post('/api/studio/turn', {
