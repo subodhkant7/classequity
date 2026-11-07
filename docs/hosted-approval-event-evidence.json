@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-11-07T10:19:03.544Z",
+  "eventType": "CHECKOUT.ORDER.APPROVED",
+  "eventFingerprint": "9763de202789aee227451d0a8e53ed83e214ebcfb96ca56a3485ced58964e4c7",
+  "eventCreatedAt": "2026-11-07T10:15:22.135Z",
+  "source": "genuine PayPal Sandbox app notification; no simulator",
+  "inbox": {
+    "status": "PROCESSED",
+    "attempts": 1,
+    "errorCode": null,
+    "bodyHash": "6bf423140e1def42f96af3a03b2f11a7355760b88b03a84bc22c561eab8d7421"
+  },
+  "audit": {
+    "signature": "PAYPAL_VERIFIED",
+    "readbackStatus": "APPROVED",
+    "exactOperationAssociation": true,
+    "correctWebhook": true,
+    "bodyHashMatchesInbox": true
+  },
+  "providerEventReadbackHashMatchesInbox": false,
+  "localOperationStatus": "APPROVED",
+  "localCaptureCount": 0,
+  "capturePreviouslyClaimed": false,
+  "captureOrRefundRequested": false,
+  "independentEventDetailReadback": {
+    "fullHashMatchesInbox": false,
+    "withoutManagementLinksHashMatchesInbox": false
+  },
+  "scope": "Genuine signed checkout approval only. No new capture/refund authorization or execution.",
+  "integrityExplanation": "PayPal accepted the complete received event through normal signature verification. The durable inbox and audit share the received-event digest. Management GET representations have a different digest and are not claimed to be identical to the delivery body."
+}

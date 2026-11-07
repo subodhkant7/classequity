@@ -1,10 +1,10 @@
 {
-  "checkedAt": "2026-11-07T09:55:01.240Z",
-  "status": "DEPLOYED — SANDBOX WEBHOOK NOT YET VERIFIED",
+  "checkedAt": "2026-11-07T12:36:04.628Z",
+  "status": "DEPLOYED — GENUINE SIGNED APPROVAL AND REDELIVERY VERIFIED; CAPTURE/REFUND WEBHOOKS NOT VERIFIED",
   "appUrl": "https://classequity.onrender.com",
   "webhookUrl": "https://classequity.onrender.com/api/webhooks/paypal",
   "startingCommit": "a0db0b0a8aae9e2a908ac91ff5150538fb3cea11",
-  "deployedCommit": "a61375f32a7e69d9c8c53f20676dfa7d909a6811",
+  "deployedCommit": "03dafab57ed17b0de9d501a2228904ea73373d09",
   "branch": "codex/hosted-webhook-verification",
   "draftPr": "https://github.com/subodhkant7/classequity/pull/3",
   "render": {
@@ -13,8 +13,8 @@
     "project": "none; confirmed workspace-level resources",
     "autoDeploy": false,
     "previews": false,
-    "deployId": "dep-dbnf8k67bikc73cd5if0",
-    "liveAt": "2026-11-07T09:52:36.499344Z",
+    "deployId": "dep-dbnhk5jrjlhs738rciag",
+    "liveAt": "2026-11-07T12:33:32.658641Z",
     "restartAt": "2026-11-07T09:39:20.728389Z",
     "postRestartHealthy": true,
     "naturalIdleWakeObserved": false
@@ -63,15 +63,23 @@
       "PAYMENT.REFUND.FAILED",
       "PAYMENT.REFUND.PENDING"
     ],
-    "genuineEventId": null,
-    "signatureVerified": false,
-    "genuineDeliveryVerified": false,
-    "authenticatedInboxCount": 0,
-    "reconciledWebhookAuditCount": 0,
-    "newOperationAssociationVerified": false,
-    "newProviderReadbackVerified": false,
-    "genuineResendIdempotencyVerified": false,
-    "simulatorUsed": false
+    "genuineEventId": "REDACTED",
+    "signatureVerified": true,
+    "genuineDeliveryVerified": true,
+    "authenticatedInboxCount": 1,
+    "reconciledWebhookAuditCount": 1,
+    "newOperationAssociationVerified": true,
+    "newProviderReadbackVerified": true,
+    "genuineResendIdempotencyVerified": true,
+    "simulatorUsed": false,
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "eventFingerprint": "9763de202789aee227451d0a8e53ed83e214ebcfb96ca56a3485ced58964e4c7",
+    "verificationScope": "CHECKOUT.ORDER.APPROVED only; no new capture/refund",
+    "newProviderReadbackStatus": "APPROVED",
+    "financialLifecycleWebhookVerified": false,
+    "resendVerificationScope": "Approved event only; actual receiver log, signature/digest guarded duplicate branch, unchanged operation/inbox/audit/capture evidence",
+    "resendReceiverObservedAt": "2026-11-07T12:35:00.238961609Z",
+    "newFinancialMutationPerformed": false
   },
   "hostedBrowser": {
     "passed": 9,
@@ -90,7 +98,10 @@
     "runtimeErrorsObserved": false,
     "report": "output/playwright/hosted-results.json",
     "currencyPrecisionVerified": true,
-    "loadingIndicatorsVisibleAtCapture": false
+    "loadingIndicatorsVisibleAtCapture": false,
+    "fullRunRuntimeCommit": "a61375f32a7e69d9c8c53f20676dfa7d909a6811",
+    "followUpRestrictedStudioPassed": true,
+    "followUpRuntimeCommit": "03dafab57ed17b0de9d501a2228904ea73373d09"
   },
   "automated": {
     "unitServiceTests": 60,
@@ -101,8 +112,8 @@
     "localBrowserTests": 12,
     "completeCi": "PASS",
     "ciChecks": "https://github.com/subodhkant7/classequity/pull/3/checks",
-    "ciCommit": "a61375f32a7e69d9c8c53f20676dfa7d909a6811",
-    "ciUrl": "https://github.com/subodhkant7/classequity/actions/runs/42361376391",
+    "ciCommit": "03dafab57ed17b0de9d501a2228904ea73373d09",
+    "ciUrl": "https://github.com/subodhkant7/classequity/actions/runs/42372803656",
     "productionBrowserTests": 12,
     "financialConcurrencyScenarios": 6
   },
@@ -111,12 +122,13 @@
     "currency": "USD",
     "cents": 100,
     "orderPrepared": true,
-    "status": "AWAITING_APPROVAL",
+    "status": "APPROVED",
     "newCapturePerformed": false,
     "newRefundPerformed": false,
-    "humanBuyerApprovalRequired": true,
+    "humanBuyerApprovalRequired": false,
     "newExactAmountAuthorizationRequired": true,
-    "approvalLink": "PRIVATE — never committed"
+    "approvalLink": "PRIVATE — never committed",
+    "humanBuyerApprovalConfirmed": true
   },
   "boundaries": {
     "existingPrsMerged": false,
