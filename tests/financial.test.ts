@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, it, expect, vi } from 'vitest';
 import { readFile, readdir } from 'node:fs/promises';
 import { sql, eq } from 'drizzle-orm';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import {
   OrderStatus,
   type Order,
@@ -447,6 +447,7 @@ const request = (event: unknown) =>
   });
 describe('authenticated webhook inbox', () => {
   it('passes the complete event to verification, deduplicates and rejects identity collisions', async () => {
+    const log = vi.spyOn(console, 'info').mockImplementation(() => {});
     const f = await fixture();
     const cap = captured(f);
     fakeReads(f, cap);
@@ -462,6 +463,14 @@ describe('authenticated webhook inbox', () => {
     await paypalWebhook(request(event));
     expect(verify).toHaveBeenCalledWith(expect.any(Headers), event);
     expect(await paypalWebhook(request(event))).toMatchObject({ duplicate: true });
+    expect(log).toHaveBeenCalledWith(
+      'PAYPAL_WEBHOOK_DUPLICATE',
+      JSON.stringify({
+        eventFingerprint: createHash('sha256').update(event.id).digest('hex'),
+        inboxStatus: 'PROCESSED',
+      }),
+    );
+    expect(log).toHaveBeenCalledTimes(1);
     const audit = await db.select().from(s.audit).where(eq(s.audit.entityId, f.id));
     expect(audit.filter((r) => r.action === 'PAYPAL_WEBHOOK_RECONCILED')).toHaveLength(1);
     expect(audit.find((r) => r.action === 'PAYPAL_WEBHOOK_RECONCILED')?.detail).toMatchObject({

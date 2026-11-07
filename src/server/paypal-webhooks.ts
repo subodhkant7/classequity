@@ -73,8 +73,18 @@ export async function paypalWebhook(req: Request) {
     .from(s.inbox)
     .where(and(eq(s.inbox.provider, 'paypal'), eq(s.inbox.eventId, event.id)));
   if (previous.bodyHash !== bodyHash) throw new AppError('Webhook event identity collision', 409);
-  if (['PROCESSED', 'IGNORED'].includes(previous.status))
+  if (['PROCESSED', 'IGNORED'].includes(previous.status)) {
+    // Make duplicate receipt observable after signature/digest checks. Record
+    // only a one-way event identity, never headers or payloads.
+    console.info(
+      'PAYPAL_WEBHOOK_DUPLICATE',
+      JSON.stringify({
+        eventFingerprint: createHash('sha256').update(event.id).digest('hex'),
+        inboxStatus: previous.status,
+      }),
+    );
     return { received: true, duplicate: true };
+  }
   const [claim] = await db
     .update(s.inbox)
     .set({
