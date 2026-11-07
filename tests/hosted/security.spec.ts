@@ -71,7 +71,11 @@ test('restricted sandbox Studio displays the preserved refunded evidence without
     ).ok(),
   ).toBe(true);
   const integrations = await (await page.request.get('/api/integrations')).json();
-  expect(integrations.paypal).toMatchObject({ configured: true, environment: 'Sandbox only' });
+  expect(integrations.paypal).toMatchObject({
+    configured: true,
+    webhook: true,
+    environment: 'Sandbox only',
+  });
   const dashboard = await (await page.request.get('/api/dashboard')).json();
   const original = dashboard.find(
     (d: { trip: { name: string } }) => d.trip.name === 'Financial closure verification',
@@ -89,7 +93,34 @@ test('restricted sandbox Studio displays the preserved refunded evidence without
   await expect(page.getByLabel('Report page')).toBeVisible({ timeout: 45000 });
   await page.getByLabel('Report page').selectOption('Payment reconciliation');
   await expect(page.locator('.ag-root').first()).toBeVisible({ timeout: 30000 });
-  await expect(page.locator('.ag-root').first()).toContainText('Financial closure verification');
+  await page.locator('.ag-root').first().scrollIntoViewIfNeeded();
+  await expect(
+    page
+      .locator('.ag-root')
+      .first()
+      .getByRole('gridcell', { name: 'Financial closure verification', exact: true }),
+  ).toBeVisible({ timeout: 30000 });
+  await expect(
+    page
+      .locator('.studio-frame')
+      .getByText('Loading...', { exact: true })
+      .filter({ visible: true }),
+  ).toHaveCount(0, { timeout: 30000 });
+  const originalRow = page
+    .locator('.ag-root')
+    .first()
+    .getByRole('row')
+    .filter({
+      has: page.getByRole('gridcell', { name: 'Financial closure verification', exact: true }),
+    });
+  await expect(originalRow.getByRole('gridcell', { name: '$0.54', exact: true })).toBeVisible();
+  await expect(originalRow.getByRole('gridcell', { name: '-$0.54', exact: true })).toBeVisible();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
   await page.screenshot({
     path: 'output/playwright/hosted/sandbox-studio-redacted-private.png',
     fullPage: true,

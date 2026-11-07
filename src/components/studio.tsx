@@ -30,6 +30,7 @@ import {
 } from 'ag-studio';
 import { CheckCircle2 } from 'lucide-react';
 import { money } from '@/lib/domain';
+import { tripStudioFields, tierStudioFields } from '@/lib/studio-fields';
 import type { dashboardData } from '@/server/data';
 import { api, Notice } from './ui';
 type Overview = Awaited<ReturnType<typeof dashboardData>>;
@@ -410,6 +411,7 @@ export default function Studio({
       sources: [
         {
           id: 'trips',
+          fields: tripStudioFields,
           name: 'Trip financial aggregates',
           description:
             'Tenant-scoped aggregate finance only. No student, parent, phone, assistance eligibility or recipient mapping fields. USD display values derive from integer cents.',
@@ -454,6 +456,7 @@ export default function Studio({
         },
         {
           id: 'tiers',
+          fields: tierStudioFields,
           name: 'Group pricing tiers',
           data: overview.flatMap((d) =>
             d.trip.tiers.map((t) => ({

@@ -19,12 +19,38 @@ async function main() {
       (SELECT count(*)::int FROM ce_trips WHERE school_id='demo-school') AS demo_trips,
       (SELECT count(*)::int FROM ce_paypal_captures WHERE provenance='PAYPAL_SANDBOX' AND cents=100 AND refunded_cents=100 AND fee_cents=54 AND status='REFUNDED') AS original_evidence_count`);
     if (result.database !== 'classequity') throw Error('Unexpected database.');
+    const operations = Array.isArray(result.operations)
+      ? (result.operations as Record<string, unknown>[])
+      : [];
+    const captures = Array.isArray(result.captures)
+      ? (result.captures as Record<string, unknown>[])
+      : [];
+    const refunds = Array.isArray(result.refunds)
+      ? (result.refunds as Record<string, unknown>[])
+      : [];
+    const original = captures.filter(
+      (c) =>
+        c.provenance === 'PAYPAL_SANDBOX' &&
+        c.cents === 100 &&
+        c.refunded_cents === 100 &&
+        c.fee_cents === 54 &&
+        c.status === 'REFUNDED',
+    );
     return {
       checkedAt: new Date().toISOString(),
       database: result.database,
       migrations: result.migrations,
       demoTrips: result.demo_trips,
       originalEvidenceCount: result.original_evidence_count,
+      originalEvidenceFingerprint: createHash('sha256')
+        .update(
+          JSON.stringify([
+            operations.filter((o) => original.some((c) => c.operation_id === o.id)),
+            original,
+            refunds.filter((r) => original.some((c) => c.id === r.capture_id)),
+          ]),
+        )
+        .digest('hex'),
       sandboxLedgerFingerprint: createHash('sha256')
         .update(JSON.stringify([result.operations, result.captures, result.refunds]))
         .digest('hex'),
