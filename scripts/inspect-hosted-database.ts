@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { createHash } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { sql } from 'drizzle-orm';
 import { db, closeDatabase } from '../src/db';
 
@@ -8,6 +8,9 @@ import { db, closeDatabase } from '../src/db';
 // this process: complete financial rows are reduced to a one-way fingerprint.
 async function main() {
   if (!process.env.DATABASE_URL) throw Error('Existing PostgreSQL required.');
+  const historical = JSON.parse(await readFile('.data/financial-closure-checkout.json', 'utf8'));
+  if (typeof historical.operationId !== 'string')
+    throw Error('Historical operation identity required.');
   const report = await db.transaction(async (tx) => {
     await tx.execute(sql`SET TRANSACTION READ ONLY`);
     await tx.execute(sql`SET LOCAL statement_timeout = '10000ms'`);
@@ -17,7 +20,7 @@ async function main() {
       (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM ce_refund_operations r JOIN ce_paypal_captures c ON c.id=r.capture_id JOIN ce_payment_operations o ON o.id=c.operation_id WHERE o.mode='sandbox') AS refunds,
       (SELECT count(*)::int FROM ce_migrations) AS migrations,
       (SELECT count(*)::int FROM ce_trips WHERE school_id='demo-school') AS demo_trips,
-      (SELECT count(*)::int FROM ce_paypal_captures WHERE provenance='PAYPAL_SANDBOX' AND cents=100 AND refunded_cents=100 AND fee_cents=54 AND status='REFUNDED') AS original_evidence_count`);
+      (SELECT count(*)::int FROM ce_paypal_captures WHERE operation_id=${historical.operationId} AND provenance='PAYPAL_SANDBOX' AND cents=100 AND refunded_cents=100 AND fee_cents=54 AND status='REFUNDED') AS original_evidence_count`);
     if (result.database !== 'classequity') throw Error('Unexpected database.');
     const operations = Array.isArray(result.operations)
       ? (result.operations as Record<string, unknown>[])
@@ -30,6 +33,7 @@ async function main() {
       : [];
     const original = captures.filter(
       (c) =>
+        c.operation_id === historical.operationId &&
         c.provenance === 'PAYPAL_SANDBOX' &&
         c.cents === 100 &&
         c.refunded_cents === 100 &&

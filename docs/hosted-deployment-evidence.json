@@ -1,6 +1,6 @@
 {
-  "checkedAt": "2026-11-07T12:36:04.628Z",
-  "status": "DEPLOYED — GENUINE SIGNED APPROVAL AND REDELIVERY VERIFIED; CAPTURE/REFUND WEBHOOKS NOT VERIFIED",
+  "checkedAt": "2026-11-07T14:28:08.971Z",
+  "status": "DEPLOYED \u2014 SANDBOX HOSTED WEBHOOK VERIFIED",
   "appUrl": "https://classequity.onrender.com",
   "webhookUrl": "https://classequity.onrender.com/api/webhooks/paypal",
   "startingCommit": "a0db0b0a8aae9e2a908ac91ff5150538fb3cea11",
@@ -36,7 +36,8 @@
     "originalEvidenceUnchangedAfterNewOrder": true,
     "originalEvidenceCount": 1,
     "originalEvidenceFingerprint": "c27a2eb43767fa2a0826a98d68e29e299bb912cde75062e481dfe22ac9a5347c",
-    "sandboxLedgerUnchangedAcrossFinalRedeploy": true
+    "sandboxLedgerUnchangedAcrossFinalRedeploy": true,
+    "originalEvidenceUnchangedAfterNewCaptureAndRefund": true
   },
   "configuration": {
     "canonicalAppUrl": true,
@@ -66,20 +67,27 @@
     "genuineEventId": "REDACTED",
     "signatureVerified": true,
     "genuineDeliveryVerified": true,
-    "authenticatedInboxCount": 1,
-    "reconciledWebhookAuditCount": 1,
+    "authenticatedInboxCount": 3,
+    "reconciledWebhookAuditCount": 3,
     "newOperationAssociationVerified": true,
     "newProviderReadbackVerified": true,
     "genuineResendIdempotencyVerified": true,
     "simulatorUsed": false,
     "eventType": "CHECKOUT.ORDER.APPROVED",
     "eventFingerprint": "9763de202789aee227451d0a8e53ed83e214ebcfb96ca56a3485ced58964e4c7",
-    "verificationScope": "CHECKOUT.ORDER.APPROVED only; no new capture/refund",
-    "newProviderReadbackStatus": "APPROVED",
-    "financialLifecycleWebhookVerified": false,
-    "resendVerificationScope": "Approved event only; actual receiver log, signature/digest guarded duplicate branch, unchanged operation/inbox/audit/capture evidence",
-    "resendReceiverObservedAt": "2026-11-07T12:35:00.238961609Z",
-    "newFinancialMutationPerformed": false
+    "verificationScope": "Genuine sandbox approval, capture completion and full refund events; genuine duplicate replays",
+    "newProviderReadbackStatus": "REFUNDED",
+    "financialLifecycleWebhookVerified": true,
+    "resendVerificationScope": "Genuine approval, capture and refund events; actual signature/digest-guarded receiver receipts and unchanged ledger",
+    "resendReceiverObservedAt": "2026-11-07T14:27:56.344350764Z",
+    "newFinancialMutationPerformed": true,
+    "explicitNewFinancialAuthorization": true,
+    "verifiedEventTypes": [
+      "PAYMENT.CAPTURE.REFUNDED",
+      "PAYMENT.CAPTURE.COMPLETED",
+      "CHECKOUT.ORDER.APPROVED"
+    ],
+    "captureAndRefundResendEvidence": "hosted-financial-redelivery-evidence.json"
   },
   "hostedBrowser": {
     "passed": 9,
@@ -101,7 +109,14 @@
     "loadingIndicatorsVisibleAtCapture": false,
     "fullRunRuntimeCommit": "a61375f32a7e69d9c8c53f20676dfa7d909a6811",
     "followUpRestrictedStudioPassed": true,
-    "followUpRuntimeCommit": "03dafab57ed17b0de9d501a2228904ea73373d09"
+    "followUpRuntimeCommit": "03dafab57ed17b0de9d501a2228904ea73373d09",
+    "newSandboxStudioAfterRefund": {
+      "capturedCents": 100,
+      "refundedCents": 100,
+      "feeCents": 54,
+      "netCents": -54,
+      "actualNativeGridVisible": true
+    }
   },
   "automated": {
     "unitServiceTests": 60,
@@ -118,17 +133,19 @@
     "financialConcurrencyScenarios": 6
   },
   "checkpoint": {
-    "fictionalObligation": "Morgan Sandbox Webhook Example — Hosted webhook verification",
+    "fictionalObligation": "Morgan Sandbox Webhook Example \u2014 Hosted webhook verification",
     "currency": "USD",
     "cents": 100,
     "orderPrepared": true,
-    "status": "APPROVED",
-    "newCapturePerformed": false,
-    "newRefundPerformed": false,
+    "status": "REFUNDED",
+    "newCapturePerformed": true,
+    "newRefundPerformed": true,
     "humanBuyerApprovalRequired": false,
-    "newExactAmountAuthorizationRequired": true,
-    "approvalLink": "PRIVATE — never committed",
-    "humanBuyerApprovalConfirmed": true
+    "newExactAmountAuthorizationRequired": false,
+    "approvalLink": "PRIVATE \u2014 never committed",
+    "humanBuyerApprovalConfirmed": true,
+    "authorization": "Explicitly granted for this completed one-dollar capture/duplicate/full-refund check only",
+    "furtherFinancialAuthorizationRequired": true
   },
   "boundaries": {
     "existingPrsMerged": false,
@@ -137,5 +154,6 @@
     "livePayments": false,
     "liveMessagesSent": false,
     "providerCredentialsExposed": false
-  }
+  },
+  "financialProofRuntimeCommit": "03dafab57ed17b0de9d501a2228904ea73373d09"
 }

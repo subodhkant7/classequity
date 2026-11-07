@@ -1,0 +1,125 @@
+{
+  "checkedAt": "2026-11-07T12:51:15.082Z",
+  "fictionalObligation": "Morgan Sandbox Webhook Example — Hosted webhook verification",
+  "currency": "USD",
+  "cents": 100,
+  "authorization": "User explicitly authorized one USD 1 sandbox capture, idempotent duplicate-request check and one full refund up to USD 1",
+  "captureVerified": true,
+  "refundVerified": true,
+  "stages": [
+    {
+      "stage": "capture-preflight",
+      "checkedAt": "2026-11-07T12:46:11.145Z",
+      "providerStatus": "APPROVED",
+      "providerCaptureCount": 0
+    },
+    {
+      "stage": "capture-independent-readback",
+      "checkedAt": "2026-11-07T12:46:21.119Z",
+      "cents": 100,
+      "currency": "USD",
+      "status": "COMPLETED",
+      "feeKnown": true,
+      "feeCents": 54,
+      "captureFingerprint": "abc5d318a490f01bc9e1b08e93444e0435388d7b0b29d4532aad22d3ab3be043"
+    },
+    {
+      "stage": "duplicate-capture-request",
+      "checkedAt": "2026-11-07T12:46:24.628Z",
+      "providerCaptureCount": 1,
+      "sameProviderCapture": true,
+      "localCaptureCount": 1,
+      "additionalCharge": false
+    },
+    {
+      "stage": "studio-captured",
+      "checkedAt": "2026-11-07T12:47:45.216Z",
+      "capturedCents": 100,
+      "feeCents": 54,
+      "feePending": 0,
+      "refundCents": 0,
+      "netCents": 46,
+      "gapCents": 54,
+      "parentPaidSeats": 1,
+      "coveredSeats": 0,
+      "ready": false,
+      "simulation": false,
+      "actualNativeGridVisible": true,
+      "exactNetCellVisible": true
+    },
+    {
+      "stage": "refund-independent-readback",
+      "checkedAt": "2026-11-07T12:48:48.889Z",
+      "currency": "USD",
+      "cents": 100,
+      "status": "COMPLETED",
+      "localRefundCount": 1,
+      "refundedCents": 100,
+      "pendingRefundCents": 0,
+      "feeKnown": true,
+      "retainedFeeCents": 54,
+      "refundFingerprint": "e727d7327b398d8c6b3fc6aa468e5f642cd25cfcbc783dc1441f254e694126fc"
+    },
+    {
+      "stage": "studio-refunded",
+      "checkedAt": "2026-11-07T12:51:15.016Z",
+      "capturedCents": 100,
+      "feeCents": 54,
+      "feePending": 0,
+      "refundCents": 100,
+      "netCents": -54,
+      "gapCents": 154,
+      "parentPaidSeats": 0,
+      "coveredSeats": 0,
+      "ready": false,
+      "simulation": false,
+      "actualNativeGridVisible": true,
+      "exactNetCellVisible": true
+    }
+  ],
+  "events": [
+    {
+      "type": "PAYMENT.CAPTURE.REFUNDED",
+      "eventFingerprint": "bc87019ca776398f3282a55bc855463c63dd00b2b94fb88e5db5f1f571a7757a",
+      "createdAt": "2026-11-07T12:48:43.588Z",
+      "inboxStatus": "PROCESSED",
+      "attempts": 1,
+      "errorCode": null,
+      "signature": "PAYPAL_VERIFIED",
+      "correctOperation": true,
+      "correctWebhook": true,
+      "receivedDigestMatchesAudit": true,
+      "readbackStatus": "REFUNDED"
+    },
+    {
+      "type": "PAYMENT.CAPTURE.COMPLETED",
+      "eventFingerprint": "0b7fa42ff6f14f2208826d7b23f6f4ab019083af1e079d1484185e9d6bf4da45",
+      "createdAt": "2026-11-07T12:46:19.627Z",
+      "inboxStatus": "PROCESSED",
+      "attempts": 1,
+      "errorCode": null,
+      "signature": "PAYPAL_VERIFIED",
+      "correctOperation": true,
+      "correctWebhook": true,
+      "receivedDigestMatchesAudit": true,
+      "readbackStatus": "COMPLETED"
+    },
+    {
+      "type": "CHECKOUT.ORDER.APPROVED",
+      "eventFingerprint": "9763de202789aee227451d0a8e53ed83e214ebcfb96ca56a3485ced58964e4c7",
+      "createdAt": "2026-11-07T10:15:22.135Z",
+      "inboxStatus": "PROCESSED",
+      "attempts": 1,
+      "errorCode": null,
+      "signature": "PAYPAL_VERIFIED",
+      "correctOperation": true,
+      "correctWebhook": true,
+      "receivedDigestMatchesAudit": true,
+      "readbackStatus": "APPROVED"
+    }
+  ],
+  "status": "SANDBOX HOSTED WEBHOOK VERIFIED — approval, capture, full refund and genuine duplicate delivery",
+  "genuineWebhookDeliveryVerified": true,
+  "genuineSignatureVerificationVerified": true,
+  "genuineCaptureAndRefundRedeliveryVerified": true
+}

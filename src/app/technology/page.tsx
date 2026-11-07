@@ -19,8 +19,8 @@ const systems = [
   {
     name: 'PayPal',
     icon: Wallet,
-    tag: 'Sandbox verified',
-    copy: 'Orders, human buyer approval, capture and refunds through the official server SDK. Exact-cent obligations and independent provider readback. One $1 capture and full refund verified; duplicate request retained one capture.',
+    tag: 'Signed sandbox lifecycle verified',
+    copy: 'Orders, human buyer approval, capture and refunds through the official server SDK. A separately authorized hosted $1 capture and full refund produced genuine signed approval, capture and refund callbacks. Provider readback and actual resends verified association and duplicate protection.',
     source: 'src/server/payments.ts',
     doc: 'PAYPAL_INTEGRATION.md',
   },
@@ -153,15 +153,16 @@ export default function Technology() {
             </p>
             <p>
               <Check size={16} />
+              Genuine signed approval, capture and refund callbacks, with verified event replays.
+            </p>
+            <p>
+              <Check size={16} />
               Real AG Studio rendering, Gemini generation and contract-guided integrations.
             </p>
           </div>
           <div>
             <h3>Still to verify before release</h3>
             <p>
-              {process.env.RENDER_EXTERNAL_URL
-                ? 'Genuine signed PayPal callbacks. '
-                : 'Public HTTPS deployment and genuine signed PayPal callbacks. '}
               Real WhatsApp delivery. Production identity, treasury controls, audit hardening and
               operational monitoring.
             </p>

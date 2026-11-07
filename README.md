@@ -63,3 +63,5 @@ Tests retain the original financial/domain/service/Twilio and presentation cases
 No video preparation or storyboard is included, following the explicit instruction that the user will prepare their own demo. The hosted follow-up authorizes the free sandbox deployment and webhook configuration; it does not authorize PR merges, repository publication, hackathon submission or any new capture/refund without separate exact-amount approval.
 
 Application source is MIT. Original illustrations/social assets are authored for ClassEquity; installed commercial AG dependencies retain their vendor terms. Public presentation uses real AG components with a vendor trial watermark when no license is applied; it does not grant production licensing rights.
+
+Hosted financial closure is now verified: one separately authorized USD 1 sandbox capture/full refund, genuine signed approval/capture/refund events, independent readback and real duplicate delivery. The prior transaction is unchanged. See [hosted verification](docs/HOSTED_WEBHOOK_VERIFICATION.md). No further financial mutation is authorized.

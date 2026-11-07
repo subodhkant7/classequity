@@ -18,7 +18,7 @@ Three Gemini uses: structured vendor-document extraction with source review; app
 
 ## PayPal integration
 
-The official APIMatic-generated PayPal Server SDK implements sandbox order creation, capture, refund and independent readback with durable request identities. Conditional claims, operation versions and refund balance reservations handle duplicates and ambiguous outcomes. Fee uncertainty is explicit. The genuine authorized one-dollar lifecycle is verified: one capture; repeated application capture request retained one capture; one full $1 refund; $0.54 retained fee; final net −$0.54. The payment was already captured when the verification run began. No additional real financial test occurred during the experience-polish phase. Genuine signed webhook delivery still needs hosted HTTPS and callback registration.
+The official APIMatic-generated PayPal Server SDK implements sandbox order creation, capture, refund and independent readback with durable request identities. Conditional claims, operation versions and refund balance reservations handle duplicates and ambiguous outcomes. Fee uncertainty is explicit. The prior one-dollar evidence remains unchanged. A separately authorized hosted USD 1 lifecycle verified one capture, a duplicate application request leaving one capture, and one full refund. PayPal verified genuine signed approval/capture/refund callbacks at the public HTTPS receiver; actual resends left the REFUNDED ledger unchanged. AG Studio displayed the retained USD 0.54 fee and final −USD 0.54 net. No simulator or live payment was used. Redacted evidence and exact release revisions are in `HOSTED_WEBHOOK_VERIFICATION.md`.
 
 ## AG Studio / AG Grid
 
@@ -26,7 +26,7 @@ Real editable native reports, custom Group Unlock/Funding Assurance/Payment Inte
 
 ## APIMatic, Twilio and Render
 
-APIMatic PayPal/Twilio Context Plugins informed API contracts, authentication, errors and idempotency. The installed official PayPal SDK is APIMatic-generated; differences from the plugins’ separate Git-source SDKs are documented. APIMatic is not a runtime processor. Twilio supports the messaging/secure-link integration, but real delivery remains unverified. Render hosts the free HTTPS application at https://classequity.onrender.com and the existing PostgreSQL database. Hosted deployment and sandbox webhook registration are separate from genuine signed event proof; consult `HOSTED_WEBHOOK_VERIFICATION.md` before making a delivery claim.
+APIMatic PayPal/Twilio Context Plugins informed API contracts, authentication, errors and idempotency. The installed official PayPal SDK is APIMatic-generated; differences from the plugins’ separate Git-source SDKs are documented. APIMatic is not a runtime processor. Twilio supports the messaging/secure-link integration, but real delivery remains unverified. Render hosts the free HTTPS application at https://classequity.onrender.com and the existing PostgreSQL database. Deployment, registration, genuine signed delivery and reconciliation are independently recorded in `HOSTED_WEBHOOK_VERIFICATION.md`.
 
 ## Innovation
 
@@ -38,7 +38,7 @@ Preserving complete events for signature verification; separating capture comple
 
 ## Limitations and release boundary
 
-Fictional demonstration data and sandbox verification are not real school adoption or impact. No partnerships, customer counts or market statistics are claimed. Live WhatsApp delivery and genuine signed public callback delivery remain unverified. Shared-password operator access, treasury attestations, audit/operational hardening, production identity and full assistive-technology review remain release work. The web experience is for local evaluation, not a deployed production service, escrow or charitable platform.
+Fictional demonstration data and sandbox verification are not real school adoption or impact. No partnerships, customer counts or market statistics are claimed. Live WhatsApp delivery and hosted Gemini generation remain unverified. Shared-password operator access, treasury attestations, audit/operational hardening, production identity and full assistive-technology review remain release work. The public HTTPS experience is for sandbox evaluation. It is not a production financial service, escrow or charitable platform.
 
 ## Review assets
 

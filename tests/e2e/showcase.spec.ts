@@ -102,8 +102,12 @@ test('six-chapter tour, local reset and actual AG Studio work without authentica
   await page.getByLabel('Report page').selectOption('Payment reconciliation');
   await expect(page.locator('.ag-root').first()).toBeVisible({ timeout: 30000 });
   await page.locator('.ag-root').first().scrollIntoViewIfNeeded();
-  await expect(page.locator('.ag-root').first().getByRole('gridcell', { name: '$20.70', exact: true })).toBeVisible();
-  await expect(page.locator('.ag-root').first().getByRole('gridcell', { name: '$532.30', exact: true })).toBeVisible();
+  await expect(
+    page.locator('.ag-root').first().getByRole('gridcell', { name: '$20.70', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.locator('.ag-root').first().getByRole('gridcell', { name: '$532.30', exact: true }),
+  ).toBeVisible();
   await page.screenshot({ path: 'output/playwright/showcase/tour-studio.png', fullPage: true });
   await page.getByRole('button', { name: 'Replay recorded AI view' }).click();
   await expect(page.getByLabel('Report page')).toHaveValue('Recorded AI · Trip comparison');
@@ -156,6 +160,7 @@ test('public AI tabs respond to arrow keys and technology claims are bounded', a
     ),
   ).toBeVisible();
   await expect(page.getByText('Authentication verified · delivery unverified')).toBeVisible();
+  await expect(page.getByText('Signed sandbox lifecycle verified', { exact: true })).toBeVisible();
   await noOverflow(page);
   await page.screenshot({
     path: 'output/playwright/showcase/technology-desktop.png',
