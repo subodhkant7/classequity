@@ -17,6 +17,9 @@ test('public hero, deterministic calculator and threshold keyboard interaction',
   await expect(
     page.getByRole('link', { name: 'Explore Interactive Demo', exact: true }),
   ).toBeVisible();
+  await expect
+    .poll(() => page.locator('.hero h1').evaluate((el) => getComputedStyle(el).opacity))
+    .toBe('1');
   await page.screenshot({ path: 'output/playwright/showcase/home-desktop.png', fullPage: true });
   await page.getByRole('link', { name: 'See How It Works', exact: true }).click();
   const range = page.getByRole('slider', { name: 'Number of students' });

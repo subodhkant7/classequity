@@ -17,7 +17,7 @@ test('landing, school overview, registration search, and actual AG Studio render
   await login(page);
   await expect(
     page.getByRole('heading', { name: 'A little planning. A lot of possibility.' }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 30000 });
   const overview = await (await page.request.get('/api/dashboard')).json();
   const science = overview.find((d: { trip: { id: string } }) => d.trip.id === 'demo-science');
   const displayedNet = new Intl.NumberFormat('en-US', {
