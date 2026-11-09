@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "release": "ClassEquity PayPal AI Hackathon 2026",
-  "status": "CONSOLIDATION_PENDING",
+  "status": "READY_FOR_PUBLICATION_APPROVAL",
   "startingSourceCommit": "9d070f4942f682eeda9a58936d1f44768d608763",
-  "consolidatedSourceCommit": null,
+  "consolidatedSourceCommit": "b1425259083e99f2db7b9cd6b4ecfa42816d3bd4",
   "githubActions": {
-    "consolidatedSource": null,
+    "consolidatedSource": "https://github.com/subodhkant7/classequity/actions/runs/42612212059",
     "deployedRuntime": "https://github.com/subodhkant7/classequity/actions/runs/42390565933"
   },
   "deployment": {
@@ -15,7 +15,12 @@
     "sourceBranch": "codex/hosted-webhook-verification",
     "autoDeploy": false,
     "healthPath": "/api/health",
-    "verifiedDatabaseReady": true
+    "verifiedDatabaseReady": true,
+    "sourceIsAncestorOfConsolidatedCommit": true,
+    "runtimeSourcePathsDifferingFromConsolidated": [
+      "src/app/technology/page.tsx",
+      "src/server/integrations/gemini.ts"
+    ]
   },
   "verification": {
     "localCleanInstall": true,
@@ -34,7 +39,18 @@
     "build": true,
     "secretsCheck": true,
     "runtimeDependencyAdvisories": 0,
-    "moderateDevelopmentAdvisories": 14
+    "moderateDevelopmentAdvisories": 14,
+    "publicTourApplicationOrExternalRequests": 0,
+    "publicTourUncaughtPageErrors": 0,
+    "publicTourConsoleNotice": "AG Studio trial licence key missing (vendor evaluation notice)",
+    "cleanShowcaseSeededAndBrowsed": true,
+    "historyAudit": {
+      "scanner": "Gitleaks 8.30.1 and targeted all-ref Git blob scan",
+      "credentialFindings": 0,
+      "historicInternalOperationIdRedactedAtTip": true,
+      "syntheticPrMergeTreesMatchedAuditedHeads": true,
+      "githubDetectedLicence": "MIT"
+    }
   },
   "database": {
     "engine": "PostgreSQL 17",
@@ -86,7 +102,15 @@
     "geminiRecordedEvidence": ["ai-evidence.json", "studio-agent-evidence.json"],
     "twilioHosted": "UNSIGNED_INBOUND_AND_STATUS_REJECTED_DELIVERY_UNVERIFIED",
     "agStudio": "NATIVE_REPORTS_BROWSER_VERIFIED_VENDOR_EVALUATION_TERMS",
-    "apimatic": "API_CONTEXT_AND_GENERATED_PAYPAL_SDK"
+    "apimatic": "API_CONTEXT_AND_GENERATED_PAYPAL_SDK",
+    "geminiModelDiscovery": {
+      "httpStatus": 200,
+      "selectedModel": "gemini-2.5-flash-lite",
+      "generated": false
+    },
+    "hostedGeminiConfigured": true,
+    "hostedPublicGroundedEnglishAndHindi": true,
+    "hostedTwilioCredentialsConfigured": false
   },
   "knownLimitations": [
     "Manual deployment and Render cold starts",
@@ -96,5 +120,49 @@
     "Sandbox operator uses a shared password",
     "AG Studio vendor licence applies",
     "Publication and submission require owner action"
+  ],
+  "recordedAt": "2026-11-09T11:51:52.850042+00:00",
+  "identityNote": "The manifest follow-up is metadata only. Its parent is the consolidated application commit and the deployed revision is recorded separately.",
+  "pullRequests": [
+    {
+      "number": 3,
+      "mergeCommit": "b93fae7abded0e02f102b5d8a9fb50ba9cb595f3",
+      "verifiedHead": "5d60c9ecf6b44dad07d8fbcd05d2432b56538117",
+      "gateCi": "https://github.com/subodhkant7/classequity/actions/runs/42610236517"
+    },
+    {
+      "number": 2,
+      "mergeCommit": "641bf06e4aadd77a7902e538de259580ff34c0b9",
+      "verifiedHead": "b93fae7abded0e02f102b5d8a9fb50ba9cb595f3",
+      "gateCi": "https://github.com/subodhkant7/classequity/actions/runs/42610872954"
+    },
+    {
+      "number": 1,
+      "mergeCommit": "b1425259083e99f2db7b9cd6b4ecfa42816d3bd4",
+      "verifiedHead": "641bf06e4aadd77a7902e538de259580ff34c0b9",
+      "gateCi": "https://github.com/subodhkant7/classequity/actions/runs/42611571629"
+    }
+  ],
+  "submissionAssets": [
+    {
+      "file": "01-class-equity-home.png",
+      "sha256": "fe13fc07993cac176aa6ea0fc6a631791eebd3c6d25feae0c4f6da8c633b211f"
+    },
+    {
+      "file": "02-funding-simulator.png",
+      "sha256": "c618c12f9af36b8ad831b31d4ddfc87ac1d2bb36666796c2b4dabf4158c45686"
+    },
+    {
+      "file": "03-school-dashboard.png",
+      "sha256": "2d23a1d3f63d3e34f732435de4bc769082c1a1417103ccb8956624c18af5f376"
+    },
+    {
+      "file": "04-native-studio-reconciliation.png",
+      "sha256": "05bc902938bb0b2e0482c593264b1ffd146ed62155853c2e657eb95ee7c1853e"
+    },
+    {
+      "file": "05-parent-portal-mobile.png",
+      "sha256": "1a6126c7a93db9c45b787bcea00b88f719164a2fa79c5a7760a79e1f8eda707a"
+    }
   ]
 }

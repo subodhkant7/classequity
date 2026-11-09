@@ -7,6 +7,8 @@ The root MIT license applies to the ClassEquity source, documentation and origin
 | AG Studio and AG Studio React 3.1.0                                 | Commercial AG Grid Ltd packages, including their built-in Enterprise widgets. The packages carry the vendor's licence. [AG Studio licensing](https://www.ag-grid.com/studio/javascript/enterprise-licence/) |
 | AG Grid Community and AG Grid React 36.3.0                          | MIT. Package licence files identify AG Grid Ltd. [AG Grid source](https://github.com/ag-grid/ag-grid)                                                                                                       |
 | PayPal Server SDK, Google Gen AI SDK, Twilio SDK and other packages | The lockfile identifies each dependency and version. npm installs the packages with their own licence files. Vendor names identify the respective integration.                                              |
+| AG Grid Enterprise 36.3.0 and AG Charts Enterprise 14.3.0           | Commercial packages installed through AG Studio. Vendor terms apply to their runtime use and redistribution.                                                                                                |
+| Optional sharp/libvips binaries and `caniuse-lite`                  | The lockfile records platform-specific libvips packages with LGPL-3.0-or-later terms and `caniuse-lite` under CC-BY-4.0. The source export distributes dependency declarations.                             |
 
 The source distribution contains dependency declarations and ClassEquity's integration code. Obtain the dependencies from their registries. Keep the applicable package notices if you distribute a built application. Use any independently supplied deployment key only within its granted scope.
 

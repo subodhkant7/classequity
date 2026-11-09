@@ -4,7 +4,7 @@ ClassEquity helps schools plan trips, unlock group pricing, keep family assistan
 
 ## Try ClassEquity
 
-The hosted site offers a six-chapter interactive tour and a working fictional workspace. Open `/login`, choose **Fictional demo**, select a role and enter. School admin shows planning and the dashboard. Parent shows registration, consent and receipts. Finance admin shows restricted allocations for fictional families. Analytics opens editable AG Studio reports. [Hosted application](https://classequity.onrender.com) · [Interactive tour](https://classequity.onrender.com/demo) · [Workspace sign-in](https://classequity.onrender.com/login)
+The hosted site offers a six-chapter interactive tour and a working fictional workspace. Open `/login`, choose **Interactive demo**, select a role and enter. School admin shows planning and the dashboard. Parent shows registration, consent and receipts. Finance admin shows restricted allocations for fictional families. Analytics opens editable AG Studio reports. [Hosted application](https://classequity.onrender.com) · [Interactive tour](https://classequity.onrender.com/demo) · [Workspace sign-in](https://classequity.onrender.com/login)
 
 The tour computes pricing and funding in the browser. Its AI examples identify recorded or illustrative output, and the PayPal timeline identifies recorded sandbox evidence. The fictional workspace persists demo activity and simulates payments. The restricted sandbox workspace supports actual sandbox payment operations and configured Gemini access. Judges can use every demo role without credentials.
 
