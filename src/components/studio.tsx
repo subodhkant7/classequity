@@ -30,6 +30,7 @@ import {
 } from 'ag-studio';
 import { CheckCircle2 } from 'lucide-react';
 import { money } from '@/lib/domain';
+import { tripStudioFields, tierStudioFields } from '@/lib/studio-fields';
 import type { dashboardData } from '@/server/data';
 import { api, Notice } from './ui';
 type Overview = Awaited<ReturnType<typeof dashboardData>>;
@@ -377,13 +378,25 @@ export const geminiAdapter: AgLlmAdapter = {
     return { complete, stream };
   },
 };
-export default function Studio({ overview, license }: { overview: Overview; license?: string }) {
+export default function Studio({
+  overview,
+  license,
+  presentation = false,
+}: {
+  overview: Overview;
+  license?: string;
+  presentation?: boolean;
+}) {
   const apiRef = useRef<AgStudioApi<Registry> | null>(null);
   const [pageId, setPageId] = useState('Financial overview');
   const [state, setState] = useState<AgReportState<Registry> | null>(null);
   const [saved, setSaved] = useState('');
   const [error, setError] = useState('');
   useEffect(() => {
+    if (presentation) {
+      setState(initial);
+      return;
+    }
     if (license) AgStudioLicenseManager.setLicenseKey(license);
     api<AgReportState<Registry> | null>('studio/state')
       .then((s) => {
@@ -391,13 +404,14 @@ export default function Studio({ overview, license }: { overview: Overview; lice
         setPageId((s || initial).selectedPageId);
       })
       .catch(() => setState(initial));
-  }, [license]);
+  }, [license, presentation]);
   const context = useMemo<Context>(() => ({ overview }), [overview]);
   const data = useMemo<AgDataSourcesDefinition<Registry>>(
     () => ({
       sources: [
         {
           id: 'trips',
+          fields: tripStudioFields,
           name: 'Trip financial aggregates',
           description:
             'Tenant-scoped aggregate finance only. No student, parent, phone, assistance eligibility or recipient mapping fields. USD display values derive from integer cents.',
@@ -442,6 +456,7 @@ export default function Studio({ overview, license }: { overview: Overview; lice
         },
         {
           id: 'tiers',
+          fields: tierStudioFields,
           name: 'Group pricing tiers',
           data: overview.flatMap((d) =>
             d.trip.tiers.map((t) => ({
@@ -635,6 +650,27 @@ export default function Studio({ overview, license }: { overview: Overview; lice
             Restore starter report
           </button>
         </span>
+        {presentation && (
+          <button
+            className="text-button"
+            onClick={() => {
+              const api = apiRef.current;
+              if (!api) return;
+              const template = initial.pages.find((p) => p.id === 'Trip comparison')!;
+              const page = { ...template, id: 'Recorded AI · Trip comparison' };
+              const next = {
+                ...api.getState(),
+                selectedPageId: page.id,
+                pages: [...initial.pages, page],
+              };
+              api.setState(next);
+              setState(next);
+              setPageId(page.id);
+            }}
+          >
+            Replay recorded AI view
+          </button>
+        )}
         <select
           aria-label="Report page"
           value={pageId}
@@ -662,12 +698,13 @@ export default function Studio({ overview, license }: { overview: Overview; lice
             initialState={state}
             widgets={widgets}
             context={context}
-            ai={ai}
+            ai={presentation ? undefined : ai}
             onApiReady={(e) => {
               apiRef.current = e.api as unknown as AgStudioApi<Registry>;
             }}
             onErrorRaised={(e) => setError(e.errorDetails.join('; '))}
             onStateUpdated={(e) => {
+              if (presentation) return;
               void api('studio/state', e.state)
                 .then(() => setSaved('Report saved'))
                 .catch(() => setError('Report changes could not be saved.'));

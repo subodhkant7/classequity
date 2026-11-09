@@ -1,5 +1,7 @@
 # PayPal sandbox integration
 
+Hosted follow-up: the free HTTPS application is at https://classequity.onrender.com and its exact sandbox callback is `/api/webhooks/paypal`. Registration/readback and genuine signature/delivery proof are recorded separately in [HOSTED_WEBHOOK_VERIFICATION.md](HOSTED_WEBHOOK_VERIFICATION.md); the historical verification section below describes the earlier financial phase. No new capture/refund is implied by deployment or registration.
+
 `src/server/integrations/paypal.ts` uses the installed APIMatic-generated official `@paypal/paypal-server-sdk` 2.5.0. Production mode is never selected. Orders and Payments use typed controllers, cached OAuth, a 20-second timeout and no SDK mutation retries. The webhook verification endpoint uses a narrow authenticated REST adapter.
 
 ## Owned obligation and checkout
@@ -32,12 +34,16 @@ External full refunds/reversals consume the capture balance. External partial re
 
 ## Signed webhook inbox
 
+The hosted release adds explicit supported-event recognition (`src/lib/paypal-webhook-events.ts`), including Payments v2 DECLINED and applicable v1 DENIED. Verified unknown financial events remain RETRYABLE/503. A provider verification outage is 503, distinct from a rejected signature (401). After authoritative readback, inbox completion and redacted reconciliation audit evidence commit together. The existing ledger engine and financial formulas are unchanged. `scripts/configure-paypal-webhook.ts` defaults to read-only inspection; its explicit registration action checks exact hosted commit/readiness, compares supported event types, reuses an exact registration, and privately saves the ID. It has no payment/capture/refund operation and no mock simulator action.
+
 `POST /api/webhooks/paypal` bounds streamed UTF-8 body bytes to 250,000, requires JSON and validates bounded PayPal transport headers, certificate URL, algorithm and transmission time (three days past/five minutes future). The **complete original parsed event** goes to PayPal's verification API before any business schema extracts fields. No raw request/body/headers are logged or persisted.
 
 A canonical full-event SHA-256 digest binds provider/event ID. Identical processed deliveries are acknowledged without reapplication; an identity collision fails. Durable two-minute processing leases, ownership tokens, attempts and retryable error records recover worker crashes. A failure retains its inbox record; no delete-and-forget path exists. Concurrent live claims return 503. Unknown financial events are retained for investigation/retry, not marked successfully reconciled. Unrelated authenticated event types are ignored explicitly. Events trigger fresh order/capture/refund readback, never direct financial state updates from event names.
 
-## Actual verification boundary
+## Historical financial verification
 
-See `financial-provider-evidence.json`, `financial-concurrency-evidence.json` and `FINANCIAL_WORKFLOW_CLOSURE.md`. OAuth, order creation, a human-approved USD 1 capture, duplicate-request safety and one completed full USD 1 refund are genuinely verified in `financial-lifecycle-evidence.json`. The capture was already complete when verification began; no new charge was initiated. Actual Studio refreshes show the retained USD 0.54 fee and negative net after refund. Genuine signed public delivery remains unverified. Provider-fake tests are not PayPal transaction proof. Render has no ClassEquity web service; no callback was registered against localhost or a placeholder.
+See `financial-provider-evidence.json`, `financial-concurrency-evidence.json` and `FINANCIAL_WORKFLOW_CLOSURE.md`. OAuth, order creation, a human-approved USD 1 capture, duplicate-request safety and one completed full USD 1 refund are genuinely verified in `financial-lifecycle-evidence.json`. The capture was already complete when verification began; no new charge was initiated. Actual Studio refreshes show the retained USD 0.54 fee and negative net after refund. That earlier phase preceded hosted deployment and did not verify signed public delivery. Provider-fake tests are not PayPal transaction proof. The later hosted outcome below closes the genuine delivery gate; no callback was registered against localhost or a placeholder.
 
 Contracts: [PayPal idempotency](https://developer.paypal.com/api/rest/reference/idempotency/), [Payments v2](https://developer.paypal.com/api/payments/v2), [webhook verification](https://developer.paypal.com/api/rest/webhooks/rest/). Installed model/controller sources and `paypal-plan.md` establish exact SDK property names.
+
+Hosted financial closure: the separately authorized Morgan USD 1 sandbox capture, duplicate-request check and one full refund are complete. Genuine signed approval/capture/refund callbacks matched the operation and provider readback; actual event resends left the REFUNDED ledger unchanged. Studio displayed USD 0.54 retained fees and −USD 0.54 net. The earlier transaction is unchanged. See [hosted verification](HOSTED_WEBHOOK_VERIFICATION.md) and the redacted lifecycle/redelivery evidence; no simulator or live payment is involved.

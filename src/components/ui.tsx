@@ -1,5 +1,5 @@
 'use client';
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, useRef, useId, type ReactNode } from 'react';
 import { LoaderCircle, X, ArrowUpRight, Check, AlertCircle } from 'lucide-react';
 export async function api<T = Record<string, unknown>>(path: string, data?: unknown): Promise<T> {
   const r = await fetch(`/api/${path}`, {
@@ -32,15 +32,19 @@ export function Button({
     <button
       type={type}
       disabled={disabled || busy}
+      aria-busy={busy}
       className={`btn ${variant} ${className}`}
       onClick={
         onClick
           ? async () => {
-              setBusy(true);
-              try {
-                await onClick();
-              } finally {
-                setBusy(false);
+              const result = onClick();
+              if (result && typeof result.then === 'function') {
+                setBusy(true);
+                try {
+                  await result;
+                } finally {
+                  setBusy(false);
+                }
               }
             }
           : undefined
@@ -82,25 +86,50 @@ export function Modal({
   children: ReactNode;
   onClose: () => void;
 }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  useEffect(() => {
+    const prior = document.activeElement as HTMLElement | null;
+    const dialog = ref.current;
+    dialog?.showModal();
+    return () => {
+      dialog?.close();
+      prior?.focus();
+    };
+  }, []);
   return (
-    <div
-      className="modal-overlay"
+    <dialog
+      ref={ref}
+      className="modal ce-dialog"
+      aria-labelledby={titleId}
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) {
+          const r = e.currentTarget.getBoundingClientRect();
+          if (
+            e.clientX < r.left ||
+            e.clientX > r.right ||
+            e.clientY < r.top ||
+            e.clientY > r.bottom
+          )
+            onClose();
+        }
       }}
     >
-      <section className="modal" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
-        <div className="section-heading">
-          <h2 id="dialog-title">{title}</h2>
-          <button className="icon-button" aria-label="Close dialog" onClick={onClose}>
-            <X size={20} />
-          </button>
-        </div>
-        {children}
-      </section>
-    </div>
+      <div className="section-heading">
+        <h2 id={titleId}>{title}</h2>
+        <button className="icon-button" aria-label="Close dialog" onClick={onClose}>
+          <X size={20} />
+        </button>
+      </div>
+      {children}
+    </dialog>
   );
 }
+
 export function Empty({
   title,
   description,

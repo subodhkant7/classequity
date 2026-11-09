@@ -34,4 +34,24 @@ Claim → database commit → provider mutation → independent readback → ver
 
 Studio's genuine Agent Framework uses a focused `directLlmRunner` agent with validated aggregate-summary and native-report presentation tools in the browser. Its Gemini boundary is authenticated server-side, rate-limited, and given only aggregate school finance. It can change report presentation; it has no payment, consent, pricing, or support-mutation tools. Uploaded quotes are untrusted extraction input and cannot directly activate a price policy.
 
-The controlled real sandbox lifecycle now verifies this ledger definition: one $1 capture, a duplicate request leaving one capture, and one completed full $1 refund. Independent readbacks and actual Studio refreshes retained the $0.54 fee, leaving −$0.54 net. `financial-lifecycle-evidence.json` distinguishes that real sandbox observation from synthetic/concurrency fixtures. Public HTTPS/webhook delivery remains outside the deployed system.
+The controlled real sandbox lifecycle verifies this ledger definition: one $1 capture, a duplicate request leaving one capture, and one completed full $1 refund. Independent readbacks and actual Studio refreshes retained the $0.54 fee, leaving −$0.54 net. `financial-lifecycle-evidence.json` distinguishes that prior sandbox observation from synthetic/concurrency fixtures. The hosted phase preserves those rows and independently verifies HTTPS, registration and genuine signed delivery in `HOSTED_WEBHOOK_VERIFICATION.md`. A separately authorized hosted USD 1 capture/full refund produced real signed approval/capture/refund events. Actual resends left its single capture, single refund and REFUNDED ledger unchanged; native Studio showed USD 0.54 retained fees and −USD 0.54 net.
+
+## Public experience and simulation boundary
+
+The presentation layer adds `/how-it-works`, `/demo` and `/technology` beside the redesigned homepage. Components are isolated under `src/components/showcase/`; `src/lib/showcase.ts` contains immutable anonymous fixtures and presentation helpers that call the existing `seatPrice`, `funding` and `seatCoverage` functions. No financial domain formula, server state machine, authorization check or database schema is changed for visual convenience.
+
+The six-chapter tour keeps interaction state in React only. Recorded Gemini extraction and PayPal sandbox evidence are labeled separately from local illustrations. No token, provider identifier or recipient mapping is embedded. The actual Studio component accepts a presentation flag that uses fixed synthetic aggregates, omits cloud AI configuration and skips saved-state reads/writes. Authenticated use retains its existing adapter and persistence.
+
+`CE_PREVIEW_ISOLATED=true` selects `.next-experience` for local QA to avoid interfering with the normal development server. QA uses a separate local PGlite path and APP_URL/port. Public pages themselves require no database connection or provider credentials. The later free Render release hosts the same application with a read-only build preflight and no recurring startup setup.
+
+## Hosted receiver
+
+The HTTPS service and existing PostgreSQL are in the same Singapore workspace and use the private database connection. Runtime readiness reads the database. No schema migration is added for hosting. Public demo roles are prevented from using cloud AI when HOSTED_RESTRICT_PUBLIC_AI=true; authenticated sandbox Gemini remains intact.
+
+The receiver recognizes explicit supported PayPal event types. Invalid signatures fail closed; verification-service outages are retryable. Unsupported financial events and unmatched operations remain durable RETRYABLE records. Successful financial reconciliation atomically completes the inbox lease and adds a redacted audit record with event/payload/webhook fingerprints, internal operation association and readback status. Repeated authenticated completed delivery does not repeat ledger settlement. Financial formulas, capture/refund claims and readback state transitions are unchanged.
+
+`scripts/start-showcase.mjs` offers a one-command loopback preview on port 3100. It initializes only the local preview fixture database and blanks provider keys in the child environment. Existing environment files and shared credentials are unchanged; sandbox operator entry has a temporary unadvertised password. The operational server/authentication code itself is unchanged.
+
+## Release and verification boundaries
+
+The release manifest links the merged source, Actions run, live Render commit, migration set and redacted provider evidence. The live readiness endpoint reports the deployed commit and database status. The local showcase seeds its own PGlite store with fictional roles and no provider credentials. Judges use the functional fictional workspace and the browser-local tour. Sandbox operators can use the restricted Gemini adapter when they have an independently authorized account. [Release manifest](RELEASE_MANIFEST.json) · [Judge access](HACKATHON_READINESS.md)

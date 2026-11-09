@@ -7,6 +7,7 @@ import { AppError } from './errors';
 import { verifyPaypalWebhook } from './integrations/paypal';
 import { settleOperation } from './payments';
 import { uid } from './services';
+import { paypalEventKind } from '@/lib/paypal-webhook-events';
 export async function boundedWebhookBody(req: Request) {
   const maximum = 250000;
   const declared = req.headers.get('content-length');
@@ -72,8 +73,18 @@ export async function paypalWebhook(req: Request) {
     .from(s.inbox)
     .where(and(eq(s.inbox.provider, 'paypal'), eq(s.inbox.eventId, event.id)));
   if (previous.bodyHash !== bodyHash) throw new AppError('Webhook event identity collision', 409);
-  if (['PROCESSED', 'IGNORED'].includes(previous.status))
+  if (['PROCESSED', 'IGNORED'].includes(previous.status)) {
+    // Make duplicate receipt observable after signature/digest checks. Record
+    // only a one-way event identity, never headers or payloads.
+    console.info(
+      'PAYPAL_WEBHOOK_DUPLICATE',
+      JSON.stringify({
+        eventFingerprint: createHash('sha256').update(event.id).digest('hex'),
+        inboxStatus: previous.status,
+      }),
+    );
     return { received: true, duplicate: true };
+  }
   const [claim] = await db
     .update(s.inbox)
     .set({
@@ -92,11 +103,17 @@ export async function paypalWebhook(req: Request) {
     .returning();
   if (!claim) throw new AppError('Event processing in progress; retry delivery.', 503);
   try {
-    const financial = /^(PAYMENT\.(CAPTURE|REFUND)\.|CHECKOUT\.ORDER\.)/.test(event.event_type);
-    if (!financial) {
+    const kind = paypalEventKind(event.event_type);
+    if (kind === 'unrelated') {
       await finish('IGNORED');
       return { received: true, ignored: true };
     }
+    if (kind === 'unsupported-financial')
+      throw new AppError(
+        'Unrecognized financial event retained for review.',
+        503,
+        'UNSUPPORTED_FINANCIAL_EVENT',
+      );
     const related = z
       .object({
         related_ids: z
@@ -145,14 +162,18 @@ export async function paypalWebhook(req: Request) {
         503,
         'UNMATCHED_EVENT',
       );
-    await settleOperation(
+    const settled = await settleOperation(
       op.id,
       event.event_type === 'PAYMENT.CAPTURE.REFUNDED' ||
         event.event_type.startsWith('PAYMENT.REFUND.')
         ? resourceId
         : undefined,
     );
-    await finish('PROCESSED');
+    await finish('PROCESSED', {
+      schoolId: op.schoolId,
+      operationId: op.id,
+      status: settled.status,
+    });
     return { received: true };
   } catch (e) {
     await db
@@ -166,12 +187,34 @@ export async function paypalWebhook(req: Request) {
       .where(and(eq(s.inbox.id, claim.id), eq(s.inbox.leaseToken, token)));
     throw e;
   }
-  async function finish(status: string) {
-    const saved = await db
-      .update(s.inbox)
-      .set({ status, leaseToken: null, leaseUntil: null })
-      .where(and(eq(s.inbox.id, claim.id), eq(s.inbox.leaseToken, token)))
-      .returning();
-    if (!saved.length) throw new AppError('Webhook lease expired; retry.', 503);
+  async function finish(
+    status: string,
+    evidence?: { schoolId: string; operationId: string; status: string },
+  ) {
+    await db.transaction(async (tx) => {
+      const saved = await tx
+        .update(s.inbox)
+        .set({ status, leaseToken: null, leaseUntil: null })
+        .where(and(eq(s.inbox.id, claim.id), eq(s.inbox.leaseToken, token)))
+        .returning();
+      if (!saved.length) throw new AppError('Webhook lease expired; retry.', 503);
+      if (evidence)
+        await tx.insert(s.audit).values({
+          id: uid(),
+          schoolId: evidence.schoolId,
+          action: 'PAYPAL_WEBHOOK_RECONCILED',
+          entityId: evidence.operationId,
+          detail: {
+            eventFingerprint: createHash('sha256').update(event.id).digest('hex'),
+            eventType: event.event_type,
+            bodyHash,
+            signature: 'PAYPAL_VERIFIED',
+            webhookFingerprint: createHash('sha256')
+              .update(process.env.PAYPAL_WEBHOOK_ID || '')
+              .digest('hex'),
+            readbackStatus: evidence.status,
+          },
+        });
+    });
   }
 }

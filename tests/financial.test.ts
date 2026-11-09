@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, it, expect, vi } from 'vitest';
 import { readFile, readdir } from 'node:fs/promises';
 import { sql, eq } from 'drizzle-orm';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import {
   OrderStatus,
   type Order,
@@ -447,6 +447,7 @@ const request = (event: unknown) =>
   });
 describe('authenticated webhook inbox', () => {
   it('passes the complete event to verification, deduplicates and rejects identity collisions', async () => {
+    const log = vi.spyOn(console, 'info').mockImplementation(() => {});
     const f = await fixture();
     const cap = captured(f);
     fakeReads(f, cap);
@@ -462,6 +463,21 @@ describe('authenticated webhook inbox', () => {
     await paypalWebhook(request(event));
     expect(verify).toHaveBeenCalledWith(expect.any(Headers), event);
     expect(await paypalWebhook(request(event))).toMatchObject({ duplicate: true });
+    expect(log).toHaveBeenCalledWith(
+      'PAYPAL_WEBHOOK_DUPLICATE',
+      JSON.stringify({
+        eventFingerprint: createHash('sha256').update(event.id).digest('hex'),
+        inboxStatus: 'PROCESSED',
+      }),
+    );
+    expect(log).toHaveBeenCalledTimes(1);
+    const audit = await db.select().from(s.audit).where(eq(s.audit.entityId, f.id));
+    expect(audit.filter((r) => r.action === 'PAYPAL_WEBHOOK_RECONCILED')).toHaveLength(1);
+    expect(audit.find((r) => r.action === 'PAYPAL_WEBHOOK_RECONCILED')?.detail).toMatchObject({
+      eventType: 'PAYMENT.CAPTURE.COMPLETED',
+      signature: 'PAYPAL_VERIFIED',
+      readbackStatus: 'COMPLETED',
+    });
     await expect(paypalWebhook(request({ ...event, summary: 'changed' }))).rejects.toMatchObject({
       status: 409,
     });
@@ -546,6 +562,27 @@ describe('authenticated webhook inbox', () => {
 });
 
 describe('additional reconciliation boundaries', () => {
+  it('durably retains unmatched and unsupported financial events without acknowledging reconciliation', async () => {
+    vi.spyOn(integration, 'verifyPaypalWebhook').mockResolvedValue(true);
+    for (const [event_type, code] of [
+      ['PAYMENT.CAPTURE.COMPLETED', 'UNMATCHED_EVENT'],
+      ['PAYMENT.CAPTURE.FUTURE', 'UNSUPPORTED_FINANCIAL_EVENT'],
+    ]) {
+      const id = randomUUID();
+      await expect(
+        paypalWebhook(request({ id, event_type, resource: { id: 'unmatched-synthetic' } })),
+      ).rejects.toMatchObject({ status: 503, code });
+      const [inbox] = await db.select().from(s.inbox).where(eq(s.inbox.eventId, id));
+      expect(inbox).toMatchObject({ status: 'RETRYABLE', errorCode: code, attempts: 1 });
+    }
+    const id = randomUUID();
+    expect(
+      await paypalWebhook(request({ id, event_type: 'BILLING.UNRELATED', resource: {} })),
+    ).toMatchObject({ ignored: true });
+    expect(
+      await paypalWebhook(request({ id, event_type: 'BILLING.UNRELATED', resource: {} })),
+    ).toMatchObject({ duplicate: true });
+  });
   it('releases a rejected refund reservation only through reconciled ledger state', async () => {
     const f = await fixture();
     const cap = captured(f);
@@ -630,6 +667,18 @@ describe('additional reconciliation boundaries', () => {
     try {
       expect(await integration.verifyPaypalWebhook(headers(), event)).toBe(true);
       expect(requests[0].webhook_event).toEqual(event);
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string) =>
+          String(url).endsWith('/v1/oauth2/token')
+            ? Response.json({ access_token: 'synthetic-only-access-token', expires_in: 0 })
+            : Response.json({ error: 'synthetic provider outage' }, { status: 503 }),
+        ),
+      );
+      await expect(integration.verifyPaypalWebhook(headers(), event)).rejects.toMatchObject({
+        status: 503,
+        code: 'WEBHOOK_VERIFY_UNAVAILABLE',
+      });
     } finally {
       vi.unstubAllGlobals();
       for (const [k, v] of Object.entries({

@@ -1,39 +1,34 @@
-# Three-minute demo
+# Explore ClassEquity locally
 
-Start `npm run dev`, open http://localhost:3000, choose Explore the demo. Use fictional identities only. Screenshots are generated under ignored `output/playwright/` for local review.
+The same public experience is hosted at [https://classequity.onrender.com](https://classequity.onrender.com). Free hosting may take time to wake after idling. Hosting, sandbox webhook registration and genuine signed-event proof are separate gates; see [hosted verification](HOSTED_WEBHOOK_VERIFICATION.md). Public workspace payments/messages are simulations and cloud AI tools require restricted sandbox access. Never share the operator password or private buyer approval links in a presentation.
 
-**0:00–0:25 — Why it exists.** Landing: “Every child belongs on the trip. Every payment is accounted for.” School trips combine changing group prices, private financial need, and messy payment screenshots. ClassEquity makes the financial outcome explicit without naming support recipients.
+Run `npm run showcase`, then open `http://localhost:3100/` for the product introduction, `/how-it-works` for the pricing/funding labs, `/demo` for the complete guided tour and `/technology` for integration roles and verification boundaries. These public pages require no sign-in or provider credentials. Every tour change is local to the browser.
 
-**0:25–0:55 — School overview.** Enter as School admin. Oakwood Academy has 30 synthetic registrations and the $23 group tier. Open the activity and explain frozen consented pricing. Required seat funding is $690. Sponsor commitments are $115, but commitments are not money: only $70 sponsor money is captured in the synthetic scenario. Total net is $532.30; the gap remains $157.70 after fees.
+## Guided product exploration
 
-**0:55–1:20 — Inclusion with a boundary.** Open registrations: no aid mapping is visible. Sign out and enter as Finance admin to see five approved synthetic allocations and individual payment operations. Mention finance is separately authorized at the application boundary, with shared operator password a documented sandbox limitation. Do not expose this screen to the ordinary teacher view.
+1. **Plan an adventure.** Meet fictional Oakwood Academy and the museum trip. Change the registration slider; see the applicable estimate and the next threshold.
+2. **Understand the quotation.** Open the original synthetic SVG, review the recorded Gemini extraction and try the local review checkbox. No activity or price is saved.
+3. **Bring families together.** Consent to a fictional $32 ceiling, add a local registration and unlock the $27 tier. Switch the illustrative conversation to Hindi. No name or invitation token is collected.
+4. **Include privately.** Switch teacher/finance/sponsor explanations. No recipient mapping is disclosed and no access is granted. Change pledges, confirmed contributions and fees to see why five supported seats still cost $115.
+5. **Verify every payment.** Step through the local state illustration, including unknown outcomes and a duplicate request. Separately read the recorded $1 sandbox proof: $1 captured, $1 refunded, $0.54 retained fee, −$0.54 net. This chapter sends no payment request.
+6. **See the whole picture.** Use the actual AG Studio custom widgets, native funding chart and reconciliation grid with synthetic aggregates. Replay the labeled recorded AI view. The public report never calls Gemini or saved-state APIs. Its final link opens the real authenticated `/analytics` application.
 
-**1:20–1:45 — Parent flow.** Enter as Parent. Review the fictional student's trip and My payments. Explain exact obligation, optional sponsor commitment, separate payment, and simulated receipt. For a fresh registration/consent story, create another open activity, issue a single-use invitation, redeem in a separate session and register a synthetic student. Only freeze after required consent and finance support decisions.
+Use chapter navigation, previous/next, Replay chapter, Skip animation or Reset demonstration at any time. `?chapter=adventure|quotation|families|support|payments|intelligence` opens a specific chapter. Reduced-motion preference preserves all information without decorative animation.
 
-**1:45–2:15 — Real sponsor component.** Open Financial intelligence. Show actual AG Studio editable report, Group Unlock / Funding Assurance / Payment Integrity widgets and native grid/charts when verified. Ask the Gemini Agent Framework why the trip is pending; it sees only aggregates and can adjust analytical presentations. Reports save per authenticated school user. Do not claim an AI mutation succeeded unless the visible report changed.
+## Functional application
 
-**2:15–2:35 — Communication and document intelligence.** Open Communication, clearly identify WhatsApp SIMULATOR, ask the price and deadline in English/Hindi, then get a secure parent link. Show the quote-upload/review workflow with `public/sample-vendor-quote.svg` exported to PNG or another fictional USD quote. AI extraction is reviewed before activation; never upload hardship data.
+`/login` opens the separate operational product. Demo-role entry persists synthetic records and simulated payments; sandbox operator entry is separate. Real application links retain authentication and role authorization. Do not use the shared sandbox workflow for presentation experiments. Financial capture/refund authorization from the previous phase is consumed and does not authorize another test.
 
-**2:35–3:00 — The outcome.** In finance, run the fully funded simulation: it completes synthetic captures and records an audited synthetic school contribution for fees and refunded seat costs. Explain that the authorized USD 1 sandbox capture and full refund are independently verified, with duplicate capture protection and a retained USD 0.54 fee; genuine public webhook delivery remains unverified. End with exact shortfall-to-funded mechanics, not fabricated real-school impact.
+For isolated application verification:
 
-## Sandbox handoff
+```sh
+DATABASE_URL='' LOCAL_DATABASE_DIR='.data/experience-qa' APP_URL='http://localhost:3100' node --import tsx scripts/migrate.ts
+DATABASE_URL='' LOCAL_DATABASE_DIR='.data/experience-qa' APP_URL='http://localhost:3100' node --import tsx scripts/seed.ts
+DATABASE_URL='' LOCAL_DATABASE_DIR='.data/experience-qa' APP_URL='http://localhost:3100' GEMINI_API_KEY='' CE_PREVIEW_ISOLATED=true npm run dev -- --webpack --port 3100
+```
 
-1. Sandbox administrator signs in using the privately configured ADMIN_PASSWORD.
-2. Issue an invitation; register a fictional student; approve any support in finance; freeze exact price.
-3. Parent opens PayPal sandbox checkout. Human buyer approves using a personal sandbox account.
-4. Return to the parent portal, finalize approved payment, read the receipt; finance reconciles.
-5. Deploy public HTTPS before registering real PayPal/Twilio webhook URLs. Pair and opt in to WhatsApp before sending a permitted test.
+Then run the browser suite in another terminal with the same DATABASE_URL/LOCAL_DATABASE_DIR/APP_URL settings and `E2E_BASE_URL=http://localhost:3100 npm run test:e2e`. Captures are under ignored `output/playwright/showcase/`. Seeding does not reset existing records. No shared database migration or provider test is necessary to view the public pages.
 
-The seed is non-destructive and does not reset demo mutations. Run funded/refund/payment demos thoughtfully. To get an untouched demo without deleting existing records, use a separate local PGlite path and seed it; never reset the shared Render database. `docs/integration-evidence.json` records actual provider credential/generation checks. Seed SIM-* capture IDs are never real PayPal transactions.
+No video storyboard, script, recording or timing plan was prepared in this phase, following the user’s explicit instruction.
 
-## Financial closure demonstration
-
-Use the finance Funding assurance card to distinguish registered, parent-paid, fully assisted and covered seats. A zero-parent-obligation seat starts uncovered until captured sponsor money or an authorized treasury entry supplies its cost. The new School contributions form records source, positive USD amount and an authorization/receipt reference; demo entries remain synthetic. Reusing the same reference does not duplicate money. Never describe a treasury attestation as a PayPal capture.
-
-Receipts with missing fee data say “Accounting pending.” Funding reserves the uncertain capture and cannot become ready. Finance supports partial refunds and refunding the remaining balance; duplicates reuse a stable identity and unresolved amounts remain reserved. Do not run these against sandbox money without the separately approved test plan.
-
-The independent-worker command `npm run test:financial:concurrency` requires the dedicated PostgreSQL connection. It uses an isolated temporary schema and a loopback fake provider, including deliberate process kills. It makes no PayPal mutations. Evidence is redacted in `docs/financial-concurrency-evidence.json`.
-
-See `FINANCIAL_WORKFLOW_CLOSURE.md` for current order availability, the private buyer handoff, exact verification classifications and hosted HTTPS blockers. Original order creation alone is not a captured payment demonstration.
-
-The authorized one-dollar sandbox lifecycle is complete (`financial-lifecycle-evidence.json`). Its payment was already captured when verification started; the duplicate application request made no additional charge. Finance issued one full refund. Show the actual retained $0.54 fee and −$0.54 final net rather than describing the refunded seat as funded. No additional financial test is authorized by that completed run.
+The one-command `showcase` launcher creates only an isolated local `.data/experience-preview` database, supplies temporary local-only session/operator secrets, disables provider credentials in its child process and listens on loopback port 3100. It never changes `.env` or the shared database. Demo-role entry works in this isolated workspace; real sandbox operator entry is intentionally unavailable there. Stop it with Ctrl+C.

@@ -1,12 +1,12 @@
 {
   "checkedAt": "2026-11-04T21:49:41.937Z",
   "provider": "PayPal sandbox",
-  "operationId": "da6a2ff7-ea43-4af2-a92d-7ad5eb64c145",
   "orderCreated": true,
   "status": "AWAITING_APPROVAL",
   "currency": "USD",
   "cents": 3200,
   "buyerApprovalCompleted": false,
   "captureVerified": false,
-  "note": "A genuine server-created sandbox order. Approval URL is stored privately under .data/sandbox-checkout.json. No buyer approval was automated."
+  "note": "A genuine server-created sandbox order. Approval URL is stored privately under .data/sandbox-checkout.json. No buyer approval was automated.",
+  "operationFingerprint": "37e53f13b5bccb8743811c8484ef75eb4cd1e2c3ebfff32f64d30cf78b5b33b1"
 }

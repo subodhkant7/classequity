@@ -189,21 +189,34 @@ export async function verifyPaypalWebhook(headers: Headers, event: unknown) {
   if (!process.env.PAYPAL_WEBHOOK_ID) return false;
   if (!validPaypalHeaders(headers)) return false;
   const transmissionTime = headers.get('paypal-transmission-time');
-  const r = await fetch(`${HOST}/v1/notifications/verify-webhook-signature`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${await accessToken()}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      auth_algo: headers.get('paypal-auth-algo'),
-      cert_url: headers.get('paypal-cert-url'),
-      transmission_id: headers.get('paypal-transmission-id'),
-      transmission_sig: headers.get('paypal-transmission-sig'),
-      transmission_time: transmissionTime,
-      webhook_id: process.env.PAYPAL_WEBHOOK_ID,
-      webhook_event: event,
-    }),
-    signal: AbortSignal.timeout(15000),
-  });
-  return r.ok && (await r.json()).verification_status === 'SUCCESS';
+  try {
+    const r = await fetch(`${HOST}/v1/notifications/verify-webhook-signature`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${await accessToken()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        auth_algo: headers.get('paypal-auth-algo'),
+        cert_url: headers.get('paypal-cert-url'),
+        transmission_id: headers.get('paypal-transmission-id'),
+        transmission_sig: headers.get('paypal-transmission-sig'),
+        transmission_time: transmissionTime,
+        webhook_id: process.env.PAYPAL_WEBHOOK_ID,
+        webhook_event: event,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!r.ok) throw new Error('Verification API unavailable');
+    return (await r.json()).verification_status === 'SUCCESS';
+  } catch {
+    // Unavailable verification is retryable, not evidence of an invalid signature.
+    throw new AppError(
+      'PayPal verification is temporarily unavailable; retry delivery.',
+      503,
+      'WEBHOOK_VERIFY_UNAVAILABLE',
+    );
+  }
 }
 
 export function validPaypalHeaders(headers: Headers, now = Date.now()) {
