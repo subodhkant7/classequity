@@ -1,0 +1,39 @@
+{
+  "checkedAt": "2026-11-05T05:05:37.382Z",
+  "provider": "controlled local fake; no PayPal mutations",
+  "database": "existing dedicated PostgreSQL; isolated temporary schema",
+  "independentProcesses": true,
+  "scenarios": [
+    {
+      "scenario": "two processes capture + in-flight reconciliation + duplicate",
+      "passed": true,
+      "providerMutations": 1
+    },
+    {
+      "scenario": "read begun before another process claimed capture cannot overwrite claim",
+      "passed": true,
+      "providerMutations": 1
+    },
+    {
+      "scenario": "process killed after provider capture; independent process recovers by GET",
+      "passed": true,
+      "providerMutations": 1
+    },
+    {
+      "scenario": "network loss with no visible result never authorizes a second mutation",
+      "passed": true,
+      "providerMutations": 1
+    },
+    {
+      "scenario": "independent refund workers reserve balance and deduplicate identity",
+      "passed": true,
+      "providerMutations": 1
+    },
+    {
+      "scenario": "refund process killed after mutation; custom identity recovers lost provider ID",
+      "passed": true,
+      "providerMutations": 1
+    }
+  ],
+  "totalScenarios": 6
+}

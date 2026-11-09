@@ -68,7 +68,7 @@ function translate(e: unknown): never {
   throw new ProviderFailure(true, 'TRANSPORT_OR_DECODE');
 }
 export const paypal = {
-  async create(cents: number, obligationId: string, key: string) {
+  async create(cents: number, obligationId: string, key: string, tripId: string) {
     try {
       const orders = new OrdersController(getClient());
       const url = process.env.APP_URL || 'http://localhost:3000';
@@ -87,8 +87,8 @@ export const paypal = {
           paymentSource: {
             paypal: {
               experienceContext: {
-                returnUrl: `${url}/parent?checkout=approved`,
-                cancelUrl: `${url}/parent?checkout=cancelled`,
+                returnUrl: `${url}/parent?trip=${encodeURIComponent(tripId)}&checkout=approved`,
+                cancelUrl: `${url}/parent?trip=${encodeURIComponent(tripId)}&checkout=cancelled`,
               },
             },
           },
@@ -128,14 +128,14 @@ export const paypal = {
       translate(e);
     }
   },
-  async refund(id: string, key: string): Promise<Refund> {
+  async refund(id: string, key: string, cents: number, refundId: string): Promise<Refund> {
     try {
       return (
         await new PaymentsController(getClient()).refundCapturedPayment({
           captureId: id,
           paypalRequestId: key,
           prefer: 'return=representation',
-          body: {},
+          body: { amount: { currencyCode: 'USD', value: decimal(cents) }, customId: refundId },
         })
       ).result;
     } catch (e) {
@@ -187,29 +187,67 @@ export async function accessToken() {
 }
 export async function verifyPaypalWebhook(headers: Headers, event: unknown) {
   if (!process.env.PAYPAL_WEBHOOK_ID) return false;
+  if (!validPaypalHeaders(headers)) return false;
   const transmissionTime = headers.get('paypal-transmission-time');
-  if (!transmissionTime || Math.abs(Date.now() - Date.parse(transmissionTime)) > 3 * 86400000)
-    return false;
-  const fields = [
+  try {
+    const r = await fetch(`${HOST}/v1/notifications/verify-webhook-signature`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${await accessToken()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        auth_algo: headers.get('paypal-auth-algo'),
+        cert_url: headers.get('paypal-cert-url'),
+        transmission_id: headers.get('paypal-transmission-id'),
+        transmission_sig: headers.get('paypal-transmission-sig'),
+        transmission_time: transmissionTime,
+        webhook_id: process.env.PAYPAL_WEBHOOK_ID,
+        webhook_event: event,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!r.ok) throw new Error('Verification API unavailable');
+    return (await r.json()).verification_status === 'SUCCESS';
+  } catch {
+    // Unavailable verification is retryable, not evidence of an invalid signature.
+    throw new AppError(
+      'PayPal verification is temporarily unavailable; retry delivery.',
+      503,
+      'WEBHOOK_VERIFY_UNAVAILABLE',
+    );
+  }
+}
+
+export function validPaypalHeaders(headers: Headers, now = Date.now()) {
+  const names = [
     'paypal-auth-algo',
     'paypal-cert-url',
     'paypal-transmission-id',
     'paypal-transmission-sig',
+    'paypal-transmission-time',
   ];
-  if (fields.some((k) => !headers.get(k))) return false;
-  const r = await fetch(`${HOST}/v1/notifications/verify-webhook-signature`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${await accessToken()}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      auth_algo: headers.get('paypal-auth-algo'),
-      cert_url: headers.get('paypal-cert-url'),
-      transmission_id: headers.get('paypal-transmission-id'),
-      transmission_sig: headers.get('paypal-transmission-sig'),
-      transmission_time: transmissionTime,
-      webhook_id: process.env.PAYPAL_WEBHOOK_ID,
-      webhook_event: event,
-    }),
-    signal: AbortSignal.timeout(15000),
-  });
-  return r.ok && (await r.json()).verification_status === 'SUCCESS';
+  if (names.some((k) => !headers.get(k) || headers.get(k)!.length > 4096)) return false;
+  const time = Date.parse(headers.get('paypal-transmission-time')!);
+  if (!Number.isFinite(time) || time < now - 3 * 86400000 || time > now + 300000) return false;
+  if (headers.get('paypal-auth-algo') !== 'SHA256withRSA') return false;
+  if (!/^[A-Za-z0-9-]{1,150}$/.test(headers.get('paypal-transmission-id')!)) return false;
+  if (!/^[A-Za-z0-9+/=]+$/.test(headers.get('paypal-transmission-sig')!)) return false;
+  try {
+    const cert = new URL(headers.get('paypal-cert-url')!);
+    return (
+      cert.protocol === 'https:' &&
+      ['api.paypal.com', 'api.sandbox.paypal.com', 'api-m.sandbox.paypal.com'].includes(
+        cert.hostname,
+      ) &&
+      !cert.port &&
+      !cert.username &&
+      !cert.password &&
+      !cert.search &&
+      !cert.hash &&
+      /^\/v1\/notifications\/certs\/[A-Za-z0-9-]+$/.test(cert.pathname)
+    );
+  } catch {
+    return false;
+  }
 }

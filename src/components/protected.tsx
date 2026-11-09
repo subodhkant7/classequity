@@ -12,6 +12,12 @@ export async function Protected({ view, tripId }: { view: string; tripId?: strin
   const [school] = await db.select().from(schools).where(eq(schools.id, a.schoolId));
   return (
     <Shell a={a} school={school.name}>
+      {a.mode === 'demo' && process.env.HOSTED_RESTRICT_PUBLIC_AI === 'true' && (
+        <p className="notice">
+          Public workspace · fictional data. Live Gemini tools require restricted sandbox access;
+          the guided demo includes recorded AI examples. Payments and messages here are simulations.
+        </p>
+      )}
       <Workspace
         a={a}
         view={view}

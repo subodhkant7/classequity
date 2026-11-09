@@ -1,5 +1,7 @@
 import type { NextConfig } from 'next';
 const config: NextConfig = {
+  devIndicators: false,
+  distDir: process.env.CE_PREVIEW_ISOLATED === 'true' ? '.next-experience' : '.next',
   turbopack: { root: process.cwd() },
   serverExternalPackages: ['@electric-sql/pglite', 'postgres'],
   experimental: { serverActions: { bodySizeLimit: '8mb' } },

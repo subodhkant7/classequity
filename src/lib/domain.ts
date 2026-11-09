@@ -37,24 +37,48 @@ export function minor(value: string) {
   if (!Number.isSafeInteger(n)) throw Error('Amount too large');
   return n;
 }
+export interface FundingCapture {
+  cents: number;
+  feeCents: number;
+  feeKnown?: boolean;
+  pendingRefundCents?: number;
+  status: string;
+  refundedCents: number;
+}
 export interface FundingInput {
   seatCents: number;
   registrations: number;
   assistedCents: number;
   sponsorCommittedCents: number;
-  captures: { cents: number; feeCents: number; status: string; refundedCents: number }[];
+  captures: FundingCapture[];
   unresolved: number;
-  reserveCents?: number;
+  schoolCents?: number;
+}
+export function availableCapture(c: FundingCapture) {
+  if (!['COMPLETED', 'PARTIALLY_REFUNDED', 'REFUNDED', 'REVERSED'].includes(c.status)) return 0;
+  if (c.feeKnown === false || c.status === 'REVERSED') return 0;
+  return Math.max(0, c.cents - c.feeCents - c.refundedCents - (c.pendingRefundCents || 0));
 }
 export function funding(i: FundingInput) {
   const required = i.seatCents * i.registrations;
   const complete = i.captures.filter((c) =>
-    ['COMPLETED', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(c.status),
+    ['COMPLETED', 'PARTIALLY_REFUNDED', 'REFUNDED', 'REVERSED'].includes(c.status),
   );
   const gross = complete.reduce((n, c) => n + c.cents, 0);
-  const fees = complete.reduce((n, c) => n + c.feeCents, 0);
-  const refunds = complete.reduce((n, c) => n + c.refundedCents, 0);
-  const net = gross - fees - refunds + (i.reserveCents || 0);
+  const fees = complete.reduce((n, c) => n + (c.feeKnown === false ? 0 : c.feeCents), 0);
+  const refunds = complete.reduce(
+    (n, c) => n + (c.status === 'REVERSED' ? c.cents : c.refundedCents),
+    0,
+  );
+  const feePending = complete.filter((c) => c.feeKnown === false).length;
+  // Until a fee is known, reserve the entire remaining capture, never a guessed zero fee.
+  const feeReserve = complete
+    .filter((c) => c.feeKnown === false)
+    .reduce((n, c) => n + Math.max(0, c.cents - c.refundedCents), 0);
+  const schoolCents = i.schoolCents || 0;
+  // Keep known fees even on reversed/refunded captures: the provider may retain them.
+  const refundReserve = complete.reduce((n, c) => n + (c.pendingRefundCents || 0), 0);
+  const net = gross - fees - refunds - feeReserve - refundReserve + schoolCents;
   const gap = Math.max(0, required - net);
   return {
     required,
@@ -63,11 +87,43 @@ export function funding(i: FundingInput) {
     refunds,
     net,
     gap,
+    feePending,
+    feeReserve,
+    refundReserve,
+    schoolCents,
     assistanceRequired: i.assistedCents,
     sponsorCommitted: i.sponsorCommittedCents,
     sponsorshipCommitmentGap: Math.max(0, i.assistedCents - i.sponsorCommittedCents),
-    ready: gap === 0 && i.unresolved === 0 && i.registrations > 0,
+    ready: gap === 0 && feePending === 0 && i.unresolved === 0 && i.registrations > 0,
     unresolved: i.unresolved,
+  };
+}
+export function seatCoverage(
+  seatCents: number,
+  net: number,
+  seats: { parentDue: number; paid: number; available: number }[],
+) {
+  const ordered = [...seats].sort((a, b) => Number(a.parentDue === 0) - Number(b.parentDue === 0));
+  let remaining = Math.max(0, net);
+  const assigned = ordered.map((s) => {
+    const n = Math.max(0, Math.min(seatCents, s.available, remaining));
+    remaining -= n;
+    return n;
+  });
+  let pool = remaining;
+  let coveredSeats = 0;
+  ordered.forEach((s, i) => {
+    const missing = seatCents - assigned[i];
+    if (pool >= missing) {
+      pool -= missing;
+      coveredSeats++;
+    }
+  });
+  return {
+    parentPaidSeats: seats.filter((s) => s.parentDue > 0 && s.paid >= s.parentDue).length,
+    fullyAssistedSeats: seats.filter((s) => s.parentDue === 0).length,
+    coveredSeats,
+    unresolvedSeats: seats.length - coveredSeats,
   };
 }
 export const tripInput = z

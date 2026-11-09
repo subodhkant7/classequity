@@ -63,7 +63,7 @@ describe('exact-cent group clearing', () => {
           unresolved: 0,
           captures: [{ cents: 69000, feeCents: 2000, status: 'COMPLETED', refundedCents: 0 }],
         },
-        reserveCents: 2000,
+        schoolCents: 2000,
       }).ready,
     ).toBe(true);
   });

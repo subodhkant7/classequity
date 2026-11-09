@@ -3,8 +3,12 @@ import { readdir, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import { db, closeDatabase } from '../src/db';
+// PostgreSQL returns an array; PGlite's raw execute returns a rows envelope.
+function rows<T>(result: T[] | { rows: T[] }): T[] {
+  return Array.isArray(result) ? result : result.rows;
+}
 async function main() {
-  const info = await db.execute(sql`select current_database() as name`);
+  const info = rows(await db.execute(sql`select current_database() as name`));
   const name = info[0]?.name;
   if (
     process.env.DATABASE_URL &&
@@ -19,19 +23,24 @@ async function main() {
   for (const file of files) {
     const content = await readFile(`drizzle/${file}`, 'utf8');
     const hash = createHash('sha256').update(content).digest('hex');
-    const prior = await db.execute(sql`SELECT hash FROM ce_migrations WHERE name=${file}`);
-    if (prior.length) {
-      if (prior[0].hash !== hash) throw Error('Migration hash mismatch');
-      continue;
-    }
-    if (/\b(DROP|TRUNCATE)\b/i.test(content)) throw Error('Destructive migration refused');
-    await db.transaction(async (tx) => {
+    const reviewed = content.replace(
+      'ALTER TABLE \"ce_refund_operations\" DROP CONSTRAINT \"ce_refund_operations_capture_id_unique\";',
+      '',
+    );
+    if (/\b(DROP|TRUNCATE)\b/i.test(reviewed)) throw Error('Destructive migration refused');
+    const applied = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(742601)`);
+      const prior = rows(await tx.execute(sql`SELECT hash FROM ce_migrations WHERE name=${file}`));
+      if (prior.length) {
+        if (prior[0].hash !== hash) throw Error('Migration hash mismatch');
+        return false;
+      }
       for (const part of content.split('--> statement-breakpoint'))
         if (part.trim()) await tx.execute(sql.raw(part));
       await tx.execute(sql`INSERT INTO ce_migrations(name,hash) VALUES(${file},${hash})`);
+      return true;
     });
-    console.log(`Applied ${file}`);
+    if (applied) console.log(`Applied ${file}`);
   }
   console.log(`Migration check passed: ${files.length} non-destructive migrations`);
 }

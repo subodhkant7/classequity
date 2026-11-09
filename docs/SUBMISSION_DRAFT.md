@@ -1,37 +1,46 @@
-# ClassEquity — Devpost draft
+# ClassEquity submission package
 
-**Tagline:** Every child belongs on the trip. Every payment is accounted for.
+- **Project name** ClassEquity
+- **Tagline** Every child belongs on the trip. Every payment is accounted for.
+- **Working demo** [classequity.onrender.com](https://classequity.onrender.com)
+- **Public source URL** `[ADD PUBLIC REPOSITORY URL AFTER APPROVAL]`
+- **YouTube URL** `[ADD FINAL PUBLIC YOUTUBE URL]`
 
-## Inspiration
+## Overview
 
-A class trip should be a shared opportunity. Schools often reconcile spreadsheets, group-message replies, informal sponsorship promises and payment screenshots while protecting families who need help. Group discounts make the price itself uncertain. We wanted a workflow in which inclusion and financial correctness reinforce each other.
+ClassEquity gives school staff and families one place to plan activities, coordinate group discounts and see verified funding. A school can offer private assistance while finance keeps track of captures, fees, refunds and unresolved outcomes. Gemini helps staff and families work with approved information.
 
-## What it does
+## Problem
 
-ClassEquity coordinates school activities with tiered group pricing, parent registration and consent, private support requests, finance-approved assistance, voluntary sponsorship, exact final obligations and PayPal sandbox checkout. It distinguishes commitments and registrations from confirmed captures, deducts provider fees/refunds, and refuses to claim funding readiness while a gap or unresolved operation remains. Teachers see safe aggregate views; only finance personnel see support-recipient mappings.
+Trip prices depend on participation. Spreadsheets, chat threads, hardship requests and payment screenshots make it hard to know what a family agreed to pay, who can privately receive help and whether the trip is actually funded.
 
-## How we built it
+## How it works
 
-Next.js App Router, React, strict TypeScript, Tailwind, PostgreSQL, Drizzle, Zod, integer-cent domain calculations and durable operation identities. The existing free Render PostgreSQL instance stores separate fictional demo and sandbox tenants. Vitest covers core invariants and Playwright checks navigation, boundaries, actual sponsor rendering and responsive layout.
+1. School staff upload a quotation. Gemini extracts price tiers and terms into a reviewable draft. An authorized staff member reviews the draft and activates the pricing.
+2. The school invites families through scoped links. Families see an estimate and consent to a ceiling. The school freezes an exact obligation within that consent.
+3. Finance reviews assistance privately. Sponsors see permitted aggregate needs. Funding calculations use captured amounts, known fees and refunds. Open commitments and uncertain outcomes are visible separately.
+4. PayPal Sandbox handles buyer approval and settlement. Signed webhooks trigger independent provider readback and durable reconciliation. Staff see the ledger in native reports.
 
-**AG Studio / AG Grid:** actual AG Studio v3 React component, editable report pages, native analytical widgets, custom Group Unlock/Funding Assurance/Payment Integrity widgets and the real Agent Framework. Gemini is connected through an authenticated server adapter. Analytics receives only permitted aggregates and cannot execute payments or approve assistance.
+## PayPal and AI
 
-**PayPal:** APIMatic-generated official Server SDK implements sandbox Orders v2 create/capture and Payments v2 readback/refunds, with durable logical keys, provider verification and compensation states. A narrow official-spec adapter verifies webhook signatures. A human completes buyer approval.
+The hosted one-dollar sandbox exercise completed one capture and one full refund. Genuine signed approval, capture and refund callbacks arrived on the public HTTPS receiver. Independent readbacks confirmed the result, including $0.54 in retained fees. Duplicate requests and actual redelivery left the ledger unchanged. [Redacted verification](HOSTED_WEBHOOK_VERIFICATION.md)
 
-**Twilio WhatsApp:** genuine typed adapter, signature-verified inbound/status endpoints, deduplication, paired opt-in, school-grounded English/Hindi information and expiring secure browser links. A clearly labeled simulator exercises the same conversation service.
+Gemini extracts fictional vendor quotations, answers approved trip questions in English or Hindi and helps an authenticated AG Studio agent explain permitted aggregates. Humans approve pricing, consent, assistance and payment actions. Integer-cent code computes the authoritative figures. Prior configured Gemini tests produced validated extraction, parent assistance and a rendered agent-created report. The public tour labels its recorded and illustrative material. Hosted cloud generation remains unverified pending confirmation of the configured project's billing tier. [AI evidence](ai-evidence.json) · [Agent evidence](studio-agent-evidence.json)
 
-**Gemini:** account model discovery, verified Flash Lite text generation, multilingual parent information, schema-validated multimodal quotation extraction with mandatory human review, and Studio tool-call translation for financial explanation and report presentation.
+## Tools and innovation
 
-**APIMatic:** installed PayPal/Twilio Context Plugins v0.4.1 and used their published SDK maps, auth/retry/error guidance and API operation contracts in implementation. The official PayPal Server SDK used in production code is APIMatic-generated. Differences from the plugins' Git-source SDKs are explicitly documented.
+AG Studio and AG Grid render editable reports and native reconciliation charts and grids. ClassEquity adds Group Unlock, Funding Assurance and Payment Integrity widgets. APIMatic context guided the PayPal and Twilio integrations, and the official PayPal server SDK is APIMatic-generated. Render hosts the HTTPS application and PostgreSQL. The WhatsApp adapter covers pairing, English/Hindi replies and secure links. Hosted real delivery remains unverified.
 
-## What is innovative
+ClassEquity combines consent-bounded group pricing with confidential assistance and net funding. A lower tier can help families afford a trip. Finance can account for fees and refunds before marking seats covered, while other roles see only their permitted views.
 
-The core outcome is a consent-bounded group-clearing workflow with confidential support and net funding assurance, rather than a payment screenshot tracker. Inclusion does not require exposing family circumstances to teachers, sponsors or AI. A beautiful funding percentage is tied to exact capture/fee/refund states, not pledges.
+## Challenges and lessons
 
-## Challenges and limitations
+Concurrency required durable capture claims, refund balance reservations and version checks on independent readback. The team made missing fee data a distinct state after finding that a completed provider capture can lack accounting details. Replaying genuine signed events tested whether duplicates preserve a refunded ledger. Aggregation lets staff explain the budget in Studio without exposing family assistance mappings to teachers or the model.
 
-Sandbox provider integrations are implemented; OAuth and Twilio account reads are verified, Gemini generation is verified. Buyer-approved captures, refunds and public webhook delivery require remaining human/external setup. All students, historical examples and demo captures are synthetic; there is no real-school impact measurement. The sandbox uses shared administrator access pending a real identity provider and independently provisioned finance staff. No live payments, escrow claims, nonprofit-processing claims or public source release are part of this submission.
+## Testing instructions for judges
 
-## Next
+Open `/demo` for the credential-free tour. Open `/login` and use the fictional School admin, Parent and Finance admin roles to work with persisted demo data and editable analytics. Allow the free Render instance time to wake. Use the README's `npm ci` and `npm run showcase` path if the hosted service is unavailable. The local preview creates its own fictional database and runs without provider credentials. [Judge access and continuity](HACKATHON_READINESS.md) · [Setup](../README.md)
 
-Finish human sandbox transaction/webhook verification, provision production identity, audit authorization and provider failure cases, polish accessibility/responsiveness, review free-host limits and dependency advisories, and verify AG Studio trial rights for judging. Keep this as a draft until provider evidence and the final implementation report are checked.
+## Limitations
+
+The project uses fictional school data and PayPal Sandbox. The restricted sandbox operator uses a shared password. The free database expires December 5, 2026 at 02:18 IST, so the local showcase is the independently tested fallback for judging through December 15. AG Studio has a vendor evaluation arrangement for judging and commercial terms for broader deployment. [Third-party notices](../THIRD_PARTY_NOTICES.md)

@@ -13,8 +13,15 @@ type Connection = {
 const globalDb = globalThis as unknown as { ceConnection?: Connection };
 function connect(): Connection {
   if (process.env.DATABASE_URL) {
+    const testSchema = process.env.CE_TEST_SCHEMA;
+    if (
+      testSchema &&
+      (process.env.NODE_ENV !== 'test' || !/^ce_verify_[a-z0-9_]{1,48}$/.test(testSchema))
+    )
+      throw new Error('Invalid isolated test schema');
     const raw = postgres(process.env.DATABASE_URL, {
       max: 5,
+      connection: { search_path: testSchema || 'public' },
       ssl: process.env.DATABASE_URL.includes('localhost') ? false : 'require',
       connect_timeout: 10,
       prepare: false,

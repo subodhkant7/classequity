@@ -1,0 +1,91 @@
+{
+  "checkedAt": "2026-11-05T06:04:39.209Z",
+  "provider": "genuine PayPal sandbox; no provider fakes",
+  "fictionalObligation": "Avery Sandbox Closure Example — Financial closure verification",
+  "currency": "USD",
+  "cents": 100,
+  "authorization": "User explicitly confirmed human buyer approval and authorized one $1 capture, duplicate-request check and one full refund up to $1",
+  "captureVerified": true,
+  "refundVerified": true,
+  "genuineWebhookDeliveryVerified": false,
+  "stages": [
+    {
+      "stage": "preflight",
+      "checkedAt": "2026-11-05T06:04:43.068Z",
+      "orderStatus": "COMPLETED",
+      "existingProviderCaptures": 1
+    },
+    {
+      "stage": "capture-independent-readback",
+      "checkedAt": "2026-11-05T06:04:51.191Z",
+      "status": "COMPLETED",
+      "currency": "USD",
+      "cents": 100,
+      "orderAssociationVerified": true,
+      "feeKnown": true,
+      "feeCents": 54,
+      "alreadyCompletedBeforeRun": true
+    },
+    {
+      "stage": "duplicate-capture",
+      "checkedAt": "2026-11-05T06:04:56.245Z",
+      "applicationRequestRepeated": true,
+      "providerCaptureCount": 1,
+      "sameProviderCapture": true,
+      "localCaptureCount": 1,
+      "additionalCharge": false
+    },
+    {
+      "stage": "studio-after-capture",
+      "checkedAt": "2026-11-05T06:05:05.517Z",
+      "capturedCents": 100,
+      "feeCents": 54,
+      "feePending": 0,
+      "refundCents": 0,
+      "netCents": 46,
+      "gapCents": 54,
+      "parentPaidSeats": 1,
+      "coveredSeats": 0,
+      "ready": false,
+      "simulation": false,
+      "actualStudioGridRendered": true
+    },
+    {
+      "stage": "refund-independent-readback",
+      "checkedAt": "2026-11-05T06:05:21.869Z",
+      "status": "COMPLETED",
+      "currency": "USD",
+      "cents": 100,
+      "localRefundCount": 1,
+      "localRefundedCents": 100,
+      "pendingRefundCents": 0
+    },
+    {
+      "stage": "studio-after-refund",
+      "checkedAt": "2026-11-05T06:05:29.099Z",
+      "capturedCents": 100,
+      "feeCents": 54,
+      "feePending": 0,
+      "refundCents": 100,
+      "netCents": -54,
+      "gapCents": 154,
+      "parentPaidSeats": 0,
+      "coveredSeats": 0,
+      "ready": false,
+      "simulation": false,
+      "actualStudioGridRendered": true
+    },
+    {
+      "stage": "final-ledger",
+      "checkedAt": "2026-11-05T06:05:30.672Z",
+      "operationStatus": "REFUNDED",
+      "captureCount": 1,
+      "capturedCents": 100,
+      "refundedCents": 100,
+      "feesRetainedCents": 54,
+      "remainingCapturableObligation": false
+    }
+  ],
+  "captureAlreadyCompletedBeforeThisRun": true,
+  "status": "SANDBOX VERIFIED — capture, duplicate request, full refund and actual Studio refresh"
+}

@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-11-05T13:18:02.502Z",
+  "scope": "Local browser verification on isolated PGlite preview; no provider mutations or shared database writes",
+  "unitServiceTests": 45,
+  "browserTests": 12,
+  "normalHeroMotion": {
+    "animation": "enter",
+    "durationMs": 600,
+    "distinctSampledFrames": true
+  },
+  "reducedMotionAnimation": "none",
+  "measuredContrastRatios": {
+    "heroBody": 6.12,
+    "primaryAction": 11.44
+  },
+  "screenReaderATReview": "Not performed; accessible names, semantics and keyboard behavior tested in browser",
+  "captures": "output/playwright/showcase/ (ignored)",
+  "providerEvidence": "Recorded prior sandbox evidence only; no new provider operation"
+}

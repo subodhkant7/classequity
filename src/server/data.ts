@@ -1,10 +1,10 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, asc } from 'drizzle-orm';
 import { db } from '@/db';
 import * as s from '@/db/schema';
 import type { Actor } from './auth';
 import { roles } from './auth';
 import { AppError, requireValue } from './errors';
-import { funding, seatPrice } from '@/lib/domain';
+import { funding, seatPrice, seatCoverage, availableCapture } from '@/lib/domain';
 export async function ownTrip(a: Actor, id: string) {
   const [trip] = await db
     .select()
@@ -17,7 +17,8 @@ export async function tripData(a: Actor, id: string) {
   const regs = await db
     .select()
     .from(s.registrations)
-    .where(and(eq(s.registrations.tripId, id), eq(s.registrations.status, 'REGISTERED')));
+    .where(and(eq(s.registrations.tripId, id), eq(s.registrations.status, 'REGISTERED')))
+    .orderBy(asc(s.registrations.createdAt), asc(s.registrations.id));
   const [snapshot] = await db.select().from(s.snapshots).where(eq(s.snapshots.tripId, id));
   const allocations = await db
     .select()
@@ -25,7 +26,7 @@ export async function tripData(a: Actor, id: string) {
     .where(and(eq(s.assistance.tripId, id), eq(s.assistance.status, 'APPROVED')));
   const sponsors = await db.select().from(s.commitments).where(eq(s.commitments.tripId, id));
   const obs = await db.select().from(s.obligations).where(eq(s.obligations.tripId, id));
-  const ops = obs.length
+  const allOps = obs.length
     ? await db
         .select()
         .from(s.operations)
@@ -36,7 +37,8 @@ export async function tripData(a: Actor, id: string) {
           ),
         )
     : [];
-  const caps = ops.length
+  const ops = allOps.filter((o) => o.mode === a.mode && o.schoolId === a.schoolId);
+  const allCaps = ops.length
     ? await db
         .select()
         .from(s.captures)
@@ -47,6 +49,15 @@ export async function tripData(a: Actor, id: string) {
           ),
         )
     : [];
+  const caps = allCaps.filter((c) =>
+    a.mode === 'demo'
+      ? c.provenance === 'SYNTHETIC'
+      : c.provenance === 'PAYPAL_SANDBOX' && !!c.verifiedAt,
+  );
+  const contributions = await db
+    .select()
+    .from(s.contributions)
+    .where(and(eq(s.contributions.tripId, id), eq(s.contributions.mode, a.mode)));
   const seatCents = snapshot?.seatCents ?? seatPrice(trip.tiers, regs.length);
   const unresolved = ops.filter((o) =>
     ['UNKNOWN', 'PENDING', 'CAPTURING', 'CREATING', 'REFUND_PENDING'].includes(o.status),
@@ -58,11 +69,35 @@ export async function tripData(a: Actor, id: string) {
     sponsorCommittedCents: sponsors.reduce((v, x) => v + x.cents, 0),
     captures: caps,
     unresolved,
-    reserveCents: trip.reserveCents,
+    schoolCents: contributions.reduce((n, c) => n + c.cents, 0),
   });
-  const confirmedSeats = ops.filter(
-    (o) => o.status === 'COMPLETED' && obs.find((b) => b.id === o.obligationId)?.kind === 'SEAT',
-  ).length;
+  const seats = regs.map((r) => {
+    const ob = obs.find((o) => o.registrationId === r.id);
+    const op = ops.find((o) => o.obligationId === ob?.id);
+    const cap = caps.find((c) => c.operationId === op?.id);
+    return {
+      parentDue: ob?.cents ?? seatCents,
+      paid:
+        cap && ['COMPLETED', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(cap.status)
+          ? Math.max(0, cap.cents - cap.refundedCents)
+          : 0,
+      available: cap ? availableCapture(cap) : 0,
+    };
+  });
+  const coverage = seatCoverage(seatCents, totals.net, seats);
+  // Without a frozen snapshot, seats and prices remain estimates.
+  totals.ready =
+    totals.ready && !!snapshot && snapshot.count === regs.length && coverage.unresolvedSeats === 0;
+  const outstandingObligationCents = obs.reduce((n, ob) => {
+    const op = ops.find((o) => o.obligationId === ob.id);
+    const cap = caps.find((c) => c.operationId === op?.id);
+    const paid =
+      cap && ['COMPLETED', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(cap.status)
+        ? Math.max(0, cap.cents - cap.refundedCents)
+        : 0;
+    return n + Math.max(0, ob.cents - paid);
+  }, 0);
+  const confirmedSeats = coverage.coveredSeats;
   return {
     trip,
     registrations: regs,
@@ -70,6 +105,9 @@ export async function tripData(a: Actor, id: string) {
     seatCents,
     totals,
     confirmedSeats,
+    coverage,
+    outstandingObligationCents,
+    contributions,
     ops,
     caps,
     obs,
@@ -83,11 +121,14 @@ export async function dashboardData(a: Actor) {
       const d = await tripData(a, t.id);
       return {
         trip: d.trip,
+        mode: a.mode,
         snapshot: d.snapshot,
         seatCents: d.seatCents,
         totals: d.totals,
         registrationCount: d.registrations.length,
         confirmedSeats: d.confirmedSeats,
+        coverage: d.coverage,
+        outstandingObligationCents: d.outstandingObligationCents,
         payments: d.ops.map((o) => ({
           id: o.id,
           status: o.status,
@@ -124,6 +165,7 @@ export async function financeData(a: Actor, id: string) {
     .where(eq(s.assistance.tripId, id));
   return {
     allocations,
+    contributions: d.contributions,
     operations: d.ops.map((o) => ({
       ...o,
       cents: d.obs.find((x) => x.id === o.obligationId)?.cents ?? 0,
@@ -174,6 +216,14 @@ export async function aggregateData(a: Actor) {
     tripId: d.trip.id,
     registrations: d.registrationCount,
     confirmedSeats: d.confirmedSeats,
+    parentPaidSeats: d.coverage.parentPaidSeats,
+    fullyAssistedSeats: d.coverage.fullyAssistedSeats,
+    unresolvedSeats: d.coverage.unresolvedSeats,
+    outstandingObligationCents: d.outstandingObligationCents,
+    feePending: d.totals.feePending,
+    feeReserveCents: d.totals.feeReserve,
+    refundReserveCents: d.totals.refundReserve,
+    schoolContributionCents: d.totals.schoolCents,
     seatCents: d.seatCents,
     requiredCents: d.totals.required,
     capturedCents: d.totals.gross,

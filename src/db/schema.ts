@@ -194,6 +194,9 @@ export const operations = pgTable('ce_payment_operations', {
   orderId: text('order_id').unique(),
   status: text('status').notNull().default('CREATED'),
   approvalUrl: text('approval_url'),
+  version: integer('version').notNull().default(0),
+  captureKey: text('capture_key'),
+  captureRequestedAt: timestamp('capture_requested_at', { withTimezone: true }),
   errorCode: text('error_code'),
   createdAt: created(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -207,7 +210,12 @@ export const captures = pgTable('ce_paypal_captures', {
   providerId: text('provider_id').notNull().unique(),
   cents: integer('cents').notNull(),
   feeCents: integer('fee_cents').notNull(),
+  feeKnown: boolean('fee_known').notNull().default(false),
+  provenance: text('provenance').notNull().default('UNVERIFIED'),
+  verifiedAt: timestamp('verified_at', { withTimezone: true }),
+  providerUpdatedAt: timestamp('provider_updated_at', { withTimezone: true }),
   refundedCents: integer('refunded_cents').notNull().default(0),
+  pendingRefundCents: integer('pending_refund_cents').notNull().default(0),
   status: text('status').notNull(),
   createdAt: created(),
 });
@@ -215,8 +223,9 @@ export const refunds = pgTable('ce_refund_operations', {
   id: id(),
   captureId: text('capture_id')
     .notNull()
-    .references(() => captures.id)
-    .unique(),
+    .references(() => captures.id),
+  clientKey: text('client_key').notNull().unique(),
+  verifiedAt: timestamp('verified_at', { withTimezone: true }),
   requestKey: text('request_key').notNull().unique(),
   providerId: text('provider_id').unique(),
   status: text('status').notNull(),
@@ -278,6 +287,11 @@ export const inbox = pgTable(
     provider: text('provider').notNull(),
     eventId: text('event_id').notNull(),
     status: text('status').notNull(),
+    bodyHash: text('body_hash'),
+    leaseToken: text('lease_token'),
+    leaseUntil: timestamp('lease_until', { withTimezone: true }),
+    attempts: integer('attempts').notNull().default(0),
+    errorCode: text('error_code'),
     createdAt: created(),
   },
   (t) => [uniqueIndex('ce_webhook_once').on(t.provider, t.eventId)],
@@ -323,3 +337,22 @@ export const quotas = pgTable('ce_usage_quotas', {
   count: integer('count').notNull().default(0),
   window: text('window').notNull(),
 });
+
+export const contributions = pgTable(
+  'ce_school_contributions',
+  {
+    id: id(),
+    tripId: text('trip_id')
+      .notNull()
+      .references(() => trips.id),
+    mode: text('mode').$type<Mode>().notNull(),
+    cents: integer('cents').notNull(),
+    source: text('source').notNull(),
+    evidence: text('evidence').notNull(),
+    authorizedBy: text('authorized_by')
+      .notNull()
+      .references(() => users.id),
+    createdAt: created(),
+  },
+  (t) => [check('ce_contribution_positive', sql`${t.cents}>0`)],
+);

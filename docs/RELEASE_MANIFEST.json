@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "release": "ClassEquity PayPal AI Hackathon 2026",
+  "status": "CONSOLIDATION_PENDING",
+  "startingSourceCommit": "9d070f4942f682eeda9a58936d1f44768d608763",
+  "consolidatedSourceCommit": null,
+  "githubActions": {
+    "consolidatedSource": null,
+    "deployedRuntime": "https://github.com/subodhkant7/classequity/actions/runs/42390565933"
+  },
+  "deployment": {
+    "applicationUrl": "https://classequity.onrender.com",
+    "runtimeCommit": "e673ad86537315167037f877386be6a9ede599ad",
+    "renderDeployId": "dep-dbnkuf3m8hqs73cgouj0",
+    "sourceBranch": "codex/hosted-webhook-verification",
+    "autoDeploy": false,
+    "healthPath": "/api/health",
+    "verifiedDatabaseReady": true
+  },
+  "verification": {
+    "localCleanInstall": true,
+    "typecheck": true,
+    "lint": true,
+    "unitAndServicePassed": 60,
+    "financialConcurrencyPassed": 6,
+    "productionBrowserPassed": 12,
+    "hostedBrowserPassed": 10,
+    "hostedBrowserSkipped": 0,
+    "hostedInitialColdRun": {
+      "passed": 6,
+      "failed": 3,
+      "observations": ["Render wake-up interstitial", "Delayed native Studio asset load"]
+    },
+    "build": true,
+    "secretsCheck": true,
+    "runtimeDependencyAdvisories": 0,
+    "moderateDevelopmentAdvisories": 14
+  },
+  "database": {
+    "engine": "PostgreSQL 17",
+    "plan": "Render Free",
+    "expiresAt": "2026-12-04T20:48:15.892628Z",
+    "migrations": [
+      {
+        "name": "0000_kind_stranger.sql",
+        "sha256": "b011b3f5f8d743073ae733eaac4a75aeb48e79f691d32c6ff9729a6b246cfa34"
+      },
+      {
+        "name": "0001_natural_skaar.sql",
+        "sha256": "98639232ac4e2d187ab1ac9457dd47f8b78799b30e7cfa2cb435f9c867e774e0"
+      },
+      {
+        "name": "0002_gorgeous_thanos.sql",
+        "sha256": "efe4d898dbb082a1db63ef634d63468b928a11be8f4c8cc94e49b6975c4a93e7"
+      }
+    ],
+    "privateRestoreRehearsal": {
+      "serverVersion": "17.11",
+      "archivesRestored": 2,
+      "tables": 25,
+      "matchedMigrationChecksums": 3,
+      "originalLedgerMatched": true,
+      "entireSandboxLedgerMatched": true,
+      "sandboxCaptures": 2,
+      "grossCents": 200,
+      "refundedCents": 200,
+      "feeCents": 108,
+      "processedPayPalEvents": 3
+    },
+    "judgeFallback": "npm ci && npm run showcase"
+  },
+  "paypalSandbox": {
+    "verification": "GENUINE_SIGNED_APPROVAL_CAPTURE_REFUND_AND_REDELIVERY",
+    "proofRuntimeCommit": "03dafab57ed17b0de9d501a2228904ea73373d09",
+    "webhookUrl": "https://classequity.onrender.com/api/webhooks/paypal",
+    "ledgerPreserved": true,
+    "newFinancialOperations": 0,
+    "evidence": [
+      "hosted-financial-lifecycle-evidence.json",
+      "hosted-financial-redelivery-evidence.json",
+      "HOSTED_WEBHOOK_VERIFICATION.md"
+    ]
+  },
+  "integrations": {
+    "geminiHosted": "UNVERIFIED_BILLING_TIER_KEY_LOOKUP_HTTP_403",
+    "geminiRecordedEvidence": ["ai-evidence.json", "studio-agent-evidence.json"],
+    "twilioHosted": "UNSIGNED_INBOUND_AND_STATUS_REJECTED_DELIVERY_UNVERIFIED",
+    "agStudio": "NATIVE_REPORTS_BROWSER_VERIFIED_VENDOR_EVALUATION_TERMS",
+    "apimatic": "API_CONTEXT_AND_GENERATED_PAYPAL_SDK"
+  },
+  "knownLimitations": [
+    "Manual deployment and Render cold starts",
+    "Free database expiry during judging",
+    "Hosted Gemini key-project billing access denied",
+    "Twilio delivery unverified",
+    "Sandbox operator uses a shared password",
+    "AG Studio vendor licence applies",
+    "Publication and submission require owner action"
+  ]
+}

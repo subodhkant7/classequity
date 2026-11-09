@@ -7,6 +7,18 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: classequity
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: synthetic-ci-postgres-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d classequity"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: ''
       SESSION_SECRET: synthetic-ci-session-secret-at-least-32-characters
@@ -24,10 +36,26 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
+      - run: npm run test:financial:concurrency
+        env:
+          DATABASE_URL: postgres://postgres:synthetic-ci-postgres-password@localhost:5432/classequity
       - run: npm run db:migrate && npm run db:seed
+      - name: Verify read-only hosted release preflight against CI PostgreSQL
+        run: npm run db:migrate && npm run db:seed && npm run release:check
+        env:
+          DATABASE_URL: postgres://postgres:synthetic-ci-postgres-password@localhost:5432/classequity
+          APP_URL: https://ci.example.test
+          PAYPAL_CLIENT_ID: synthetic-ci-client
+          PAYPAL_CLIENT_SECRET: synthetic-ci-secret
+          GEMINI_API_KEY: synthetic-ci-key
+          HOSTED_RESTRICT_PUBLIC_AI: 'true'
       - run: npm run build
+      - run: npm run secrets:check
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+        env:
+          E2E_PRODUCTION: 'true'
+          DATABASE_URL: postgres://postgres:synthetic-ci-postgres-password@localhost:5432/classequity
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

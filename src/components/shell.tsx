@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   LayoutDashboard,
   Compass,
@@ -43,12 +43,62 @@ export function Shell({
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const sidebar = useRef<HTMLElement>(null);
+  const menuTrigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const prior = menuTrigger.current || (document.activeElement as HTMLElement);
+    const old = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const items = () =>
+      Array.from(
+        sidebar.current?.querySelectorAll<HTMLElement>('a[href],button:not([disabled])') || [],
+      ).filter((el) => el.getClientRects().length > 0);
+    items()[0]?.focus();
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Tab') {
+        const list = items(),
+          first = list[0],
+          last = list.at(-1);
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', key);
+    return () => {
+      document.body.style.overflow = old;
+      document.removeEventListener('keydown', key);
+      prior?.focus();
+    };
+  }, [open]);
   const label =
     links.find((l) => pathname.startsWith(l.path))?.label ??
     (pathname.startsWith('/finance') ? 'Finance desk' : 'Workspace settings');
   return (
     <div className="shell">
-      <aside className={`sidebar ${open ? 'open' : ''}`}>
+      <a href="#workspace-main" className="skip-link">
+        Skip to workspace
+      </a>
+      {open && (
+        <button
+          className="workspace-backdrop"
+          aria-label="Dismiss navigation"
+          tabIndex={-1}
+          onClick={() => setOpen(false)}
+        />
+      )}
+      <aside
+        ref={sidebar}
+        id="workspace-navigation"
+        aria-label="School navigation"
+        className={`sidebar ${open ? 'open' : ''}`}
+      >
         <Brand />
         <div className="sidebar-label">YOUR WORKSPACE</div>
         <nav className="sidebar-nav">
@@ -143,13 +193,16 @@ export function Shell({
           </button>
         )}
       </aside>
-      <div className="workspace">
+      <div className="workspace" inert={open}>
         <header className="topbar">
           <div className="flex">
             <button
               className="icon-button mobile-menu"
               onClick={() => setOpen(true)}
+              ref={menuTrigger}
               aria-label="Open menu"
+              aria-expanded={open}
+              aria-controls="workspace-navigation"
             >
               <Menu size={21} />
             </button>
@@ -175,7 +228,7 @@ export function Shell({
             </span>
           </div>
         </header>
-        <main className="main">
+        <main className="main" id="workspace-main" tabIndex={-1}>
           <div className="demo-strip">
             <ShieldCheck size={13} />
             {a.mode === 'demo'
