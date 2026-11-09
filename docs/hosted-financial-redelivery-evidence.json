@@ -1,0 +1,74 @@
+{
+  "startedAt": "2026-11-07T14:27:05.859Z",
+  "scope": "Real completed capture event replayed after full refund, plus real refund event replay",
+  "before": {
+    "operationStatus": "REFUNDED",
+    "version": 12,
+    "captureCount": 1,
+    "refundCount": 1,
+    "capturedCents": 100,
+    "refundedCents": 100,
+    "feeKnown": true,
+    "feeCents": 54,
+    "pendingRefundCents": 0,
+    "reconciliationAuditCount": 3,
+    "ledgerFingerprint": "adf2b275e8d7d7f2a2a2774c8843f06aa1bf7da39846b33447841bb5c27c3ef6"
+  },
+  "events": [
+    {
+      "type": "PAYMENT.CAPTURE.COMPLETED",
+      "eventFingerprint": "0b7fa42ff6f14f2208826d7b23f6f4ab019083af1e079d1484185e9d6bf4da45",
+      "resendHttpStatus": 202,
+      "inboxAttemptsBefore": 1,
+      "bodyHash": "8ef2486ed071ca3cfa1c6e9f2ad5e659287355393237a8fda23e1b1a6046b67e"
+    },
+    {
+      "type": "PAYMENT.CAPTURE.REFUNDED",
+      "eventFingerprint": "bc87019ca776398f3282a55bc855463c63dd00b2b94fb88e5db5f1f571a7757a",
+      "resendHttpStatus": 202,
+      "inboxAttemptsBefore": 1,
+      "bodyHash": "b38bbce4b8fafc64f99a7ccd574bfc3f84b34d8cc2d6157d4cbfce8920029313"
+    }
+  ],
+  "captureOrRefundRequested": false,
+  "deliveryConfirmed": true,
+  "checkedAt": "2026-11-07T14:28:08.971Z",
+  "after": {
+    "operationStatus": "REFUNDED",
+    "version": 12,
+    "captureCount": 1,
+    "refundCount": 1,
+    "capturedCents": 100,
+    "refundedCents": 100,
+    "feeKnown": true,
+    "feeCents": 54,
+    "pendingRefundCents": 0,
+    "reconciliationAuditCount": 3,
+    "ledgerFingerprint": "adf2b275e8d7d7f2a2a2774c8843f06aa1bf7da39846b33447841bb5c27c3ef6"
+  },
+  "ledgerUnchanged": true,
+  "stateDidNotRegressFromRefunded": true,
+  "receiverReceipts": [
+    {
+      "timestamp": "2026-11-07T14:27:55.760907664Z",
+      "eventFingerprint": "bc87019ca776398f3282a55bc855463c63dd00b2b94fb88e5db5f1f571a7757a",
+      "inboxStatus": "PROCESSED"
+    },
+    {
+      "timestamp": "2026-11-07T14:27:56.048987608Z",
+      "eventFingerprint": "0b7fa42ff6f14f2208826d7b23f6f4ab019083af1e079d1484185e9d6bf4da45",
+      "inboxStatus": "PROCESSED"
+    },
+    {
+      "timestamp": "2026-11-07T14:27:56.142860853Z",
+      "eventFingerprint": "bc87019ca776398f3282a55bc855463c63dd00b2b94fb88e5db5f1f571a7757a",
+      "inboxStatus": "PROCESSED"
+    },
+    {
+      "timestamp": "2026-11-07T14:27:56.344350764Z",
+      "eventFingerprint": "0b7fa42ff6f14f2208826d7b23f6f4ab019083af1e079d1484185e9d6bf4da45",
+      "inboxStatus": "PROCESSED"
+    }
+  ],
+  "signatureAndDigestCheckedBeforeDuplicateReceipt": true
+}

@@ -1,0 +1,41 @@
+{
+  "startedAt": "2026-11-07T12:34:56.664Z",
+  "eventType": "CHECKOUT.ORDER.APPROVED",
+  "eventFingerprint": "9763de202789aee227451d0a8e53ed83e214ebcfb96ca56a3485ced58964e4c7",
+  "resendAccepted": true,
+  "httpStatus": 202,
+  "before": {
+    "operationVersion": 3,
+    "operationFingerprint": "f19f495fc8938cce781c621cd1186314e11bd6e5445226f31b2a5d55ca0aa5f0",
+    "operationStatus": "APPROVED",
+    "inboxStatus": "PROCESSED",
+    "inboxAttempts": 1,
+    "bodyHash": "6bf423140e1def42f96af3a03b2f11a7355760b88b03a84bc22c561eab8d7421",
+    "captureCount": 0,
+    "reconciliationAuditCount": 1
+  },
+  "captureOrRefundRequested": false,
+  "deliveryConfirmed": true,
+  "checkedAt": "2026-11-07T12:36:04.628Z",
+  "receiverLogObservedAt": "2026-11-07T12:35:00.238961609Z",
+  "receiverLogOutcome": "PAYPAL_WEBHOOK_DUPLICATE; PROCESSED",
+  "signatureAndDigestChecksPassedBeforeDuplicateLog": true,
+  "after": {
+    "operationVersion": 3,
+    "operationFingerprint": "f19f495fc8938cce781c621cd1186314e11bd6e5445226f31b2a5d55ca0aa5f0",
+    "operationStatus": "APPROVED",
+    "inboxStatus": "PROCESSED",
+    "inboxAttempts": 1,
+    "bodyHash": "6bf423140e1def42f96af3a03b2f11a7355760b88b03a84bc22c561eab8d7421",
+    "captureCount": 0,
+    "reconciliationAuditCount": 1
+  },
+  "noRepeatedLedgerSettlement": true,
+  "independentOrderReadback": {
+    "status": "APPROVED",
+    "currency": "USD",
+    "amount": "1.00",
+    "identityMatches": true,
+    "providerCaptureCount": 0
+  }
+}

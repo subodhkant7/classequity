@@ -17,6 +17,9 @@ test('public hero, deterministic calculator and threshold keyboard interaction',
   await expect(
     page.getByRole('link', { name: 'Explore Interactive Demo', exact: true }),
   ).toBeVisible();
+  await expect
+    .poll(() => page.locator('.hero h1').evaluate((el) => getComputedStyle(el).opacity))
+    .toBe('1');
   await page.screenshot({ path: 'output/playwright/showcase/home-desktop.png', fullPage: true });
   await page.getByRole('link', { name: 'See How It Works', exact: true }).click();
   const range = page.getByRole('slider', { name: 'Number of students' });
@@ -98,6 +101,13 @@ test('six-chapter tour, local reset and actual AG Studio work without authentica
   await expect(page.locator('canvas').first()).toBeVisible({ timeout: 30000 });
   await page.getByLabel('Report page').selectOption('Payment reconciliation');
   await expect(page.locator('.ag-root').first()).toBeVisible({ timeout: 30000 });
+  await page.locator('.ag-root').first().scrollIntoViewIfNeeded();
+  await expect(
+    page.locator('.ag-root').first().getByRole('gridcell', { name: '$20.70', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.locator('.ag-root').first().getByRole('gridcell', { name: '$532.30', exact: true }),
+  ).toBeVisible();
   await page.screenshot({ path: 'output/playwright/showcase/tour-studio.png', fullPage: true });
   await page.getByRole('button', { name: 'Replay recorded AI view' }).click();
   await expect(page.getByLabel('Report page')).toHaveValue('Recorded AI · Trip comparison');
@@ -144,8 +154,9 @@ test('public AI tabs respond to arrow keys and technology claims are bounded', a
   await expect(page.getByRole('tab', { name: /question finds/ })).toBeFocused();
   await expect(page.getByRole('tabpanel')).toContainText('Illustrative Hindi answer');
   await page.goto('/technology');
-  await expect(page.getByText('PostgreSQL hosted · web deployment pending')).toBeVisible();
+  await expect(page.getByText('HTTPS application · PostgreSQL hosted')).toBeVisible();
   await expect(page.getByText('Authentication verified · delivery unverified')).toBeVisible();
+  await expect(page.getByText('Signed sandbox lifecycle verified', { exact: true })).toBeVisible();
   await noOverflow(page);
   await page.screenshot({
     path: 'output/playwright/showcase/technology-desktop.png',

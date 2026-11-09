@@ -19,8 +19,8 @@ const systems = [
   {
     name: 'PayPal',
     icon: Wallet,
-    tag: 'Sandbox verified',
-    copy: 'Orders, human buyer approval, capture and refunds through the official server SDK. Exact-cent obligations and independent provider readback. One $1 capture and full refund verified; duplicate request retained one capture.',
+    tag: 'Signed sandbox lifecycle verified',
+    copy: 'Orders, human buyer approval, capture and refunds through the official server SDK. A separately authorized hosted $1 capture and full refund produced genuine signed approval, capture and refund callbacks. Provider readback and actual resends verified association and duplicate protection.',
     source: 'src/server/payments.ts',
     doc: 'PAYPAL_INTEGRATION.md',
   },
@@ -59,10 +59,10 @@ const systems = [
   {
     name: 'Render',
     icon: Database,
-    tag: 'PostgreSQL hosted · web deployment pending',
-    copy: 'The existing hosted PostgreSQL stores the application ledger. The ClassEquity website is not deployed. Public HTTPS and genuine signed webhook delivery are still required.',
+    tag: 'HTTPS application · PostgreSQL hosted',
+    copy: 'The hosted ClassEquity site runs over HTTPS on Render with PostgreSQL. The verification report records the deployed revision and the genuine signed PayPal event delivery. The local showcase uses a separate fictional database.',
     source: 'src/db/schema.ts',
-    doc: 'FINANCIAL_WORKFLOW_CLOSURE.md',
+    doc: 'HOSTED_WEBHOOK_VERIFICATION.md',
   },
 ];
 export default function Technology() {
@@ -112,14 +112,14 @@ export default function Technology() {
               <span className="local-label">{s.tag}</span>
               <p>{s.copy}</p>
               <a
-                href={`https://github.com/subodhkant7/classequity/blob/codex/hackathon-experience-polish/${s.source}`}
+                href={`https://github.com/subodhkant7/classequity/blob/codex/hosted-webhook-verification/${s.source}`}
                 target="_blank"
                 rel="noreferrer"
               >
                 Source: <code>{s.source}</code> ↗
               </a>
               <a
-                href={`https://github.com/subodhkant7/classequity/blob/codex/hackathon-experience-polish/docs/${s.doc}`}
+                href={`https://github.com/subodhkant7/classequity/blob/codex/hosted-webhook-verification/docs/${s.doc}`}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -149,14 +149,18 @@ export default function Technology() {
             </p>
             <p>
               <Check size={16} />
+              Genuine signed approval, capture and refund callbacks, with verified event replays.
+            </p>
+            <p>
+              <Check size={16} />
               Real AG Studio rendering, Gemini generation and contract-guided integrations.
             </p>
           </div>
           <div>
             <h3>Still to verify before release</h3>
             <p>
-              Public HTTPS deployment and genuine signed PayPal callbacks. Real WhatsApp delivery.
-              Production identity, treasury controls, audit hardening and operational monitoring.
+              Real WhatsApp delivery. Production identity, treasury controls, audit hardening and
+              operational monitoring.
             </p>
           </div>
         </div>

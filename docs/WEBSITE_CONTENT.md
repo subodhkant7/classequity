@@ -30,7 +30,7 @@ Primary entry is **Explore Interactive Demo**, which opens `/demo` without login
 | Recorded AI report replay                            | A local replay of a native report template, clearly labeled; actual prior Gemini tool execution is in `docs/studio-agent-evidence.json`                     |
 | Twilio                                               | Adapter/authentication verified; live message delivery unverified                                                                                           |
 | APIMatic                                             | Contract-guided development and generated PayPal SDK, not a runtime payment processor                                                                       |
-| Render                                               | Existing hosted PostgreSQL; web hosting/public HTTPS delivery pending                                                                                       |
+| Render                                               | Free HTTPS application and existing PostgreSQL; genuine signed sandbox callbacks and replay verification recorded separately                                |
 
 No impact statistics, testimonials, customer logos, partnerships, compliance certifications or AI payment-authority claims are used. Integration names identify actual tooling; they do not imply endorsement. Source links point into the private repository and require access.
 
@@ -39,3 +39,5 @@ No impact statistics, testimonials, customer logos, partnerships, compliance cer
 Museum/bus/learner illustration and social-preview SVG are original vectors authored for this product. Icons use the already-installed Lucide library. No stock photograph, purchased media, new font dependency or copied product design is used. `social-preview.png` is a browser-rendered export of the original SVG, not an application screenshot. Actual product captures are Playwright outputs under ignored `output/playwright/showcase/`.
 
 No video content or storyboard was prepared, following the explicit section 11 instruction.
+
+Hosted financial closure: the separately authorized Morgan USD 1 sandbox capture, duplicate-request check and one full refund are complete. Genuine signed approval/capture/refund callbacks matched the operation and provider readback; actual event resends left the REFUNDED ledger unchanged. Studio displayed USD 0.54 retained fees and −USD 0.54 net. The earlier transaction is unchanged. See [hosted verification](HOSTED_WEBHOOK_VERIFICATION.md) and the redacted lifecycle/redelivery evidence; no simulator or live payment is involved.
