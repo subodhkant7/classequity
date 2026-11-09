@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { db, closeDatabase } from '../src/db';
 import * as s from '../src/db/schema';
@@ -51,7 +52,7 @@ async function main() {
       {
         checkedAt: new Date().toISOString(),
         provider: 'PayPal sandbox',
-        operationId: result.operationId,
+        operationFingerprint: createHash('sha256').update(result.operationId).digest('hex'),
         orderCreated: !!result.approvalUrl,
         status: result.status,
         currency: 'USD',

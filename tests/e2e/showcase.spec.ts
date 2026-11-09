@@ -154,11 +154,7 @@ test('public AI tabs respond to arrow keys and technology claims are bounded', a
   await expect(page.getByRole('tab', { name: /question finds/ })).toBeFocused();
   await expect(page.getByRole('tabpanel')).toContainText('Illustrative Hindi answer');
   await page.goto('/technology');
-  await expect(
-    page.getByText(
-      /PostgreSQL hosted · web deployment pending|HTTPS application · PostgreSQL hosted/,
-    ),
-  ).toBeVisible();
+  await expect(page.getByText('HTTPS application · PostgreSQL hosted')).toBeVisible();
   await expect(page.getByText('Authentication verified · delivery unverified')).toBeVisible();
   await expect(page.getByText('Signed sandbox lifecycle verified', { exact: true })).toBeVisible();
   await noOverflow(page);

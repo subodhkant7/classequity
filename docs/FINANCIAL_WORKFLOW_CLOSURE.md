@@ -1,5 +1,7 @@
 # Financial workflow closure
 
+This document records an earlier implementation phase. See the [release manifest](RELEASE_MANIFEST.json) and [hosted verification](HOSTED_WEBHOOK_VERIFICATION.md) for current deployment and webhook status.
+
 Baseline and starting HEAD: `62f9df8a093e9cf0e1954ef338264296ecdf7481`. Remote fetch found no intervening main changes. Branch: `codex/financial-workflow-closure`. Published history is preserved. Final commit/push/PR identifiers are reported in the delivery message; this document does not attempt a self-referential commit hash.
 
 ## Corrections and evidence

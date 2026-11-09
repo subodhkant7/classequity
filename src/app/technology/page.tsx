@@ -59,12 +59,8 @@ const systems = [
   {
     name: 'Render',
     icon: Database,
-    tag: process.env.RENDER_EXTERNAL_URL
-      ? 'HTTPS application · PostgreSQL hosted'
-      : 'PostgreSQL hosted · web deployment pending',
-    copy: process.env.RENDER_EXTERNAL_URL
-      ? 'The application runs over HTTPS on a free Render web service with the existing PostgreSQL ledger. Hosting and webhook registration do not prove signed event delivery; that gate is recorded separately in the verification documentation.'
-      : 'The existing hosted PostgreSQL stores the application ledger. Public HTTPS deployment and genuine signed webhook delivery are separate verification gates.',
+    tag: 'HTTPS application · PostgreSQL hosted',
+    copy: 'The hosted ClassEquity site runs over HTTPS on Render with PostgreSQL. The verification report records the deployed revision and the genuine signed PayPal event delivery. The local showcase uses a separate fictional database.',
     source: 'src/db/schema.ts',
     doc: 'HOSTED_WEBHOOK_VERIFICATION.md',
   },

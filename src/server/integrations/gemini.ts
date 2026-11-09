@@ -98,8 +98,10 @@ export async function assistant(
         maxOutputTokens: 1000,
       },
     });
+    const text = result.text?.trim();
+    if (!text) throw new Error('Gemini returned no parent answer.');
     await assessed(a, 'PARENT_ASSISTANT', model, 'COMPLETED');
-    return { text: result.text || local, source: 'Gemini · school-grounded', model };
+    return { text, source: 'Gemini · school-grounded', model };
   } catch {
     await assessed(a, 'PARENT_ASSISTANT', 'unavailable', 'FALLBACK');
     return { text: local, source: 'Grounded local assistant · Gemini unavailable', model: null };

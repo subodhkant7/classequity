@@ -1,38 +1,38 @@
-# Hackathon readiness
+# Hackathon release readiness
 
-## Implemented and hosted for sandbox evaluation
+Submission closes November 12 at noon Pacific, or November 13 at 01:30 IST. Judging ends December 15 at 08:00 Pacific, or 21:30 IST. The rules accept a functional hosted demo or complete setup instructions and require public source with a detectable open-source licence. [Official rules](https://paypalaihackathon.devpost.com/rules)
 
-- Public homepage, interactive explanation, six-chapter guided demo and technology/evidence page.
-- Deterministic pricing/funding illustrations, local quote review and consent interaction, privacy perspectives and payment-state exploration.
-- Existing real AG Studio component in public presentation mode: synthetic aggregates, cloud AI disabled, persistence disabled. Authenticated Studio behavior is retained.
-- Finite CSS motion, reduced-motion and skip controls, keyboard navigation, responsive menu, native accessible application dialog and mobile drawer handling.
-- Project/story/website/design/acceptance documentation, revised README and submission review draft.
-- Original SVG identity/social assets and real browser captures. Derived application screenshots remain ignored.
+## Judge access
 
-## Evidence boundary
+| Surface                                           | What judges can exercise                                                                                                                                  |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public homepage, calculators and six-chapter tour | Client-side scenarios, recorded sandbox evidence, explicitly illustrative or recorded AI, and editable native Studio on fictional aggregates              |
+| Fictional roles from `/login`                     | Actual persisted demo workflow for school, family and finance, with synthetic payments and role restrictions                                              |
+| Restricted sandbox                                | Password-protected operator access, tenant isolation and authenticated Gemini adapter. Judge access uses fictional roles instead of operator credentials. |
+| Clean local showcase                              | `npm ci` and `npm run showcase`, which build a reproducible fictional workspace at localhost:3100                                                         |
 
-| Capability              | Honest status                                                                                                              |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Public experience       | IMPLEMENTED; browser verification recorded in delivery report                                                              |
-| PayPal sandbox          | Prior evidence preserved; separately authorized hosted USD 1 capture/full refund and duplicate protection verified         |
-| Gemini                  | Prior generation, extraction and report-agent evidence preserved; public tour uses labeled illustrations/recorded outcomes |
-| AG Studio / AG Grid     | Real framework components, not screenshot substitutes                                                                      |
-| Twilio                  | Adapter/authentication implemented; actual delivery unverified                                                             |
-| APIMatic                | Contract-guided development and generated official PayPal SDK; not runtime processing                                      |
-| Render                  | Free HTTPS application at https://classequity.onrender.com; existing PostgreSQL preserved                                  |
-| Signed public callbacks | Genuine signed approval/capture/refund and actual replays verified; see HOSTED_WEBHOOK_VERIFICATION.md                     |
-| Production release      | Requires identity/treasury/audit/operations hardening and broader accessibility review                                     |
+The first hosted browser run encountered Render's cold-start screen and delayed asset loading. A new session after health readiness passed the hosted regression suite. The release manifest records the tested revision, counts and evidence. [Release manifest](RELEASE_MANIFEST.json)
 
-## Experience-phase verification (historical)
+## Provider verification
 
-Starting financial tests: 39. Added presentation tests: 6. Verified current unit/service total: **45 passed across five files**. Browser suite: **12 passed** (original 5 retained plus public/accessibility coverage). Typecheck, lint (zero warnings), production build with DATABASE_URL empty, and secret scan passed. Browser QA was run at desktop and 390px with optional local trace storage disabled after a disk-space failure; all assertions were retained. Motion-frame, reduced-motion and representative contrast measurements are in `experience-verification.json`. Exact final CI URL and commit are in the delivery report. No provider integration smoke command is needed for this presentation-only phase; it would add external calls without verifying a UI change.
+Genuine PayPal Sandbox approval, capture and refund callbacks were verified previously, including independent readback and genuine redelivery. The release preservation read compared the complete sandbox ledger to the previous fingerprint. [Hosted webhook report](HOSTED_WEBHOOK_VERIFICATION.md)
 
-The later hosted phase authorizes the free sandbox deployment and exact callback registration. Deployment source, current CI, nine production browser checks, restart/persistence checks and completed genuine event proof are recorded in `HOSTED_WEBHOOK_VERIFICATION.md`. Public demo cloud AI is restricted; Twilio credentials and the unconfirmed public-use Studio trial are omitted. No paid upgrade, live payment, automatic submission, repository publication or merge is authorized. PR #1 and #2 remain unmerged; draft PR #3 targets the experience branch. The original and hosted USD 1 authorizations are consumed; any further capture/refund requires fresh exact-amount authorization and manual buyer approval.
+The authenticated Gemini adapter limits quotation extraction to admin or finance, grounds parent answers in owned approved facts and restricts Studio turns to school roles and aggregates. Uploads require supported file contents and human review. Quota, input size, output token and timeout limits bound calls. Public hosted sessions use the grounded local assistant, and the tour uses browser-only examples. Google Cloud key ownership lookup returned HTTP 403 `AUTH_PERMISSION_DENIED`, so the account could not prove free billing for the configured key. Hosted generation remains unverified. With the owner confirming the exact project is on the free tier, a bounded check can upload one fictional quotation for review, ask one English and one Hindi question, and request one aggregate Studio report in the restricted workspace. Use the review screen and presentation tools without approving pricing or changing funding.
 
-No video preparation is included, as explicitly requested. VIDEO_STORYBOARD.md is intentionally not created. Existing sandbox proof is a technical verification example, not adoption or real school-impact evidence.
+Twilio delivery remains unverified. Hosted inbound and status routes reject unsigned requests. The implementation checks sender account and pairing, deduplicates inbound MessageSid, limits conversation requests and uses local approved facts for real replies. Follow the optional authorized sandbox checklist in the integration guide. [Twilio integration](TWILIO_INTEGRATION.md)
 
-## Hosted follow-up verification
+## Database continuity
 
-The hosted verification and current release revisions are recorded in `hosted-deployment-evidence.json`. Complete CI passed 60 unit/service tests, six independent-process financial concurrency scenarios and all 12 browser checks against the production server. Nine production HTTPS smoke checks passed, including 390px/reduced motion, public-tour isolation, authorization, webhook configuration and painted native Studio cells with exact currency precision. Original sandbox ledger rows are unchanged. The new USD 1 obligation is fully REFUNDED. Genuine approval/capture/refund signatures, delivery, readback and actual redelivery are verified. Details and exact CI link: `HOSTED_WEBHOOK_VERIFICATION.md`.
+The existing Singapore PostgreSQL 17 instance is available. The free plan's 30-day lifetime ends December 5 at 02:18 IST. Its grace period is for a paid upgrade and does not keep the database accessible. Render allows one active free PostgreSQL instance per workspace. [Render free plan](https://render.com/docs/free#free-postgres) · [Free instance replacement policy](https://render.com/changelog/free-postgresql-instances-now-expire-after-30-days-previously-90)
 
-Hosted financial closure: the separately authorized Morgan USD 1 sandbox capture, duplicate-request check and one full refund are complete. Genuine signed approval/capture/refund callbacks matched the operation and provider readback; actual event resends left the REFUNDED ledger unchanged. Studio displayed USD 0.54 retained fees and −USD 0.54 net. The earlier transaction is unchanged. See [hosted verification](HOSTED_WEBHOOK_VERIFICATION.md) and the redacted lifecycle/redelivery evidence; no simulator or live payment is involved.
+Both the pre-deployment archive and a fresh private `pg_dump` custom archive were restored into separate local PostgreSQL 17.11 databases. The archive includes 25 ClassEquity tables and three applied migrations. Restore with `pg_restore --exit-on-error --single-transaction --no-owner --no-acl` into a fresh database using its owner role. The rehearsal used a private loopback cluster and required only the standard `plpgsql` extension. The fresh archive retains the two refunded captures, retained fees and three processed signed PayPal events. Migration checksums match the repository SQL. Keep archives private and make a fresh archive before any cutover.
+
+Use the tested local showcase as the independent judge fallback for the full judging period. For continuity at the hosted URL, the owner can approve a paid upgrade of the existing database before expiry, or approve provisioning a replacement and switching the web service's database connection. A replacement in the same workspace on the free plan can be created only after the current instance expires, so it entails an interruption. An earlier cutover requires an authorized compatible provider or eligible workspace. Rehearse with PostgreSQL 17 and sufficient storage, export a fresh private backup, restore into an empty target, compare migrations, ledger and inbox fingerprints, then run the read-only release preflight. After an approved connection switch, verify health, hosted role access and the existing webhook receiver. Preserve the old archive and connection recovery details. No availability guarantee extends the present free database past its expiry.
+
+## Publication and submission
+
+Review the final release manifest and third-party notices. The source has a canonical MIT licence and depends on commercial AG Studio packages under vendor terms. AG Grid describes a judging-period evaluation arrangement. Check coverage for broader public operation with the vendor. [Third-party notices](../THIRD_PARTY_NOTICES.md)
+
+The source audit used Gitleaks plus a targeted scan of reachable Git blobs against configured credentials, private handoff identifiers and artifact patterns. An early redacted-evidence file carried an internal application operation UUID. It was replaced at the release tip by a fingerprint. The historic ID is an internal correlation value and every operation lookup requires authorization. The other internal matches identify fictional fixtures. No checkout URL, buyer detail or credential was found in the audited history. The tracked binary assets are original quote and social-preview exports. Browser sessions and database archives are excluded from source.
+
+Approve repository visibility separately and supply the public source URL and final YouTube URL for manual Devpost entry. Use the tested clean local setup as an alternate access path and attach the reviewed application screenshots. [Submission package](SUBMISSION_DRAFT.md)

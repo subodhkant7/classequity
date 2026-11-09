@@ -1,5 +1,7 @@
 # Implementation and financial closure report
 
+This document records an earlier implementation phase. See the [release manifest](RELEASE_MANIFEST.json) and [hosted verification](HOSTED_WEBHOOK_VERIFICATION.md) for current deployment and webhook status.
+
 Current hosted follow-up: the public sandbox and genuine signed approval/capture/refund callbacks are verified. Exact revisions, separate authorization, independent readback, native Studio and actual resend evidence are in [HOSTED_WEBHOOK_VERIFICATION.md](HOSTED_WEBHOOK_VERIFICATION.md). This report records the earlier implementation and financial-closure checkpoints.
 
 Build date: November 5, 2026, Asia/Kolkata. Workspace: `/Users/urjasoft/Documents/ClassEquity`. Current branch: `codex/financial-workflow-closure`; baseline `62f9df8a093e9cf0e1954ef338264296ecdf7481`. Final commit is recorded in the handoff response (`git rev-parse HEAD`); this report does not embed a self-referential commit hash.
