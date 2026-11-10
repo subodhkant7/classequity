@@ -8,7 +8,7 @@ The hosted site offers a six-chapter interactive tour and a working fictional wo
 
 The tour computes pricing and funding in the browser. Its AI examples identify recorded or illustrative output, and the PayPal timeline identifies recorded sandbox evidence. The fictional workspace persists demo activity and simulates payments. The restricted sandbox workspace supports actual sandbox payment operations and configured Gemini access. Judges can use every demo role without credentials.
 
-Render may show a wake-up screen on the first visit. The free database expires December 5, 2026 at 02:18 IST, during judging. The independently reproducible local showcase below is the continuity path. [Judge access and recovery plan](docs/HACKATHON_READINESS.md)
+Render may show a wake-up screen on the first visit. The hosted app uses paid Render PostgreSQL. The independently reproducible local showcase is available as a judge fallback. [Judge access and recovery plan](docs/HACKATHON_READINESS.md)
 
 ## Run locally from a clean checkout
 
@@ -39,6 +39,6 @@ Point `DATABASE_URL` at a disposable PostgreSQL 17 database named `classequity` 
 
 - **PayPal Sandbox.** The hosted $1 capture and full refund have independent provider readbacks and three genuine signed callbacks. PayPal retained $0.54 in fees. Duplicate capture requests and genuine event resends preserved the ledger. [Hosted verification](docs/HOSTED_WEBHOOK_VERIFICATION.md)
 - **Gemini and AG Studio.** Earlier configured tests observed Gemini quotation extraction, parent assistance and agent-created editable reports. The hosted tour and fictional workspace use local or recorded examples. The restricted hosted Gemini adapter is configured, and its hosted generation verification is pending billing-tier confirmation. [Architecture](docs/ARCHITECTURE.md) · [AG Studio integration](docs/AG_STUDIO_INTEGRATION.md)
-- **Twilio and APIMatic.** Twilio routing and signature validation are implemented, and live WhatsApp delivery remains unverified. APIMatic context informed both API integrations and the official PayPal server SDK is APIMatic-generated. [Twilio integration](docs/TWILIO_INTEGRATION.md) · [APIMatic integration](docs/APIMATIC_INTEGRATION.md)
+- **Twilio and APIMatic.** Twilio confirmed delivery of one authorized WhatsApp Sandbox message sent through the ClassEquity adapter. Hosted callback delivery remains unverified. APIMatic context informed both API integrations and the official PayPal server SDK is APIMatic-generated. [Twilio integration](docs/TWILIO_INTEGRATION.md) · [APIMatic integration](docs/APIMATIC_INTEGRATION.md)
 
 [Product story](docs/PRODUCT_STORY.md) · [Security and limitations](docs/SECURITY.md) · [Submission materials](docs/SUBMISSION_DRAFT.md) · [Release identity](docs/RELEASE_MANIFEST.json) · [MIT licence](LICENSE)

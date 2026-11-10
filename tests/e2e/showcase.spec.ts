@@ -155,7 +155,10 @@ test('public AI tabs respond to arrow keys and technology claims are bounded', a
   await expect(page.getByRole('tabpanel')).toContainText('Illustrative Hindi answer');
   await page.goto('/technology');
   await expect(page.getByText('HTTPS application · PostgreSQL hosted')).toBeVisible();
-  await expect(page.getByText('Authentication verified · delivery unverified')).toBeVisible();
+  await expect(page.getByText('Sandbox delivery verified', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Hosted signed callbacks remain unverified/)).toBeVisible();
+  await expect(page.getByText('Local generation verified', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Hosted generation remains unverified/)).toBeVisible();
   await expect(page.getByText('Signed sandbox lifecycle verified', { exact: true })).toBeVisible();
   await noOverflow(page);
   await page.screenshot({

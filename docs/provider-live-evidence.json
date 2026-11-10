@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "baseline": "f7e5d7f7c2b921e978fa28f2184b5f3a7dc691a3",
+  "localEnvironment": "Loopback and isolated PGlite with fictional data",
+  "configuredEnvironment": {
+    "geminiApiKey": true,
+    "geminiModel": true,
+    "twilioAccountSid": true,
+    "twilioAuthToken": true,
+    "twilioWhatsappFrom": true,
+    "appUrl": true
+  },
+  "gemini": {
+    "classification": "GEMINI_APPLICATION_VERIFIED",
+    "providerClassification": "GEMINI_PROVIDER_VERIFIED",
+    "provider": {
+      "modelDiscoveryHttp": 200,
+      "model": "gemini-2.5-flash-lite",
+      "generationSupported": true,
+      "generationAttempted": true,
+      "generationHttp": 200,
+      "elapsedMs": 1237,
+      "providerStatus": null,
+      "finishReason": "STOP",
+      "nonempty": true,
+      "matchedVerificationText": true,
+      "inputTokens": 14,
+      "outputTokens": 9
+    },
+    "application": {
+      "quotation": {
+        "verified": true,
+        "http": 200,
+        "elapsedMs": 4512,
+        "source": "Gemini gemini-2.5-flash-lite",
+        "persistedStatus": "REVIEW",
+        "vendor": "Exploratorium Learning Visits",
+        "currency": "USD",
+        "tiers": [
+          {
+            "min": 1,
+            "cents": 3200
+          },
+          {
+            "min": 20,
+            "cents": 2700
+          },
+          {
+            "min": 30,
+            "cents": 2300
+          }
+        ],
+        "humanReviewRequired": true,
+        "capacity": 40,
+        "date": "2026-11-20",
+        "fixture": "Text-preserving PDF generated from public/sample-vendor-quote.svg",
+        "pngIssuerOutcome": "Document label returned instead of issuer. The corrected app rejected it with HTTP 502 QUOTE_ISSUER_UNRESOLVED."
+      },
+      "parent_en": {
+        "verified": true,
+        "http": 200,
+        "elapsedMs": 1292,
+        "source": "Gemini · school-grounded",
+        "model": "gemini-2.5-flash-lite",
+        "correctPrice": true,
+        "correctDate": true,
+        "containsHindiScript": false,
+        "text": "The approved trip date is November 20, 2026, and the group seat price is $23.00."
+      },
+      "parent_hi": {
+        "verified": true,
+        "http": 200,
+        "elapsedMs": 1085,
+        "source": "Gemini · school-grounded",
+        "model": "gemini-2.5-flash-lite",
+        "correctPrice": true,
+        "correctDate": true,
+        "containsHindiScript": true,
+        "text": "20 नवंबर 2026 को एक्सप्लोरेटोरियम साइंस म्यूजियम की यात्रा के लिए प्रति छात्र अनुमानित मूल्य $23.00 है।"
+      },
+      "studio": {
+        "verified": true,
+        "selectedReport": "AI · Trip funding comparison",
+        "editableReportReopened": true,
+        "turns": [
+          {
+            "http": 200,
+            "model": "gemini-2.5-flash-lite",
+            "status": "completed",
+            "code": null,
+            "error": null,
+            "outputs": ["function_call"],
+            "tools": ["build_financial_view"]
+          },
+          {
+            "http": 200,
+            "model": "gemini-2.5-flash-lite",
+            "status": "completed",
+            "code": null,
+            "error": null,
+            "outputs": ["message"],
+            "tools": []
+          }
+        ],
+        "uncaughtPageErrors": 0
+      },
+      "financialProjectionsPreserved": true
+    },
+    "hostedGenerationVerified": false,
+    "billingTierConfirmed": false
+  },
+  "twilio": {
+    "classification": "WHATSAPP_DELIVERY_VERIFIED",
+    "accountClassification": "TWILIO_ACCOUNT_VERIFIED",
+    "accountType": "Trial",
+    "accountStatus": "active",
+    "senderFormatValid": true,
+    "sharedSandboxSender": true,
+    "destinationFingerprint": "58b04f1919fd241994b2cb6ef4b7de1b2de4fb085eff5a2f953f0f445ae65dea",
+    "observedJoinAt": "2026-11-10T06:59:06.000Z",
+    "lastMatchingInboundAt": "2026-11-10T06:59:06.000Z",
+    "joinWithin72Hours": true,
+    "serviceWindowOpen": true,
+    "optOutAfterJoin": false,
+    "positiveExistingBalance": true,
+    "sendAttempts": 1,
+    "delivery": "WHATSAPP_DELIVERY_VERIFIED",
+    "messageSidFingerprint": "2932ece4a317d498a8ce0115a1bc2b0fe128779b3e02aa52899d11f1f9cd0a2c",
+    "localSignedFixtureVerification": true,
+    "hostedSignedCallbackVerified": false,
+    "checkedAt": "2026-11-10T07:01:12.504Z",
+    "sendClassification": "WHATSAPP_SEND_ACCEPTED",
+    "applicationEndToEndClassification": "TWILIO_PARTIAL",
+    "preRejoin": {
+      "checkedAt": "2026-11-10T06:37:16.665Z",
+      "observedJoinAt": "2026-11-04T20:22:48.000Z",
+      "sendAttempts": 0
+    },
+    "providerAccepted": true,
+    "testIdentity": "CE-WA-VERIFY",
+    "attemptedAt": "2026-11-10T07:00:44.590Z",
+    "providerAcceptedAt": "2026-11-10T07:00:45.594Z",
+    "initialStatus": "queued",
+    "deliveryConfirmedAt": "2026-11-10T07:00:48.264Z",
+    "latestProviderStatus": "delivered",
+    "readReceiptObserved": false,
+    "recipientReceiptConfirmed": false,
+    "exactProviderReadbackIdentityMatched": true,
+    "statusObservations": [
+      {
+        "checkedAt": "2026-11-10T07:00:45.917Z",
+        "status": "sending",
+        "errorCode": null
+      },
+      {
+        "checkedAt": "2026-11-10T07:00:48.264Z",
+        "status": "delivered",
+        "errorCode": null
+      },
+      {
+        "checkedAt": "2026-11-10T07:01:12.504Z",
+        "status": "delivered",
+        "errorCode": null
+      }
+    ]
+  },
+  "localRegression": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "unitAndServicePassed": 67,
+    "browserPassed": 12,
+    "productionBuild": "passed",
+    "secretScanMatches": 0
+  }
+}

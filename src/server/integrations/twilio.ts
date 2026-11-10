@@ -1,4 +1,5 @@
 import twilio from 'twilio';
+import { isIP } from 'node:net';
 import { AppError } from '../errors';
 export function verifyTwilio(
   signature: string,
@@ -7,6 +8,23 @@ export function verifyTwilio(
   token = process.env.TWILIO_AUTH_TOKEN || '',
 ) {
   return Boolean(token && signature) && twilio.validateRequest(token, signature, url, params);
+}
+export function whatsappStatusCallback(appUrl = process.env.APP_URL || '') {
+  if (!URL.canParse(appUrl)) return undefined;
+  const url = new URL(appUrl);
+  const hostname = url.hostname.replace(/\.$/, '');
+  if (
+    url.protocol !== 'https:' ||
+    url.username ||
+    url.password ||
+    !hostname.includes('.') ||
+    hostname.endsWith('.localhost') ||
+    hostname.endsWith('.local') ||
+    hostname.includes('_') ||
+    isIP(hostname)
+  )
+    return undefined;
+  return new URL('/api/webhooks/twilio/status', url.origin).href;
 }
 export async function sendWhatsapp(to: string, body: string) {
   if (
@@ -24,7 +42,7 @@ export async function sendWhatsapp(to: string, body: string) {
       to,
       from: process.env.TWILIO_WHATSAPP_FROM,
       body,
-      statusCallback: `${process.env.APP_URL}/api/webhooks/twilio/status`,
+      statusCallback: whatsappStatusCallback(),
     });
   } catch (e) {
     const code = typeof e === 'object' && e && 'code' in e ? String(e.code) : 'UNKNOWN';
