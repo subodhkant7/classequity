@@ -19,7 +19,7 @@ Genuine PayPal Sandbox approval, capture and refund callbacks were verified prev
 
 Real Gemini generation was verified with the local credentials on November 10. The isolated application verified English and Hindi parent responses, structured quotation extraction from the original fictional quote rendered to PDF, and a native editable AG Studio report. The PNG issuer remained unreliable and requires review. Hosted generation remains unverified. [Provider verification](PROVIDER_LIVE_VERIFICATION.md)
 
-Twilio authenticated against the active trial account. Delivery remains unverified because the authorized phone must rejoin the Sandbox and reopen its 24-hour reply window. Local signed fixtures verify pairing, replay and delivery-status handling. The hosted routes previously rejected unsigned requests. [Provider verification](PROVIDER_LIVE_VERIFICATION.md) · [Hosted callback checklist](TWILIO_INTEGRATION.md)
+Twilio confirmed delivery of one authorized WhatsApp Sandbox message sent through the ClassEquity adapter after the receiver rejoined. Local signed fixtures verify pairing, replay and delivery-status handling. The hosted routes previously rejected unsigned requests, and genuine hosted callbacks remain unverified. [Provider verification](PROVIDER_LIVE_VERIFICATION.md) · [Hosted callback checklist](TWILIO_INTEGRATION.md)
 
 ## Database continuity
 

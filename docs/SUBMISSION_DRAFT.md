@@ -29,7 +29,7 @@ Gemini extracts fictional vendor quotations, answers approved trip questions in 
 
 ## Tools and innovation
 
-AG Studio and AG Grid render editable reports and native reconciliation charts and grids. ClassEquity adds Group Unlock, Funding Assurance and Payment Integrity widgets. APIMatic context guided the PayPal and Twilio integrations, and the official PayPal server SDK is APIMatic-generated. Render hosts the HTTPS application and PostgreSQL. The WhatsApp adapter covers pairing, English/Hindi replies and secure links. Hosted real delivery remains unverified.
+AG Studio and AG Grid render editable reports and native reconciliation charts and grids. ClassEquity adds Group Unlock, Funding Assurance and Payment Integrity widgets. APIMatic context guided the PayPal and Twilio integrations, and the official PayPal server SDK is APIMatic-generated. Render hosts the HTTPS application and PostgreSQL. The WhatsApp adapter covers pairing, English/Hindi replies and secure links. Twilio confirmed one Sandbox delivery through the ClassEquity adapter. Hosted inbound and status callbacks remain unverified.
 
 ClassEquity combines consent-bounded group pricing with confidential assistance and net funding. A lower tier can help families afford a trip. Finance can account for fees and refunds before marking seats covered, while other roles see only their permitted views.
 

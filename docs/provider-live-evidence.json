@@ -110,25 +110,59 @@
     "billingTierConfirmed": false
   },
   "twilio": {
-    "classification": "TWILIO_PARTIAL",
+    "classification": "WHATSAPP_DELIVERY_VERIFIED",
     "accountClassification": "TWILIO_ACCOUNT_VERIFIED",
     "accountType": "Trial",
     "accountStatus": "active",
     "senderFormatValid": true,
     "sharedSandboxSender": true,
     "destinationFingerprint": "58b04f1919fd241994b2cb6ef4b7de1b2de4fb085eff5a2f953f0f445ae65dea",
-    "observedJoinAt": "2026-11-04T20:22:48.000Z",
-    "lastMatchingInboundAt": "2026-11-04T20:22:48.000Z",
-    "joinWithin72Hours": false,
-    "serviceWindowOpen": false,
+    "observedJoinAt": "2026-11-10T06:59:06.000Z",
+    "lastMatchingInboundAt": "2026-11-10T06:59:06.000Z",
+    "joinWithin72Hours": true,
+    "serviceWindowOpen": true,
     "optOutAfterJoin": false,
     "positiveExistingBalance": true,
-    "sendAttempts": 0,
-    "delivery": "DELIVERY_UNVERIFIED",
-    "messageSidFingerprint": null,
+    "sendAttempts": 1,
+    "delivery": "WHATSAPP_DELIVERY_VERIFIED",
+    "messageSidFingerprint": "2932ece4a317d498a8ce0115a1bc2b0fe128779b3e02aa52899d11f1f9cd0a2c",
     "localSignedFixtureVerification": true,
     "hostedSignedCallbackVerified": false,
-    "checkedAt": "2026-11-10T06:37:16.665Z"
+    "checkedAt": "2026-11-10T07:01:12.504Z",
+    "sendClassification": "WHATSAPP_SEND_ACCEPTED",
+    "applicationEndToEndClassification": "TWILIO_PARTIAL",
+    "preRejoin": {
+      "checkedAt": "2026-11-10T06:37:16.665Z",
+      "observedJoinAt": "2026-11-04T20:22:48.000Z",
+      "sendAttempts": 0
+    },
+    "providerAccepted": true,
+    "testIdentity": "CE-WA-VERIFY",
+    "attemptedAt": "2026-11-10T07:00:44.590Z",
+    "providerAcceptedAt": "2026-11-10T07:00:45.594Z",
+    "initialStatus": "queued",
+    "deliveryConfirmedAt": "2026-11-10T07:00:48.264Z",
+    "latestProviderStatus": "delivered",
+    "readReceiptObserved": false,
+    "recipientReceiptConfirmed": false,
+    "exactProviderReadbackIdentityMatched": true,
+    "statusObservations": [
+      {
+        "checkedAt": "2026-11-10T07:00:45.917Z",
+        "status": "sending",
+        "errorCode": null
+      },
+      {
+        "checkedAt": "2026-11-10T07:00:48.264Z",
+        "status": "delivered",
+        "errorCode": null
+      },
+      {
+        "checkedAt": "2026-11-10T07:01:12.504Z",
+        "status": "delivered",
+        "errorCode": null
+      }
+    ]
   },
   "localRegression": {
     "typecheck": "passed",
