@@ -3,9 +3,9 @@
   "release": "ClassEquity PayPal AI Hackathon 2026",
   "status": "READY_FOR_PUBLICATION_APPROVAL",
   "startingSourceCommit": "9d070f4942f682eeda9a58936d1f44768d608763",
-  "consolidatedSourceCommit": "b1425259083e99f2db7b9cd6b4ecfa42816d3bd4",
+  "consolidatedSourceCommit": "16f3731b3923c2b381c500e791d611f75c2132d6",
   "githubActions": {
-    "consolidatedSource": "https://github.com/subodhkant7/classequity/actions/runs/42612212059",
+    "consolidatedSource": "https://github.com/subodhkant7/classequity/actions/runs/42866170502",
     "deployedRuntime": "https://github.com/subodhkant7/classequity/actions/runs/42390565933"
   },
   "deployment": {
@@ -18,15 +18,18 @@
     "verifiedDatabaseReady": true,
     "sourceIsAncestorOfConsolidatedCommit": true,
     "runtimeSourcePathsDifferingFromConsolidated": [
+      "src/app/api/[...path]/route.ts",
       "src/app/technology/page.tsx",
-      "src/server/integrations/gemini.ts"
+      "src/server/integrations/gemini.ts",
+      "src/server/integrations/twilio.ts",
+      "src/server/messaging.ts"
     ]
   },
   "verification": {
     "localCleanInstall": true,
     "typecheck": true,
     "lint": true,
-    "unitAndServicePassed": 60,
+    "unitAndServicePassed": 74,
     "financialConcurrencyPassed": 6,
     "productionBrowserPassed": 12,
     "hostedBrowserPassed": 10,
@@ -49,13 +52,20 @@
       "credentialFindings": 0,
       "historicInternalOperationIdRedactedAtTip": true,
       "syntheticPrMergeTreesMatchedAuditedHeads": true,
-      "githubDetectedLicence": "MIT"
-    }
+      "githubDetectedLicence": "MIT",
+      "currentProviderAudit": {
+        "scanner": "Gitleaks 8.30.1 plus targeted reachable-blob and local artifact scan",
+        "credentialFindings": 0,
+        "privateRecipientAndMessageSidMatches": 0,
+        "priorDisposableSessionRejectedHttp": 401
+      }
+    },
+    "hostedBrowserRuntimeCommit": "e673ad86537315167037f877386be6a9ede599ad"
   },
   "database": {
     "engine": "PostgreSQL 17",
-    "plan": "Render Free",
-    "expiresAt": "2026-12-04T20:48:15.892628Z",
+    "plan": "Render paid 0.1c-256mb",
+    "expiresAt": null,
     "migrations": [
       {
         "name": "0000_kind_stranger.sql",
@@ -83,7 +93,10 @@
       "feeCents": 108,
       "processedPayPalEvents": 3
     },
-    "judgeFallback": "npm ci && npm run showcase"
+    "judgeFallback": "npm ci && npm run showcase",
+    "previousFreePlanExpiryAt": "2026-12-04T20:48:15.892628Z",
+    "planReadbackStatus": "available",
+    "planReadbackDate": "2026-11-10"
   },
   "paypalSandbox": {
     "verification": "GENUINE_SIGNED_APPROVAL_CAPTURE_REFUND_AND_REDELIVERY",
@@ -98,9 +111,10 @@
     ]
   },
   "integrations": {
-    "geminiHosted": "UNVERIFIED_BILLING_TIER_KEY_LOOKUP_HTTP_403",
+    "geminiHosted": "HOSTED_GENERATION_UNVERIFIED",
+    "previousHostedGeminiBillingTierLookupHttp": 403,
     "geminiRecordedEvidence": ["ai-evidence.json", "studio-agent-evidence.json"],
-    "twilioHosted": "UNSIGNED_INBOUND_AND_STATUS_REJECTED_DELIVERY_UNVERIFIED",
+    "twilioHosted": "UNSIGNED_INBOUND_AND_STATUS_REJECTED_HOSTED_SIGNED_CALLBACKS_UNVERIFIED",
     "agStudio": "NATIVE_REPORTS_BROWSER_VERIFIED_VENDOR_EVALUATION_TERMS",
     "apimatic": "API_CONTEXT_AND_GENERATED_PAYPAL_SDK",
     "geminiModelDiscovery": {
@@ -110,19 +124,23 @@
     },
     "hostedGeminiConfigured": true,
     "hostedPublicGroundedEnglishAndHindi": true,
-    "hostedTwilioCredentialsConfigured": false
+    "hostedTwilioCredentialsConfigured": false,
+    "geminiProvider": "GEMINI_PROVIDER_VERIFIED_LOCALLY",
+    "geminiApplication": "GEMINI_APPLICATION_VERIFIED_LOCALLY",
+    "twilioOutbound": "WHATSAPP_SANDBOX_DELIVERY_VERIFIED",
+    "providerEvidence": "provider-live-evidence.json"
   },
   "knownLimitations": [
-    "Manual deployment and Render cold starts",
-    "Free database expiry during judging",
-    "Hosted Gemini key-project billing access denied",
-    "Twilio delivery unverified",
+    "Manual deployment and Render web service cold starts",
+    "Hosted Gemini generation unverified",
+    "Gemini quotation PNG issuer may require manual entry",
+    "Genuine hosted Twilio signed callbacks unverified",
     "Sandbox operator uses a shared password",
     "AG Studio vendor licence applies",
     "Publication and submission require owner action"
   ],
-  "recordedAt": "2026-11-09T11:51:52.850042+00:00",
-  "identityNote": "The manifest follow-up is metadata only. Its parent is the consolidated application commit and the deployed revision is recorded separately.",
+  "recordedAt": "2026-11-10T17:38:45.412Z",
+  "identityNote": "The PR #4 merge SHA identifies the verified application tree on main. This follow-up changes release metadata only. The hosted runtime uses the separately recorded SHA.",
   "pullRequests": [
     {
       "number": 3,
@@ -141,6 +159,13 @@
       "mergeCommit": "b1425259083e99f2db7b9cd6b4ecfa42816d3bd4",
       "verifiedHead": "641bf06e4aadd77a7902e538de259580ff34c0b9",
       "gateCi": "https://github.com/subodhkant7/classequity/actions/runs/42611571629"
+    },
+    {
+      "number": 4,
+      "initiallyRequestedHead": "7c405470456d798aee0a80c3041d41aa01bfeb38",
+      "verifiedHead": "280fdd0078edacf4e4ce81dec1ab7f2eb44d7820",
+      "mergeCommit": "16f3731b3923c2b381c500e791d611f75c2132d6",
+      "gateCi": "https://github.com/subodhkant7/classequity/actions/runs/42865211455"
     }
   ],
   "submissionAssets": [
@@ -164,5 +189,14 @@
       "file": "05-parent-portal-mobile.png",
       "sha256": "1a6126c7a93db9c45b787bcea00b88f719164a2fa79c5a7760a79e1f8eda707a"
     }
-  ]
+  ],
+  "releaseIntegration": {
+    "previousMainCommit": "f7e5d7f7c2b921e978fa28f2184b5f3a7dc691a3",
+    "mainCommitAtMerge": "16f3731b3923c2b381c500e791d611f75c2132d6",
+    "postMergeCi": {
+      "conclusion": "success",
+      "url": "https://github.com/subodhkant7/classequity/actions/runs/42866170502"
+    },
+    "liveProviderOperations": 0
+  }
 }
