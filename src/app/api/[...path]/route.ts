@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z, ZodError } from 'zod';
-import { and, eq, gt, isNull, desc } from 'drizzle-orm';
+import { and, eq, gt, isNull, desc, inArray } from 'drizzle-orm';
 import type { AgLlmRequest } from 'ag-studio';
 import { db } from '@/db';
 import * as s from '@/db/schema';
@@ -42,6 +42,16 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const json = (value: unknown) =>
   NextResponse.json(value, { headers: { 'Cache-Control': 'no-store' } });
+const whatsappStatusStages = [
+  ['unknown'],
+  ['accepted'],
+  ['queued'],
+  ['sending'],
+  ['sent'],
+  ['failed', 'undelivered'],
+  ['delivered'],
+  ['read'],
+];
 async function body(req: NextRequest) {
   const raw = await req.text();
   if (raw.length > 400000) throw new AppError('Request is too large.', 413);
@@ -457,12 +467,16 @@ async function webhook(req: NextRequest, route: string) {
     const raw = await req.text();
     if (raw.length > 30000) throw new AppError('Payload too large', 413);
     const params = Object.fromEntries(new URLSearchParams(raw));
-    const url = `${process.env.APP_URL}/api/${route}`;
+    const url = new URL(`/api/${route}`, process.env.APP_URL || 'http://localhost:3000').href;
     if (!verifyTwilio(req.headers.get('x-twilio-signature') || '', url, params))
       throw new AppError('Twilio signature rejected', 401);
     if (params.AccountSid !== process.env.TWILIO_ACCOUNT_SID)
       throw new AppError('Account mismatch', 403);
     if (route.endsWith('/status')) {
+      const sid = z
+        .string()
+        .regex(/^(SM|MM)[a-fA-F0-9]{32}$/)
+        .parse(params.MessageSid);
       const status = z
         .enum([
           'queued',
@@ -478,7 +492,22 @@ async function webhook(req: NextRequest, route: string) {
       await db
         .update(s.messages)
         .set({ status })
-        .where(eq(s.messages.providerId, params.MessageSid));
+        .where(
+          and(
+            eq(s.messages.providerId, sid),
+            eq(s.messages.direction, 'OUTBOUND'),
+            eq(s.messages.simulation, false),
+            inArray(
+              s.messages.status,
+              whatsappStatusStages
+                .slice(
+                  0,
+                  whatsappStatusStages.findIndex((stage) => stage.includes(status)),
+                )
+                .flat(),
+            ),
+          ),
+        );
       return json({ received: true });
     }
     const sid = z
