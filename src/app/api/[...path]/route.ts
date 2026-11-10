@@ -42,16 +42,30 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const json = (value: unknown) =>
   NextResponse.json(value, { headers: { 'Cache-Control': 'no-store' } });
-const whatsappStatusStages = [
-  ['unknown'],
-  ['accepted'],
-  ['queued'],
-  ['sending'],
-  ['sent'],
-  ['failed', 'undelivered'],
-  ['delivered'],
-  ['read'],
-];
+const whatsappStatus = z.enum([
+  'accepted',
+  'queued',
+  'sending',
+  'sent',
+  'failed',
+  'undelivered',
+  'delivered',
+  'read',
+]);
+const beforeSent = ['unknown', 'accepted', 'queued', 'sending'];
+const beforeDelivery = [...beforeSent, 'sent'];
+// Allow skipped callbacks on the same path. Failed sends and failed deliveries
+// are separate terminal branches, and a read receipt can follow delivery.
+const whatsappStatusPredecessors: Record<z.infer<typeof whatsappStatus>, string[]> = {
+  accepted: ['unknown'],
+  queued: ['unknown', 'accepted'],
+  sending: ['unknown', 'accepted', 'queued'],
+  sent: beforeSent,
+  failed: beforeSent,
+  undelivered: beforeDelivery,
+  delivered: beforeDelivery,
+  read: [...beforeDelivery, 'delivered'],
+};
 async function body(req: NextRequest) {
   const raw = await req.text();
   if (raw.length > 400000) throw new AppError('Request is too large.', 413);
@@ -477,18 +491,7 @@ async function webhook(req: NextRequest, route: string) {
         .string()
         .regex(/^(SM|MM)[a-fA-F0-9]{32}$/)
         .parse(params.MessageSid);
-      const status = z
-        .enum([
-          'queued',
-          'accepted',
-          'sending',
-          'sent',
-          'delivered',
-          'undelivered',
-          'failed',
-          'read',
-        ])
-        .parse(params.MessageStatus);
+      const status = whatsappStatus.parse(params.MessageStatus);
       await db
         .update(s.messages)
         .set({ status })
@@ -497,15 +500,7 @@ async function webhook(req: NextRequest, route: string) {
             eq(s.messages.providerId, sid),
             eq(s.messages.direction, 'OUTBOUND'),
             eq(s.messages.simulation, false),
-            inArray(
-              s.messages.status,
-              whatsappStatusStages
-                .slice(
-                  0,
-                  whatsappStatusStages.findIndex((stage) => stage.includes(status)),
-                )
-                .flat(),
-            ),
+            inArray(s.messages.status, whatsappStatusPredecessors[status]),
           ),
         );
       return json({ received: true });

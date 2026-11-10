@@ -136,9 +136,9 @@ export async function remind(a: Actor, conversationId: string) {
         .set({ providerId: response.sid, status: response.status })
         .where(eq(s.messages.id, messageId));
     }
-    await record(a, a.mode === 'demo' ? 'SIMULATED_REMINDER' : 'WHATSAPP_REMINDER', messageId);
   } catch (e) {
     await db.update(s.messages).set({ status: 'unknown' }).where(eq(s.messages.id, messageId));
     throw e;
   }
+  await record(a, a.mode === 'demo' ? 'SIMULATED_REMINDER' : 'WHATSAPP_REMINDER', messageId);
 }

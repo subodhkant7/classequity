@@ -73,6 +73,31 @@ function inbound(id: number, text: string) {
     Body: text,
   });
 }
+function statusCallback(id: string, status: string) {
+  return webhook('webhooks/twilio/status', { MessageSid: id, MessageStatus: status });
+}
+async function outboundFixture(n: number, status: string) {
+  const { pairingCode } = await connectPhone(parent, 'sandbox-science', phone);
+  const id = fixtureSid(n);
+  await db.insert(s.messages).values({
+    id,
+    providerId: id,
+    conversationId: pairingCode.slice(5),
+    direction: 'OUTBOUND',
+    body: 'Fictional message',
+    status,
+    simulation: false,
+  });
+  return id;
+}
+async function storedStatus(id: string) {
+  const [message] = await db.select().from(s.messages).where(eq(s.messages.id, id));
+  return message.status;
+}
+async function updateStatus(id: string, status: string) {
+  expect((await statusCallback(id, status)).status).toBe(200);
+  return storedStatus(id);
+}
 
 describe('local Twilio webhook fixtures', () => {
   it('rejects unsigned forms and signed forms for a different account', async () => {
@@ -129,27 +154,44 @@ describe('local Twilio webhook fixtures', () => {
   });
 
   it('preserves delivery and read evidence when earlier status callbacks arrive late', async () => {
-    const { pairingCode } = await connectPhone(parent, 'sandbox-science', phone);
-    const id = fixtureSid(7);
-    await db.insert(s.messages).values({
-      id,
-      providerId: id,
-      conversationId: pairingCode.slice(5),
-      direction: 'OUTBOUND',
-      body: 'Fictional message',
-      status: 'queued',
-      simulation: false,
-    });
-    const update = async (status: string) => {
-      expect(
-        (await webhook('webhooks/twilio/status', { MessageSid: id, MessageStatus: status })).status,
-      ).toBe(200);
-      return (await db.select().from(s.messages).where(eq(s.messages.id, id)))[0].status;
-    };
-    expect(await update('sent')).toBe('sent');
-    expect(await update('delivered')).toBe('delivered');
-    expect(await update('sent')).toBe('delivered');
-    expect(await update('read')).toBe('read');
-    expect(await update('delivered')).toBe('read');
+    const id = await outboundFixture(7, 'queued');
+    expect(await updateStatus(id, 'sent')).toBe('sent');
+    expect(await updateStatus(id, 'failed')).toBe('sent');
+    expect(await updateStatus(id, 'delivered')).toBe('delivered');
+    expect(await updateStatus(id, 'sent')).toBe('delivered');
+    expect(await updateStatus(id, 'undelivered')).toBe('delivered');
+    expect(await updateStatus(id, 'read')).toBe('read');
+    expect(await updateStatus(id, 'delivered')).toBe('read');
+    expect(await updateStatus(id, 'failed')).toBe('read');
+    expect(await updateStatus(id, 'undelivered')).toBe('read');
+  });
+
+  it('keeps failed sends and undelivered receipts on separate terminal paths', async () => {
+    const failed = await outboundFixture(8, 'queued');
+    expect(await updateStatus(failed, 'failed')).toBe('failed');
+    expect(await updateStatus(failed, 'failed')).toBe('failed');
+    expect(await updateStatus(failed, 'undelivered')).toBe('failed');
+    expect(await updateStatus(failed, 'delivered')).toBe('failed');
+
+    const undelivered = await outboundFixture(9, 'unknown');
+    expect(await updateStatus(undelivered, 'undelivered')).toBe('undelivered');
+    expect(await updateStatus(undelivered, 'sent')).toBe('undelivered');
+    expect(await updateStatus(undelivered, 'read')).toBe('undelivered');
+  });
+
+  it('keeps the read receipt when progress callbacks and duplicates race', async () => {
+    const id = await outboundFixture(10, 'queued');
+    const responses = await Promise.all(
+      ['sent', 'read', 'delivered', 'read'].map((status) => statusCallback(id, status)),
+    );
+    expect(responses.map((response) => response.status)).toEqual([200, 200, 200, 200]);
+    expect(await storedStatus(id)).toBe('read');
+  });
+
+  it('rejects malformed identifiers and unrecognized statuses without updating the row', async () => {
+    const id = await outboundFixture(11, 'queued');
+    expect((await statusCallback('not-a-message-sid', 'delivered')).status).toBe(400);
+    expect((await statusCallback(id, 'received')).status).toBe(400);
+    expect(await storedStatus(id)).toBe('queued');
   });
 });

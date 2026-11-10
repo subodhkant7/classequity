@@ -153,13 +153,14 @@ export async function extractQuote(a: Actor, file: File) {
       },
     });
     const extraction = quoteSchema.parse(JSON.parse(result.text || '{}'));
+    const vendor = extraction.vendor.trim();
     if (
-      /^(?:fictional vendor|sample quotation|vendor quotation)(?:\s*[·:—-].*)?$/i.test(
-        extraction.vendor.trim(),
-      )
+      !vendor ||
+      /^(?:unknown|fictional vendor|sample quotation|vendor quotation)$/i.test(vendor) ||
+      /^fictional vendor\s*·\s*hackathon sample$/i.test(vendor)
     )
       throw new AppError(
-        'Gemini returned a document label as the issuer. Enter the vendor name manually or retry.',
+        'Gemini could not identify the quotation issuer. Enter the vendor name manually or retry.',
         502,
         'QUOTE_ISSUER_UNRESOLVED',
       );

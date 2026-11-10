@@ -50,26 +50,39 @@ afterAll(() => {
 });
 
 describe('Gemini quotation issuer validation', () => {
-  it('rejects the generic document label returned in the live quotation probe', async () => {
-    generateContent.mockResolvedValueOnce({
-      text: JSON.stringify({ ...quote, vendor: 'FICTIONAL VENDOR' }),
-    });
-    await expect(extractQuote(actor, file)).rejects.toMatchObject({
-      code: 'QUOTE_ISSUER_UNRESOLVED',
-    });
-  });
+  it.each(['FICTIONAL VENDOR', 'FICTIONAL VENDOR · HACKATHON SAMPLE', ' Unknown ', '  '])(
+    'rejects an unresolved issuer (%j)',
+    async (vendor) => {
+      generateContent.mockResolvedValueOnce({ text: JSON.stringify({ ...quote, vendor }) });
+      await expect(extractQuote(actor, file)).rejects.toMatchObject({
+        code: 'QUOTE_ISSUER_UNRESOLVED',
+      });
+    },
+  );
 
-  it('returns the named issuer and validated cent amounts for human review', async () => {
+  it('preserves a named issuer containing punctuation and returns cents for review', async () => {
+    const vendor = 'Fictional Vendor — Museum Services';
     generateContent.mockResolvedValueOnce({
-      text: JSON.stringify({ ...quote, vendor: 'Fictional Science Museum' }),
+      text: JSON.stringify({ ...quote, vendor }),
     });
     await expect(extractQuote(actor, file)).resolves.toMatchObject({
       model,
       extraction: {
-        vendor: 'Fictional Science Museum',
+        vendor,
         currency: 'USD',
         tiers: [{ min: 1, cents: 3200 }],
       },
     });
+  });
+
+  it('rejects fractional cents from structured output', async () => {
+    generateContent.mockResolvedValueOnce({
+      text: JSON.stringify({
+        ...quote,
+        vendor: 'Fictional Science Museum',
+        tiers: [{ min: 1, cents: 32.5 }],
+      }),
+    });
+    await expect(extractQuote(actor, file)).rejects.toMatchObject({ status: 502 });
   });
 });
