@@ -8,7 +8,7 @@ The hosted site offers a six-chapter interactive tour and a working fictional wo
 
 The tour computes pricing and funding in the browser. Its AI examples identify recorded or illustrative output, and the PayPal timeline identifies recorded sandbox evidence. The fictional workspace persists demo activity and simulates payments. The restricted sandbox workspace supports actual sandbox payment operations and configured Gemini access. Judges can use every demo role without credentials.
 
-Render may show a wake-up screen on the first visit. The free database expires December 5, 2026 at 02:18 IST, during judging. The independently reproducible local showcase below is the continuity path. [Judge access and recovery plan](docs/HACKATHON_READINESS.md)
+Render may show a wake-up screen on the first visit. The hosted app uses paid Render PostgreSQL. The independently reproducible local showcase is available as a judge fallback. [Judge access and recovery plan](docs/HACKATHON_READINESS.md)
 
 ## Run locally from a clean checkout
 

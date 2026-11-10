@@ -43,4 +43,4 @@ Open `/demo` for the credential-free tour. Open `/login` and use the fictional S
 
 ## Limitations
 
-The project uses fictional school data and PayPal Sandbox. The restricted sandbox operator uses a shared password. The free database expires December 5, 2026 at 02:18 IST, so the local showcase is the independently tested fallback for judging through December 15. AG Studio has a vendor evaluation arrangement for judging and commercial terms for broader deployment. [Third-party notices](../THIRD_PARTY_NOTICES.md)
+The project uses fictional school data and PayPal Sandbox. The restricted sandbox operator uses a shared password. Render hosts the application and a paid PostgreSQL database. The local showcase is the independently tested judging fallback. AG Studio has a vendor evaluation arrangement for judging and commercial terms for broader deployment. [Third-party notices](../THIRD_PARTY_NOTICES.md)
