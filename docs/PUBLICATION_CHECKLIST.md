@@ -22,7 +22,7 @@
 | Feature | What was verified | What must not be claimed |
 | --- | --- | --- |
 | PayPal | Genuine hosted Sandbox approval/capture/refund callbacks, provider readback, duplicate/redelivery protection and retained-fee reconciliation | Live-money processing, real school adoption, or new transactions while visiting the public tour |
-| Gemini | Genuine hosted English and Hindi assistance, plus local PDF extraction and local editable AG Studio agent reports | Successful hosted PDF extraction, hosted Studio agent generation or autonomous payment or assistance decisions |
+| Gemini | Genuine hosted English and Hindi assistance (`gemini-2.5-flash-lite`), plus local PDF extraction and local editable AG Studio agent reports | Successful hosted PDF extraction, hosted Studio agent generation or autonomous payment or assistance decisions |
 | Twilio | One authorized real outbound WhatsApp Sandbox message provider-confirmed `delivered` | Verified genuine hosted inbound/status callbacks or universal production messaging |
 | AG Studio | Native report widgets and actual editable UI | MIT licence of commercial Enterprise dependencies or unrestricted usage |
 | Public roles | Sample school/parent/finance workflows; browser-local illustrations | Production identity assurance or personal-data readiness |
