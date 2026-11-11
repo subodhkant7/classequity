@@ -39,8 +39,15 @@ Concurrency required durable capture claims, refund balance reservations and ver
 
 ## Testing instructions for judges
 
-Open `/demo` for the credential-free tour. Open `/login` and use the fictional School admin, Parent and Finance admin roles to work with persisted demo data and editable analytics. Allow the free Render instance time to wake. Use the README's `npm ci` and `npm run showcase` path if the hosted service is unavailable. The local preview creates its own fictional database and runs without provider credentials. [Judge access and continuity](HACKATHON_READINESS.md) · [Setup](../README.md)
+Open `/demo` for the credential-free tour. Open `/login` and use the fictional School admin, Parent and Finance admin roles to work with persisted demo data and editable analytics. Allow the Render web service time to wake after inactivity. The PostgreSQL database is on a paid plan. Use the README's `npm ci` and `npm run showcase` path if the hosted service is unavailable. The local preview creates its own fictional database and runs without provider credentials. [Judge access and continuity](HACKATHON_READINESS.md) · [Setup](../README.md)
 
 ## Limitations
 
 The project uses fictional school data and PayPal Sandbox. The restricted sandbox operator uses a shared password. Render hosts the application and a paid PostgreSQL database. The local showcase is the independently tested judging fallback. AG Studio has a vendor evaluation arrangement for judging and commercial terms for broader deployment. [Third-party notices](../THIRD_PARTY_NOTICES.md)
+
+## Final owner-controlled submission steps
+
+1. Complete the [publication checklist](PUBLICATION_CHECKLIST.md), including a fresh all-ref secret/history scan and licensing verification, before changing repository visibility.
+2. After explicit approval, publish the repository and replace the public-source URL placeholder above with the verified public link.
+3. Upload the approved under-three-minute ClassEquity MP4 to YouTube as **Public**, verify playback in a signed-out browser, and replace the video URL placeholder above. Do not commit the large MP4 or raw recording artifacts.
+4. Attach only reviewed, non-sensitive screenshots. Confirm every provider and AI claim reflects the separately verified evidence boundaries before manual Devpost submission.
