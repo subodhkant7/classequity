@@ -1,4 +1,11 @@
 'use client';
+import { z } from 'zod';
+import {
+  demoPreviewKeys,
+  readDemoPreview,
+  writeDemoPreview,
+  removeDemoPreview,
+} from '@/lib/demo-preview-storage';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import {
   AgStudio,
@@ -378,16 +385,49 @@ export const geminiAdapter: AgLlmAdapter = {
     return { complete, stream };
   },
 };
-const DEMO_STUDIO_STORAGE_KEY = 'ce_demo_studio_report_v1';
+const DEMO_STUDIO_STORAGE_KEY = demoPreviewKeys.studio;
+const demoStudioSchema = z
+  .looseObject({
+    selectedPageId: z.string().max(160),
+    pages: z
+      .array(
+        z.looseObject({
+          id: z.string().max(160),
+          widgets: z.record(
+            z.string(),
+            z.looseObject({
+              type: z.string(),
+              dataMapping: z
+                .record(z.string(), z.array(z.looseObject({ id: z.string() })))
+                .optional(),
+            }),
+          ),
+          widgetLayout: z.record(
+            z.string(),
+            z.looseObject({
+              xTrack: z.number(),
+              yTrack: z.number(),
+              xSpan: z.number(),
+              ySpan: z.number(),
+            }),
+          ),
+        }),
+      )
+      .min(1)
+      .max(50),
+  })
+  .refine((report) => report.pages.some((page) => page.id === report.selectedPageId));
 
 export default function Studio({
   overview,
   license,
   presentation = false,
+  previewScope,
 }: {
   overview: Overview;
   license?: string;
   presentation?: boolean;
+  previewScope?: string;
 }) {
   const apiRef = useRef<AgStudioApi<Registry> | null>(null);
   const initialReadyRef = useRef(false);
@@ -405,18 +445,15 @@ export default function Studio({
       return;
     }
     if (isDemo) {
-      try {
-        const raw = window.sessionStorage.getItem(DEMO_STUDIO_STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw) as AgReportState<Registry>;
-          if (parsed && Array.isArray(parsed.pages) && parsed.pages.length > 0) {
-            setState(parsed);
-            setPageId(parsed.selectedPageId || initial.selectedPageId);
-            setSaved('Preview updated in this browser.');
-            return;
-          }
-        }
-      } catch {}
+      const stored = readDemoPreview(DEMO_STUDIO_STORAGE_KEY, previewScope, (value) =>
+        demoStudioSchema.safeParse(value).success ? (value as AgReportState<Registry>) : undefined,
+      );
+      if (stored) {
+        setState(stored);
+        setPageId(stored.selectedPageId);
+        setSaved('Preview updated in this browser.');
+        return;
+      }
       setState(initial);
       setPageId(initial.selectedPageId);
       return;
@@ -427,7 +464,7 @@ export default function Studio({
         setPageId((s || initial).selectedPageId);
       })
       .catch(() => setState(initial));
-  }, [isDemo, license, presentation]);
+  }, [isDemo, license, presentation, previewScope]);
   const context = useMemo<Context>(() => ({ overview }), [overview]);
   const data = useMemo<AgDataSourcesDefinition<Registry>>(
     () => ({
@@ -664,12 +701,10 @@ export default function Studio({
             style={{ fontSize: 9, minHeight: 24, padding: '3px 7px' }}
             onClick={() => {
               if (isDemo && !presentation) {
-                try {
-                  window.sessionStorage.removeItem(DEMO_STUDIO_STORAGE_KEY);
-                } catch {}
+                removeDemoPreview(DEMO_STUDIO_STORAGE_KEY);
+                suppressNextUpdateRef.current = true;
                 setSaved('Starter report restored.');
               }
-              suppressNextUpdateRef.current = true;
               const studio = apiRef.current;
               if (studio) {
                 studio.setState(initial);
@@ -698,9 +733,7 @@ export default function Studio({
               setState(next);
               setPageId(page.id);
               if (!presentation) {
-                try {
-                  window.sessionStorage.setItem(DEMO_STUDIO_STORAGE_KEY, JSON.stringify(next));
-                } catch {}
+                writeDemoPreview(DEMO_STUDIO_STORAGE_KEY, previewScope, next);
               }
               setSaved('Preview updated in this browser.');
             }}
@@ -724,9 +757,7 @@ export default function Studio({
             setState(nextState);
             if (isDemo) {
               if (!presentation) {
-                try {
-                  window.sessionStorage.setItem(DEMO_STUDIO_STORAGE_KEY, JSON.stringify(nextState));
-                } catch {}
+                writeDemoPreview(DEMO_STUDIO_STORAGE_KEY, previewScope, nextState);
               }
               setSaved('Preview updated in this browser.');
             }
@@ -762,7 +793,11 @@ export default function Studio({
             onStateUpdated={(e) => {
               if (suppressNextUpdateRef.current) {
                 suppressNextUpdateRef.current = false;
-                return;
+                if (
+                  e.state.selectedPageId === initial.selectedPageId &&
+                  e.state.pages.length === initial.pages.length
+                )
+                  return;
               }
               if (!initialReadyRef.current) return;
               if (presentation) {
@@ -770,9 +805,9 @@ export default function Studio({
                 return;
               }
               if (isDemo) {
-                try {
-                  window.sessionStorage.setItem(DEMO_STUDIO_STORAGE_KEY, JSON.stringify(e.state));
-                } catch {}
+                setState(e.state);
+                setPageId(e.state.selectedPageId);
+                writeDemoPreview(DEMO_STUDIO_STORAGE_KEY, previewScope, e.state);
                 setSaved('Preview updated in this browser.');
                 return;
               }

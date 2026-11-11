@@ -39,19 +39,19 @@ const TRIP_GET_SUBROUTES = new Set(['registrations', 'parent', 'finance', 'quota
 
 export function classifyApiRoute(method: string, path: string[]): RouteCategory {
   const route = path.join('/');
-  if (route.startsWith('webhooks/')) return 'webhook';
-  if (route === 'health') return method === 'GET' ? 'public_read' : 'invalid_method';
+  const read = method === 'GET' || method === 'HEAD';
+  if (route.startsWith('webhooks/')) return method === 'POST' ? 'webhook' : 'invalid_method';
+  if (route === 'health') return read ? 'public_read' : 'invalid_method';
   if (route === 'auth/login' || route === 'auth/logout' || route === 'auth/redeem') {
     return method === 'POST' ? 'session_auth' : 'invalid_method';
   }
-  if (method === 'GET') {
-    if (TOP_LEVEL_GET_ROUTES.has(route)) return 'reference_read';
-    if (path[0] === 'trips' && path[1] && path.length === 3 && TRIP_GET_SUBROUTES.has(path[2])) {
-      return 'reference_read';
-    }
-    return 'invalid_method';
-  }
+  const tripRead =
+    path[0] === 'trips' && path[1] && path.length === 3 && TRIP_GET_SUBROUTES.has(path[2]);
+  const referenceRead = TOP_LEVEL_GET_ROUTES.has(route) || tripRead;
+  if (read) return referenceRead ? 'reference_read' : 'invalid_method';
   if (method !== 'POST') return 'invalid_method';
+  if (referenceRead && route !== 'studio/state' && !(tripRead && path[2] === 'quotations'))
+    return 'invalid_method';
   if (route === 'assistant') return 'demo_calculation';
   return 'business_mutation';
 }
@@ -69,26 +69,29 @@ export const CANONICAL_DEMO_TIERS = [
   { min: 30, cents: 2300 },
 ];
 
-export function isCanonicalDemoRegistrationId(id: string): boolean {
-  return /^demo-registration-(?:[1-9]|[12]\d|30)$/.test(id);
-}
-
-export function isCanonicalDemoConsentId(id: string): boolean {
-  return /^consent-demo-registration-(?:[1-9]|[12]\d|30)$/.test(id);
-}
-
-export function isCanonicalDemoAllocationId(id: string): boolean {
-  return /^assistance-demo-registration-(?:2[6-9]|30)$/.test(id);
-}
-
-export function isCanonicalDemoCommitmentId(id: string): boolean {
-  return /^demo-sponsor-[1-3]$/.test(id);
-}
+const numberedIds = (prefix: string, count: number) =>
+  Array.from({ length: count }, (_, index) => `${prefix}-${index + 1}`);
+export const canonicalDemoRegistrationIds = numberedIds('demo-registration', 30);
+export const canonicalDemoConsentIds = canonicalDemoRegistrationIds.map((id) => `consent-${id}`);
+export const canonicalDemoAllocationIds = canonicalDemoRegistrationIds
+  .slice(25)
+  .map((id) => `assistance-${id}`);
+export const canonicalDemoCommitmentIds = numberedIds('demo-sponsor', 3);
+export const canonicalDemoObligationIds = [
+  ...numberedIds('demo-obligation', 30),
+  ...canonicalDemoCommitmentIds.map((id) => `${id}-obligation`),
+];
+export const canonicalDemoOperationIds = [
+  ...numberedIds('demo-payment', 25),
+  ...canonicalDemoCommitmentIds.map((id) => `${id}-payment`),
+];
+export const canonicalDemoCaptureIds = [
+  ...numberedIds('demo-capture', 21),
+  ...canonicalDemoCommitmentIds.slice(0, 2).map((id) => `${id}-capture`),
+];
 
 export function isCanonicalDemoObligationId(id: string): boolean {
-  return (
-    /^demo-obligation-(?:[1-9]|[12]\d|30)$/.test(id) || /^demo-sponsor-[1-3]-obligation$/.test(id)
-  );
+  return canonicalDemoObligationIds.includes(id);
 }
 
 export function canonicalDemoOperationStatus(id: string): string | null {
@@ -105,12 +108,6 @@ export function canonicalDemoOperationStatus(id: string): string | null {
   if (id === 'demo-sponsor-1-payment' || id === 'demo-sponsor-2-payment') return 'COMPLETED';
   if (id === 'demo-sponsor-3-payment') return 'PENDING';
   return null;
-}
-
-export function isCanonicalDemoCaptureId(id: string): boolean {
-  return (
-    /^demo-capture-(?:[1-9]|1\d|2[01])$/.test(id) || /^demo-sponsor-[12]-capture$/.test(id)
-  );
 }
 
 export function normalizeCanonicalDemoTrip<
@@ -140,4 +137,3 @@ export function normalizeCanonicalDemoTrip<
     state: 'FROZEN',
   };
 }
-

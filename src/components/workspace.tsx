@@ -1,6 +1,12 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, type CSSProperties } from 'react';
-import type { z } from 'zod';
+import { z } from 'zod';
+import {
+  demoPreviewKeys,
+  readDemoPreview,
+  writeDemoPreview,
+  removeDemoPreview,
+} from '@/lib/demo-preview-storage';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -38,7 +44,6 @@ import {
   applyDemoFundedSimulation,
   applyDemoPricingPreview,
   applyDemoRefundSimulation,
-  type DemoContributionInput,
 } from '@/lib/demo-simulation';
 import { Badge, Button, Empty, Field, Modal, Notice, api } from './ui';
 import Museum from './museum';
@@ -499,10 +504,7 @@ function TripEditor({
               onLocalSave(parsed);
               return;
             }
-            const result = await api<{ id?: string }>(
-              d ? `trips/${d.trip.id}` : 'trips',
-              payload,
-            );
+            const result = await api<{ id?: string }>(d ? `trips/${d.trip.id}` : 'trips', payload);
             onSaved(result.id || d!.trip.id);
           } catch (e) {
             setError((e as Error).message);
@@ -742,34 +744,68 @@ function Quotations({
     </section>
   );
 }
-interface DemoWorkspaceLocalState {
-  previewRegistrations?: number;
-  fundedScenario?: boolean;
-  contributions?: DemoContributionInput[];
-  refunds?: { captureId: string; cents?: number; clientKey: string }[];
-  localTrips?: Trip[];
-  schoolName?: string;
-}
-
-const DEMO_WORKSPACE_STORAGE_KEY = 'ce_demo_workspace_v1';
-
-function readDemoWorkspaceLocalState(): DemoWorkspaceLocalState {
-  if (typeof window === 'undefined') return {};
-  try {
-    const raw = window.sessionStorage.getItem(DEMO_WORKSPACE_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as DemoWorkspaceLocalState) : {};
-  } catch {
-    return {};
-  }
-}
+const localDemoTrip = z.custom<Trip>((value: unknown) => {
+  if (!value || typeof value !== 'object') return false;
+  const trip = value as Partial<Trip>;
+  const snapshot = trip.snapshot;
+  return (
+    trip.mode === 'demo' &&
+    typeof trip.trip?.id === 'string' &&
+    trip.trip.id.startsWith('demo-local-trip-') &&
+    (snapshot === null ||
+      (snapshot?.tripId === trip.trip.id &&
+        Number.isSafeInteger(snapshot.seatCents) &&
+        Number.isSafeInteger(snapshot.count))) &&
+    tripInput.safeParse(trip.trip).success &&
+    Number.isSafeInteger(trip.seatCents) &&
+    Number.isSafeInteger(trip.registrationCount) &&
+    Array.isArray(trip.payments) &&
+    trip.payments.length === 0 &&
+    !!trip.totals &&
+    Number.isSafeInteger(trip.totals.required) &&
+    Number.isSafeInteger(trip.totals.gap) &&
+    !!trip.coverage &&
+    Number.isSafeInteger(trip.coverage.unresolvedSeats)
+  );
+});
+const demoWorkspaceSchema = z.object({
+  previewRegistrations: z.number().int().min(1).max(500).optional(),
+  fundedScenario: z.boolean().optional(),
+  contributions: z
+    .array(
+      z.object({
+        cents: z.number().int().positive().max(10_000_000),
+        source: z.string().max(160),
+        evidence: z.string().max(500),
+      }),
+    )
+    .max(100)
+    .optional(),
+  refunds: z
+    .array(
+      z.object({
+        captureId: z.string().max(120),
+        cents: z.number().int().positive().max(10_000_000).optional(),
+        clientKey: z.string().max(150),
+      }),
+    )
+    .max(100)
+    .optional(),
+  localTrips: z.array(localDemoTrip).max(50).optional(),
+  schoolName: z.string().max(120).optional(),
+});
+type DemoWorkspaceLocalState = z.infer<typeof demoWorkspaceSchema>;
+const DEMO_WORKSPACE_STORAGE_KEY = demoPreviewKeys.workspace;
 
 export default function Workspace({
   a,
+  previewScope,
   view,
   tripId,
   studioLicense,
 }: {
   a: Actor;
+  previewScope?: string;
   view: string;
   tripId?: string;
   studioLicense?: string;
@@ -783,9 +819,16 @@ export default function Workspace({
   const [selected, setSelected] = useState(tripId || '');
   const [regs, setRegs] = useState<Reg>([]);
   const [rawFinance, setRawFinance] = useState<Finance | null>(null);
-  const [demoLocal, setDemoLocal] = useState<DemoWorkspaceLocalState>(() =>
-    a.mode === 'demo' ? readDemoWorkspaceLocalState() : {},
-  );
+  const [demoLocal, setDemoLocal] = useState<DemoWorkspaceLocalState>({});
+  useEffect(() => {
+    setDemoLocal(
+      readDemoPreview(
+        DEMO_WORKSPACE_STORAGE_KEY,
+        previewScope,
+        (value) => demoWorkspaceSchema.safeParse(value).data,
+      ) ?? {},
+    );
+  }, [previewScope]);
   const [search, setSearch] = useState('');
   const [invitation, setInvitation] = useState('');
   const [integration, setIntegration] = useState<Record<
@@ -812,24 +855,16 @@ export default function Workspace({
     (updater: (prev: DemoWorkspaceLocalState) => DemoWorkspaceLocalState) => {
       setDemoLocal((prev) => {
         const next = updater(prev);
-        if (typeof window !== 'undefined') {
-          try {
-            window.sessionStorage.setItem(DEMO_WORKSPACE_STORAGE_KEY, JSON.stringify(next));
-          } catch {}
-        }
+        writeDemoPreview(DEMO_WORKSPACE_STORAGE_KEY, previewScope, next);
         return next;
       });
     },
-    [],
+    [previewScope],
   );
 
   const resetDemoLocal = useCallback(() => {
     setDemoLocal({});
-    if (typeof window !== 'undefined') {
-      try {
-        window.sessionStorage.removeItem(DEMO_WORKSPACE_STORAGE_KEY);
-      } catch {}
-    }
+    removeDemoPreview(DEMO_WORKSPACE_STORAGE_KEY);
     setNotice('Demo preview reset to canonical Oakwood Academy records.');
   }, []);
 
@@ -838,11 +873,11 @@ export default function Workspace({
       a.mode === 'demo' &&
       Boolean(
         demoLocal.previewRegistrations !== undefined ||
-          demoLocal.fundedScenario ||
-          (demoLocal.contributions && demoLocal.contributions.length > 0) ||
-          (demoLocal.refunds && demoLocal.refunds.length > 0) ||
-          (demoLocal.localTrips && demoLocal.localTrips.length > 0) ||
-          demoLocal.schoolName,
+        demoLocal.fundedScenario ||
+        (demoLocal.contributions && demoLocal.contributions.length > 0) ||
+        (demoLocal.refunds && demoLocal.refunds.length > 0) ||
+        (demoLocal.localTrips && demoLocal.localTrips.length > 0) ||
+        demoLocal.schoolName,
       ),
     [a.mode, demoLocal],
   );
@@ -869,7 +904,14 @@ export default function Workspace({
       let seenKeys: Record<string, number> = {};
       for (const r of demoLocal.refunds ?? []) {
         try {
-          const res = applyDemoRefundSimulation(trip, fin, r.captureId, r.cents, r.clientKey, seenKeys);
+          const res = applyDemoRefundSimulation(
+            trip,
+            fin,
+            r.captureId,
+            r.cents,
+            r.clientKey,
+            seenKeys,
+          );
           trip = res.trip;
           fin = res.finance;
           seenKeys = res.seenKeys;
@@ -1581,7 +1623,7 @@ export default function Workspace({
             <Badge tone="purple">Primary sponsor integration</Badge>
           </div>
           <div className="studio-frame">
-            <Studio overview={data} license={studioLicense} />
+            <Studio overview={data} license={studioLicense} previewScope={previewScope} />
           </div>
           <p className="muted" style={{ fontSize: 10, marginTop: 13 }}>
             Open Studio’s chat panel to ask a question or create a report. Gemini runs through an
@@ -2281,7 +2323,10 @@ export default function Workspace({
             };
             updateDemoLocal((prev) => ({
               ...prev,
-              localTrips: [...(prev.localTrips ?? []).filter((t) => t.trip.id !== localId), newTrip],
+              localTrips: [
+                ...(prev.localTrips ?? []).filter((t) => t.trip.id !== localId),
+                newTrip,
+              ],
             }));
             setSelected(localId);
             setEditor(null);

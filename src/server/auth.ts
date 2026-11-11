@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { isIP } from 'node:net';
 import { and, eq, gt } from 'drizzle-orm';
 import { db } from '@/db';
 import { sessions, users, memberships, schools, quotas } from '@/db/schema';
@@ -16,6 +17,14 @@ export function bindSessionQuotaKey(a: Actor, sessionKey: string): Actor {
 export function sessionQuotaScope(a: Actor): string {
   if (a.mode === 'demo') return sessionQuotaKeys.get(a) ?? a.userId;
   return a.userId;
+}
+export function demoPreviewScope(a: Actor): string | undefined {
+  const sessionKey = sessionQuotaKeys.get(a);
+  return a.mode === 'demo' && sessionKey ? hash(`browser-preview:${sessionKey}`) : undefined;
+}
+export function loginClientKey(h: Headers) {
+  const client = process.env.RENDER === 'true' ? h.get('cf-connecting-ip')?.trim() : undefined;
+  return client && isIP(client) ? client : 'unattributed';
 }
 export async function actor(): Promise<Actor> {
   const token = (await cookies()).get('ce_session')?.value;
@@ -95,10 +104,10 @@ export async function quota(key: string, max = 30) {
   if (result[0].count > max)
     throw new AppError('Request limit reached. Please try again later.', 429, 'RATE_LIMIT');
 }
-export async function enforceApiQuota(a: Actor, clientKey = 'local') {
+export async function enforceApiQuota(a: Actor) {
   if (a.mode === 'demo') {
     await quota(`api:demo-session:${sessionQuotaScope(a)}`, 240);
-    await quota(`api:demo-shared:${clientKey}`, 2400);
+    await quota('api:demo-global', 24000);
     return;
   }
   await quota(`api:${a.userId}`, 600);

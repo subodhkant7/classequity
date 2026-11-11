@@ -1,4 +1,12 @@
 'use client';
+import { z } from 'zod';
+import {
+  clearDemoPreviews,
+  demoPreviewKeys,
+  readDemoPreview,
+  writeDemoPreview,
+  removeDemoPreview,
+} from '@/lib/demo-preview-storage';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
@@ -25,41 +33,48 @@ import Museum from './museum';
 import { Chat } from './workspace';
 type ParentData = Awaited<ReturnType<typeof parentData>>;
 
-interface DemoParentLocalState {
-  previewRegistrations?: number;
-  previewCeilingCents?: number;
-  simulatedPaidObligationIds?: string[];
-  simulatedSponsors?: { id: string; cents: number }[];
-  pairingCode?: string;
-}
-
-const DEMO_PARENT_STORAGE_KEY = 'ce_demo_parent_v1';
-
-function readDemoParentLocalState(): DemoParentLocalState {
-  if (typeof window === 'undefined') return {};
-  try {
-    const raw = window.sessionStorage.getItem(DEMO_PARENT_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as DemoParentLocalState) : {};
-  } catch {
-    return {};
-  }
-}
+const demoParentSchema = z.object({
+  previewRegistrations: z.number().int().min(1).max(500).optional(),
+  previewCeilingCents: z.number().int().nonnegative().max(1_000_000).optional(),
+  simulatedPaidObligationIds: z.array(z.string().max(120)).max(100).optional(),
+  simulatedSponsors: z
+    .array(
+      z.object({
+        id: z.string().max(120),
+        cents: z.number().int().positive().max(100_000),
+      }),
+    )
+    .max(100)
+    .optional(),
+  pairingCode: z.string().max(120).optional(),
+});
+type DemoParentLocalState = z.infer<typeof demoParentSchema>;
+const DEMO_PARENT_STORAGE_KEY = demoPreviewKeys.parent;
 
 export default function Parent({
   a,
+  previewScope,
   trips,
   selected,
 }: {
   a: Actor;
+  previewScope?: string;
   trips: { id: string; name: string }[];
   selected?: string;
 }) {
   const router = useRouter();
   const [tripId, setTripId] = useState(selected || trips[0]?.id || '');
   const [rawD, setRawD] = useState<ParentData | null>(null);
-  const [demoLocal, setDemoLocal] = useState<DemoParentLocalState>(() =>
-    a.mode === 'demo' ? readDemoParentLocalState() : {},
-  );
+  const [demoLocal, setDemoLocal] = useState<DemoParentLocalState>({});
+  useEffect(() => {
+    setDemoLocal(
+      readDemoPreview(
+        DEMO_PARENT_STORAGE_KEY,
+        previewScope,
+        (value) => demoParentSchema.safeParse(value).data,
+      ) ?? {},
+    );
+  }, [previewScope]);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [tab, setTab] = useState('trip');
@@ -71,25 +86,17 @@ export default function Parent({
     (updater: (prev: DemoParentLocalState) => DemoParentLocalState) => {
       setDemoLocal((prev) => {
         const next = updater(prev);
-        if (typeof window !== 'undefined') {
-          try {
-            window.sessionStorage.setItem(DEMO_PARENT_STORAGE_KEY, JSON.stringify(next));
-          } catch {}
-        }
+        writeDemoPreview(DEMO_PARENT_STORAGE_KEY, previewScope, next);
         return next;
       });
     },
-    [],
+    [previewScope],
   );
 
   const resetDemoLocal = useCallback(() => {
     setDemoLocal({});
     setPair('');
-    if (typeof window !== 'undefined') {
-      try {
-        window.sessionStorage.removeItem(DEMO_PARENT_STORAGE_KEY);
-      } catch {}
-    }
+    removeDemoPreview(DEMO_PARENT_STORAGE_KEY);
     setNotice('Demo preview reset to canonical family portal records.');
   }, []);
 
@@ -98,11 +105,10 @@ export default function Parent({
       a.mode === 'demo' &&
       Boolean(
         demoLocal.previewRegistrations !== undefined ||
-          demoLocal.previewCeilingCents !== undefined ||
-          (demoLocal.simulatedPaidObligationIds &&
-            demoLocal.simulatedPaidObligationIds.length > 0) ||
-          (demoLocal.simulatedSponsors && demoLocal.simulatedSponsors.length > 0) ||
-          demoLocal.pairingCode,
+        demoLocal.previewCeilingCents !== undefined ||
+        (demoLocal.simulatedPaidObligationIds && demoLocal.simulatedPaidObligationIds.length > 0) ||
+        (demoLocal.simulatedSponsors && demoLocal.simulatedSponsors.length > 0) ||
+        demoLocal.pairingCode,
       ),
     [a.mode, demoLocal],
   );
@@ -115,8 +121,7 @@ export default function Parent({
       demoLocal.previewRegistrations !== undefined
         ? seatPrice(rawD.trip.tiers, regCount)
         : rawD.seatCents;
-    const ceilingCents =
-      demoLocal.previewCeilingCents ?? rawD.consents[0]?.ceilingCents ?? 3200;
+    const ceilingCents = demoLocal.previewCeilingCents ?? rawD.consents[0]?.ceilingCents ?? 3200;
     const consents = rawD.consents.map((c, idx) =>
       idx === 0 ? { ...c, ceilingCents, accepted: true } : c,
     );
@@ -137,26 +142,24 @@ export default function Parent({
       .map((ob) => {
         const existing = rawD.operations.find((o) => o.obligationId === ob.id);
         if (paidIds.has(ob.id)) {
-          return (
-            existing
-              ? { ...existing, status: 'COMPLETED', errorCode: null }
-              : {
-                  id: `demo-sim-op-${ob.id}`,
-                  schoolId: a.schoolId,
-                  obligationId: ob.id,
-                  mode: 'demo' as const,
-                  orderId: `SIM-ORDER-${ob.id}`,
-                  requestKey: `sim-req-${ob.id}`,
-                  captureKey: `sim-cap-${ob.id}`,
-                  status: 'COMPLETED',
-                  approvalUrl: null,
-                  errorCode: null,
-                  version: 2,
-                  captureRequestedAt: new Date(),
-                  updatedAt: new Date(),
-                  createdAt: new Date(),
-                }
-          );
+          return existing
+            ? { ...existing, status: 'COMPLETED', errorCode: null }
+            : {
+                id: `demo-sim-op-${ob.id}`,
+                schoolId: a.schoolId,
+                obligationId: ob.id,
+                mode: 'demo' as const,
+                orderId: `SIM-ORDER-${ob.id}`,
+                requestKey: `sim-req-${ob.id}`,
+                captureKey: `sim-cap-${ob.id}`,
+                status: 'COMPLETED',
+                approvalUrl: null,
+                errorCode: null,
+                version: 2,
+                captureRequestedAt: new Date(),
+                updatedAt: new Date(),
+                createdAt: new Date(),
+              };
         }
         return existing ?? null;
       })
@@ -234,18 +237,15 @@ export default function Parent({
       );
       return;
     }
-    return run(
-      async () => {
-        const result = await api<{ approvalUrl: string | null }>('payments/order', {
-          obligationId: id,
-        });
-        if (result.approvalUrl) {
-          window.location.assign(result.approvalUrl);
-          return;
-        }
-      },
-      'Sandbox order prepared. Complete buyer approval, then finalize capture.',
-    );
+    return run(async () => {
+      const result = await api<{ approvalUrl: string | null }>('payments/order', {
+        obligationId: id,
+      });
+      if (result.approvalUrl) {
+        window.location.assign(result.approvalUrl);
+        return;
+      }
+    }, 'Sandbox order prepared. Complete buyer approval, then finalize capture.');
   };
   return (
     <>
@@ -259,11 +259,7 @@ export default function Parent({
             aria-label="Sign out"
             className="icon-button"
             onClick={async () => {
-              try {
-                window.sessionStorage.removeItem('ce_demo_workspace_v1');
-                window.sessionStorage.removeItem('ce_demo_parent_v1');
-                window.sessionStorage.removeItem('ce_demo_studio_report_v1');
-              } catch {}
+              clearDemoPreviews();
               await api('auth/logout', {});
               router.push('/');
               router.refresh();
@@ -418,11 +414,8 @@ export default function Parent({
                             </div>
                             <p style={{ fontSize: 10 }}>
                               Parent consent recorded up to{' '}
-                              <strong>
-                                {money(d.consents[0]?.ceilingCents ?? d.seatCents)}
-                              </strong>
-                              . Any increase above the latest consent ceiling needs renewed
-                              approval.
+                              <strong>{money(d.consents[0]?.ceilingCents ?? d.seatCents)}</strong>.
+                              Any increase above the latest consent ceiling needs renewed approval.
                             </p>
                             {a.mode === 'demo' && (
                               <div
@@ -435,7 +428,9 @@ export default function Parent({
                                 }}
                               >
                                 <div className="spread" style={{ fontSize: 10 }}>
-                                  <strong>Interactive consent & tier preview (browser-local)</strong>
+                                  <strong>
+                                    Interactive consent & tier preview (browser-local)
+                                  </strong>
                                   <Badge
                                     tone={
                                       (d.consents[0]?.ceilingCents ?? 3200) >= d.seatCents
@@ -486,7 +481,8 @@ export default function Parent({
                                         );
                                       }}
                                     >
-                                      Preview {count} students ({money(seatPrice(d.trip.tiers, count))})
+                                      Preview {count} students (
+                                      {money(seatPrice(d.trip.tiers, count))})
                                     </button>
                                   ))}
                                 </div>

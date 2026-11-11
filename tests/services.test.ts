@@ -103,9 +103,7 @@ describe('public demo isolation, read-only guards and canonical protection', () 
     await expect(
       data.ownTrip({ ...admin, schoolId: 'sandbox-school' }, 'demo-science'),
     ).rejects.toMatchObject({ status: 404 });
-    await expect(
-      data.ownTrip(admin, 'sandbox-science'),
-    ).rejects.toMatchObject({ status: 404 });
+    await expect(data.ownTrip(admin, 'sandbox-science')).rejects.toMatchObject({ status: 404 });
     await expect(payments.paymentOrder(parent, 'demo-obligation-1')).rejects.toMatchObject({
       status: 404,
     });
@@ -230,9 +228,7 @@ describe('public demo isolation, read-only guards and canonical protection', () 
     expect(pData.registrations.map((r) => r.id)).toEqual(['demo-registration-23']);
 
     // Drifted rows were preserved (non-destructive filtering), clean up test-inserted drift rows afterwards
-    expect(
-      await db.select().from(s.trips).where(eq(s.trips.id, driftedTripId)),
-    ).toHaveLength(1);
+    expect(await db.select().from(s.trips).where(eq(s.trips.id, driftedTripId))).toHaveLength(1);
     await db.delete(s.dashboards).where(eq(s.dashboards.id, driftedDashId));
     await db.delete(s.contributions).where(eq(s.contributions.id, driftedContribId));
     await db.delete(s.registrations).where(eq(s.registrations.id, driftedRegId));
@@ -244,7 +240,13 @@ describe('public demo isolation, read-only guards and canonical protection', () 
       .select()
       .from(s.assessments)
       .where(eq(s.assessments.schoolId, 'demo-school'));
-    const reply = await gemini.assistant(admin, 'demo-science', 'What is the group price?', 'en', true);
+    const reply = await gemini.assistant(
+      admin,
+      'demo-science',
+      'What is the group price?',
+      'en',
+      true,
+    );
     expect(reply.source).toBe('Grounded local assistant');
     expect(reply.model).toBeNull();
     expect(reply.text).toContain('$23.00');
@@ -259,14 +261,14 @@ describe('public demo isolation, read-only guards and canonical protection', () 
     const visitorA = auth.bindSessionQuotaKey({ ...admin }, 'session-a-unique');
     const visitorB = auth.bindSessionQuotaKey({ ...admin }, 'session-b-unique');
     for (let i = 0; i < 240; i++) {
-      await auth.enforceApiQuota(visitorA, 'shared-test-ip');
+      await auth.enforceApiQuota(visitorA);
     }
-    await expect(auth.enforceApiQuota(visitorA, 'shared-test-ip')).rejects.toMatchObject({
+    await expect(auth.enforceApiQuota(visitorA)).rejects.toMatchObject({
       status: 429,
       code: 'RATE_LIMIT',
     });
     // Visitor B has its own independent session bucket and still succeeds.
-    await expect(auth.enforceApiQuota(visitorB, 'shared-test-ip')).resolves.toBeUndefined();
+    await expect(auth.enforceApiQuota(visitorB)).resolves.toBeUndefined();
   });
 });
 

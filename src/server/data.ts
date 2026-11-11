@@ -4,19 +4,21 @@ import * as s from '@/db/schema';
 import type { Actor } from './auth';
 import { roles } from './auth';
 import { AppError, requireValue } from './errors';
-import { funding, seatPrice, seatCoverage, availableCapture } from '@/lib/domain';
+import { funding, seatPrice, seatCoverage, availableCapture, syntheticNames } from '@/lib/domain';
 import {
   assertMutableWorkspace,
   CANONICAL_DEMO_SNAPSHOT_ID,
   CANONICAL_DEMO_TIERS,
   CANONICAL_DEMO_TRIP_ID,
   canonicalDemoOperationStatus,
-  isCanonicalDemoAllocationId,
-  isCanonicalDemoCaptureId,
-  isCanonicalDemoCommitmentId,
-  isCanonicalDemoConsentId,
+  canonicalDemoOperationIds,
+  canonicalDemoObligationIds,
+  canonicalDemoAllocationIds,
+  canonicalDemoCaptureIds,
+  canonicalDemoCommitmentIds,
+  canonicalDemoConsentIds,
   isCanonicalDemoObligationId,
-  isCanonicalDemoRegistrationId,
+  canonicalDemoRegistrationIds,
   normalizeCanonicalDemoTrip,
 } from './demo-policy';
 export async function ownTrip(a: Actor, id: string) {
@@ -31,101 +33,142 @@ export async function ownTrip(a: Actor, id: string) {
 }
 export async function tripData(a: Actor, id: string) {
   const trip = await ownTrip(a, id);
+  const demo = a.mode === 'demo';
   const rawRegs = await db
     .select()
     .from(s.registrations)
     .where(
-      a.mode === 'demo'
-        ? eq(s.registrations.tripId, id)
-        : and(eq(s.registrations.tripId, id), eq(s.registrations.status, 'REGISTERED')),
+      and(
+        eq(s.registrations.tripId, id),
+        demo
+          ? inArray(s.registrations.id, canonicalDemoRegistrationIds)
+          : eq(s.registrations.status, 'REGISTERED'),
+      ),
     )
     .orderBy(asc(s.registrations.createdAt), asc(s.registrations.id));
-  const regs =
-    a.mode === 'demo'
-      ? rawRegs
-          .filter((r) => isCanonicalDemoRegistrationId(r.id))
-          .map((r) => ({ ...r, status: 'REGISTERED' }))
-      : rawRegs;
-  const rawSnapshots = await db.select().from(s.snapshots).where(eq(s.snapshots.tripId, id));
+  const regs = demo
+    ? rawRegs.map((r) => ({
+        ...r,
+        student: syntheticNames[canonicalDemoRegistrationIds.indexOf(r.id)],
+        status: 'REGISTERED',
+      }))
+    : rawRegs;
+  const rawSnapshots = await db
+    .select()
+    .from(s.snapshots)
+    .where(
+      and(
+        eq(s.snapshots.tripId, id),
+        demo ? eq(s.snapshots.id, CANONICAL_DEMO_SNAPSHOT_ID) : undefined,
+      ),
+    );
+  const rawSnapshot = rawSnapshots.at(0);
   const snapshot =
-    a.mode === 'demo'
-      ? rawSnapshots
-          .filter((sn) => sn.id === CANONICAL_DEMO_SNAPSHOT_ID)
-          .map((sn) => ({
-            ...sn,
-            seatCents: 2300,
-            count: 30,
-            policy: CANONICAL_DEMO_TIERS.map((t) => ({ ...t })),
-          }))
-          .at(0)
-      : rawSnapshots.at(0);
+    demo && rawSnapshot
+      ? {
+          ...rawSnapshot,
+          seatCents: 2300,
+          count: 30,
+          policy: CANONICAL_DEMO_TIERS.map((t) => ({ ...t })),
+        }
+      : rawSnapshot;
   const rawAllocations = await db
     .select()
     .from(s.assistance)
     .where(
-      a.mode === 'demo'
-        ? eq(s.assistance.tripId, id)
-        : and(eq(s.assistance.tripId, id), eq(s.assistance.status, 'APPROVED')),
+      and(
+        eq(s.assistance.tripId, id),
+        demo
+          ? inArray(s.assistance.id, canonicalDemoAllocationIds)
+          : eq(s.assistance.status, 'APPROVED'),
+      ),
     );
-  const allocations =
-    a.mode === 'demo'
-      ? rawAllocations
-          .filter((x) => isCanonicalDemoAllocationId(x.id))
-          .map((x) => ({ ...x, status: 'APPROVED', cents: 2300 }))
-      : rawAllocations;
-  const rawSponsors = await db.select().from(s.commitments).where(eq(s.commitments.tripId, id));
-  const sponsors =
-    a.mode === 'demo'
-      ? rawSponsors.filter((x) => isCanonicalDemoCommitmentId(x.id))
-      : rawSponsors;
-  const rawObs = await db.select().from(s.obligations).where(eq(s.obligations.tripId, id));
-  const obs =
-    a.mode === 'demo' ? rawObs.filter((o) => isCanonicalDemoObligationId(o.id)) : rawObs;
+  const allocations = demo
+    ? rawAllocations.map((x) => ({ ...x, status: 'APPROVED', cents: 2300 }))
+    : rawAllocations;
+  const rawSponsors = await db
+    .select()
+    .from(s.commitments)
+    .where(
+      and(
+        eq(s.commitments.tripId, id),
+        demo ? inArray(s.commitments.id, canonicalDemoCommitmentIds) : undefined,
+      ),
+    );
+  const sponsorAmount = (id: string) => [5000, 2000, 4500][canonicalDemoCommitmentIds.indexOf(id)];
+  const sponsors = demo
+    ? rawSponsors.map((row) => ({ ...row, cents: sponsorAmount(row.id) }))
+    : rawSponsors;
+  const rawObs = await db
+    .select()
+    .from(s.obligations)
+    .where(
+      and(
+        eq(s.obligations.tripId, id),
+        demo ? inArray(s.obligations.id, canonicalDemoObligationIds) : undefined,
+      ),
+    );
+  const obs = demo
+    ? rawObs.map((row) => ({
+        ...row,
+        cents: row.commitmentId
+          ? sponsorAmount(row.commitmentId)
+          : canonicalDemoObligationIds.indexOf(row.id) < 25
+            ? 2300
+            : 0,
+      }))
+    : rawObs;
   const allOps = obs.length
     ? await db
         .select()
         .from(s.operations)
         .where(
-          inArray(
-            s.operations.obligationId,
-            obs.map((o) => o.id),
+          and(
+            inArray(
+              s.operations.obligationId,
+              obs.map((o) => o.id),
+            ),
+            eq(s.operations.schoolId, a.schoolId),
+            eq(s.operations.mode, a.mode),
+            demo ? inArray(s.operations.id, canonicalDemoOperationIds) : undefined,
           ),
         )
     : [];
-  const ops =
-    a.mode === 'demo'
-      ? allOps
-          .filter(
-            (o) =>
-              o.mode === 'demo' &&
-              o.schoolId === a.schoolId &&
-              canonicalDemoOperationStatus(o.id) !== null,
-          )
-          .map((o) => ({ ...o, status: canonicalDemoOperationStatus(o.id)!, errorCode: null }))
-      : allOps.filter((o) => o.mode === a.mode && o.schoolId === a.schoolId);
+  const ops = demo
+    ? allOps.map((o) => ({
+        ...o,
+        status: canonicalDemoOperationStatus(o.id)!,
+        errorCode: null,
+      }))
+    : allOps;
   const allCaps = ops.length
     ? await db
         .select()
         .from(s.captures)
         .where(
-          inArray(
-            s.captures.operationId,
-            ops.map((o) => o.id),
+          and(
+            inArray(
+              s.captures.operationId,
+              ops.map((o) => o.id),
+            ),
+            eq(s.captures.provenance, demo ? 'SYNTHETIC' : 'PAYPAL_SANDBOX'),
+            demo ? inArray(s.captures.id, canonicalDemoCaptureIds) : undefined,
           ),
         )
     : [];
-  const caps =
-    a.mode === 'demo'
-      ? allCaps
-          .filter((c) => c.provenance === 'SYNTHETIC' && isCanonicalDemoCaptureId(c.id))
-          .map((c) => ({
-            ...c,
-            status: 'COMPLETED',
-            refundedCents: 0,
-            pendingRefundCents: 0,
-            feeKnown: true,
-          }))
-      : allCaps.filter((c) => c.provenance === 'PAYPAL_SANDBOX' && !!c.verifiedAt);
+  const caps = demo
+    ? allCaps.map((c) => ({
+        ...c,
+        cents: c.id.startsWith('demo-sponsor-')
+          ? sponsorAmount(c.id.replace(/-capture$/, ''))
+          : 2300,
+        feeCents: c.id === 'demo-sponsor-1-capture' ? 200 : 85,
+        status: 'COMPLETED',
+        refundedCents: 0,
+        pendingRefundCents: 0,
+        feeKnown: true,
+      }))
+    : allCaps.filter((c) => !!c.verifiedAt);
   const contributions =
     a.mode === 'demo'
       ? []
@@ -190,9 +233,15 @@ export async function tripData(a: Actor, id: string) {
 }
 export async function dashboardData(a: Actor) {
   roles(a, ['admin', 'finance', 'teacher']);
-  const allTrips = await db.select().from(s.trips).where(eq(s.trips.schoolId, a.schoolId));
-  const trips =
-    a.mode === 'demo' ? allTrips.filter((t) => t.id === CANONICAL_DEMO_TRIP_ID) : allTrips;
+  const trips = await db
+    .select({ id: s.trips.id })
+    .from(s.trips)
+    .where(
+      and(
+        eq(s.trips.schoolId, a.schoolId),
+        a.mode === 'demo' ? eq(s.trips.id, CANONICAL_DEMO_TRIP_ID) : undefined,
+      ),
+    );
   return Promise.all(
     trips.map(async (t) => {
       const d = await tripData(a, t.id);
@@ -239,12 +288,20 @@ export async function financeData(a: Actor, id: string) {
     })
     .from(s.assistance)
     .innerJoin(s.registrations, eq(s.assistance.registrationId, s.registrations.id))
-    .where(eq(s.assistance.tripId, id));
+    .where(
+      and(
+        eq(s.assistance.tripId, id),
+        a.mode === 'demo' ? inArray(s.assistance.id, canonicalDemoAllocationIds) : undefined,
+      ),
+    );
   const allocations =
     a.mode === 'demo'
-      ? rawAllocations
-          .filter((x) => isCanonicalDemoAllocationId(x.id))
-          .map((x) => ({ ...x, status: 'APPROVED', cents: 2300 }))
+      ? rawAllocations.map((x) => ({
+          ...x,
+          student: syntheticNames[canonicalDemoRegistrationIds.indexOf(x.registrationId)],
+          status: 'APPROVED',
+          cents: 2300,
+        }))
       : rawAllocations;
   return {
     allocations,
@@ -269,17 +326,18 @@ export async function parentData(a: Actor, id: string) {
         .select()
         .from(s.consents)
         .where(
-          inArray(
-            s.consents.registrationId,
-            mine.map((r) => r.id),
+          and(
+            inArray(
+              s.consents.registrationId,
+              mine.map((r) => r.id),
+            ),
+            a.mode === 'demo' ? inArray(s.consents.id, canonicalDemoConsentIds) : undefined,
           ),
         )
     : [];
   const consents =
     a.mode === 'demo'
-      ? rawConsents
-          .filter((c) => isCanonicalDemoConsentId(c.id))
-          .map((c) => ({ ...c, ceilingCents: 3200, accepted: true }))
+      ? rawConsents.map((c) => ({ ...c, ceilingCents: 3200, accepted: true }))
       : rawConsents;
   return {
     trip: d.trip,

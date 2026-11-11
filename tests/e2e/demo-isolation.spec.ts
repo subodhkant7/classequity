@@ -2,14 +2,20 @@ import { test, expect, type Page } from '@playwright/test';
 
 const base = process.env.E2E_BASE_URL || 'http://localhost:3000';
 
-async function loginDemo(page: Page, role: 'School admin' | 'Finance admin' | 'Teacher' | 'Parent' = 'School admin') {
+async function loginDemo(
+  page: Page,
+  role: 'School admin' | 'Finance admin' | 'Teacher' | 'Parent' = 'School admin',
+) {
   await page.goto('/login');
   await page.getByRole('button', { name: new RegExp(role) }).click();
   await page.getByRole('button', { name: 'Enter the demo' }).click();
   await expect(page).toHaveURL(role === 'Parent' ? /\/parent/ : /\/dashboard/, { timeout: 30000 });
 }
 
-async function loginSandbox(page: Page, role: 'School admin' | 'Finance admin' | 'Teacher' = 'School admin') {
+async function loginSandbox(
+  page: Page,
+  role: 'School admin' | 'Finance admin' | 'Teacher' = 'School admin',
+) {
   const sandboxPassword = process.env.ADMIN_PASSWORD;
   expect(sandboxPassword, 'ADMIN_PASSWORD must be configured for sandbox E2E tests').toBeTruthy();
   await page.goto('/login');
@@ -182,11 +188,7 @@ test('D: every server-side write route returns 403 DEMO_READ_ONLY (and unsupport
       tiers: [{ min: 1, cents: 2300 }],
     };
 
-    const assertDemoReadOnly = async (
-      page: Page,
-      path: string,
-      data?: Record<string, unknown>,
-    ) => {
+    const assertDemoReadOnly = async (page: Page, path: string, data?: Record<string, unknown>) => {
       const res = await page.request.post(path, { headers, data: data ?? {} });
       expect(res.status(), `POST ${path}`).toBe(403);
       expect(await res.json(), `POST ${path} json`).toMatchObject({ code: 'DEMO_READ_ONLY' });
@@ -277,6 +279,9 @@ test('D: every server-side write route returns 403 DEMO_READ_ONLY (and unsupport
     expect(putRes.status()).toBe(405);
     const deleteRes = await adminPage.request.delete('/api/trips/demo-science', { headers });
     expect(deleteRes.status()).toBe(405);
+    expect((await adminPage.request.patch('/api/studio/state', { headers })).status()).toBe(405);
+    expect((await adminPage.request.post('/api/me', { headers })).status()).toBe(405);
+    expect((await adminPage.request.head('/api/studio/state')).status()).toBe(200);
   } finally {
     await adminCtx.close();
     await financeCtx.close();
@@ -297,10 +302,14 @@ test('E: demo sessions receive 404 on cross-tenant sandbox trips and other-famil
     await loginDemo(parentPage, 'Parent');
     const headers = { Origin: base };
 
-    expect((await adminPage.request.get('/api/trips/sandbox-science/registrations')).status()).toBe(404);
+    expect((await adminPage.request.get('/api/trips/sandbox-science/registrations')).status()).toBe(
+      404,
+    );
     expect((await adminPage.request.get('/api/trips/sandbox-science/finance')).status()).toBe(404);
     expect(
-      (await adminPage.request.post('/api/trips/sandbox-science/freeze', { headers, data: {} })).status(),
+      (
+        await adminPage.request.post('/api/trips/sandbox-science/freeze', { headers, data: {} })
+      ).status(),
     ).toBe(404);
     expect(
       (
@@ -378,7 +387,9 @@ test('F: restricted sandbox workspace preserves full persistent server workflows
     await expect(parentPage.getByText('Registration and consent recorded.')).toBeVisible();
 
     await parentPage.getByRole('button', { name: 'Community support', exact: true }).click();
-    await parentPage.getByRole('button', { name: 'Request support for Sandbox Isolation Student' }).click();
+    await parentPage
+      .getByRole('button', { name: 'Request support for Sandbox Isolation Student' })
+      .click();
     await expect(parentPage.getByText(/private support request was submitted/)).toBeVisible();
 
     const finInfo = await (await financePage.request.get(`/api/trips/${tripId}/finance`)).json();
@@ -548,7 +559,32 @@ test('I: same-tab reload preserves local preview, reset restores canonical value
   }
 });
 
-test('J: exhausting demo assistant quota in one visitor session does not throttle another independent demo session', async ({
+test('J: replacing a session or corrupting its preview leaves the canonical workspace usable', async ({
+  page,
+}) => {
+  await loginDemo(page, 'School admin');
+  await page.getByRole('button', { name: 'Preview 19 students ($32.00)' }).click();
+  await expect(page.getByText('$32.00 per student').first()).toBeVisible();
+  const key = 'ce_demo_workspace_v1';
+  await page.evaluate((key) => {
+    const stored = JSON.parse(sessionStorage.getItem(key)!);
+    sessionStorage.setItem(key, JSON.stringify({ ...stored, value: { refunds: 'invalid' } }));
+  }, key);
+  await page.reload();
+  await expect(page.getByText('$23.00 per student').first()).toBeVisible();
+
+  await page.getByRole('button', { name: 'Preview 20 students ($27.00)' }).click();
+  await expect(page.getByText('$27.00 per student').first()).toBeVisible();
+  const replacement = await page.request.post('/api/auth/login', {
+    headers: { Origin: base },
+    data: { mode: 'demo', role: 'finance' },
+  });
+  expect(replacement.ok()).toBe(true);
+  await page.reload();
+  await expect(page.getByText('$23.00 per student').first()).toBeVisible();
+});
+
+test('K: exhausting demo assistant quota in one visitor session does not throttle another independent demo session', async ({
   browser,
 }) => {
   test.setTimeout(120000);
@@ -590,4 +626,3 @@ test('J: exhausting demo assistant quota in one visitor session does not throttl
     await ctxB.close();
   }
 });
-

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { trips } from '@/db/schema';
-import { optionalActor } from '@/server/auth';
+import { demoPreviewScope, optionalActor } from '@/server/auth';
 import { CANONICAL_DEMO_TRIP_ID } from '@/server/demo-policy';
 import Parent from '@/components/parent';
 export const dynamic = 'force-dynamic';
@@ -19,9 +19,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
         : eq(trips.schoolId, a.schoolId),
     );
   const selected = (await searchParams).trip;
+  const previewScope = demoPreviewScope(a);
   return (
     <Parent
+      key={previewScope ?? a.userId}
       a={a}
+      previewScope={previewScope}
       trips={activities}
       selected={activities.some((t) => t.id === selected) ? selected : undefined}
     />

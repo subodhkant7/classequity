@@ -9,6 +9,7 @@ import {
   createSession,
   enforceApiQuota,
   hash,
+  loginClientKey,
   logout,
   passwordMatches,
   quota,
@@ -100,8 +101,10 @@ function failure(e: unknown) {
 async function dispatch(req: NextRequest, path: string[]) {
   const route = path.join('/');
   const classification = classifyApiRoute(req.method, path);
-  if (route.startsWith('webhooks/')) return webhook(req, route);
-  if (req.method !== 'GET') await sameOrigin();
+  if (classification === 'invalid_method') throw new AppError('Method not allowed', 405);
+  if (classification === 'webhook') return webhook(req, route);
+  const read = classification === 'public_read' || classification === 'reference_read';
+  if (!read) await sameOrigin();
   if (route === 'health') {
     try {
       await db.execute(sql`SELECT 1`);
@@ -115,7 +118,6 @@ async function dispatch(req: NextRequest, path: string[]) {
       commit: process.env.RENDER_GIT_COMMIT ?? null,
     });
   }
-  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
   if (route === 'auth/login' && req.method === 'POST') {
     const v = z
       .object({
@@ -124,8 +126,8 @@ async function dispatch(req: NextRequest, path: string[]) {
         password: z.string().max(200).optional(),
       })
       .parse(await body(req));
-    await quota(`login:${v.mode}:${clientIp}`, v.mode === 'demo' ? 60 : 20);
-    if (v.mode === 'demo') await quota('login:demo:global', 600);
+    await quota(`login:${v.mode}:${loginClientKey(req.headers)}`, v.mode === 'demo' ? 60 : 20);
+    await quota(`login:${v.mode}:global`, v.mode === 'demo' ? 600 : 120);
     if (v.mode === 'demo' && process.env.DEMO_MODE === 'false')
       throw new AppError('Demo access is disabled', 403);
     if (v.mode === 'sandbox' && !passwordMatches(v.password || ''))
@@ -151,33 +153,21 @@ async function dispatch(req: NextRequest, path: string[]) {
         )
         .for('update');
       if (!i) throw new AppError('This invitation is expired or already used.', 410);
-      const [t] = await tx.select().from(s.trips).where(eq(s.trips.id, i.tripId));
+      const [t] = await tx
+        .select({ id: s.trips.id, schoolId: s.trips.schoolId, mode: s.schools.mode })
+        .from(s.trips)
+        .innerJoin(s.schools, eq(s.schools.id, s.trips.schoolId))
+        .where(eq(s.trips.id, i.tripId));
       requireValue(t);
-      if (t.schoolId === CANONICAL_DEMO_SCHOOL_ID) throw demoReadOnlyError();
+      if (t.mode === 'demo') throw demoReadOnlyError();
       await tx.update(s.invitations).set({ usedAt: new Date() }).where(eq(s.invitations.id, i.id));
       return { invitation: i, trip: t };
     });
     await createSession(invitation.userId, trip.schoolId);
     return json({ redirect: `/parent?trip=${trip.id}` });
   }
-  if (
-    req.method === 'GET' &&
-    ![
-      'me',
-      'dashboard',
-      'analytics',
-      'messages',
-      'audit',
-      'integrations',
-      'export',
-      'studio/state',
-      'schools',
-    ].includes(route) &&
-    !(path[0] === 'trips' && ['registrations', 'parent', 'finance', 'quotations'].includes(path[2]))
-  )
-    throw new AppError('POST required', 405);
   const a = await actor();
-  await enforceApiQuota(a, clientIp);
+  if (route !== 'auth/logout') await enforceApiQuota(a);
   if (route === 'auth/logout') {
     await logout();
     return json({ redirect: '/' });
@@ -226,7 +216,7 @@ async function dispatch(req: NextRequest, path: string[]) {
     assertMutableWorkspace(a);
     return json({ id: await services.createTrip(a, await body(req)) });
   }
-  if (path[0] === 'trips' && path[1]) {
+  if (path[0] === 'trips' && path[1] && path.length <= 3) {
     const id = path[1];
     await ownTrip(a, id);
     if (path.length === 2 && req.method === 'POST') {
@@ -273,7 +263,7 @@ async function dispatch(req: NextRequest, path: string[]) {
       return json({ ok: true });
     }
     if (path[2] === 'quotations') {
-      if (req.method === 'GET') {
+      if (read) {
         roles(a, ['admin', 'finance']);
         if (a.mode === 'demo') return json([]);
         return json(await db.select().from(s.quotations).where(eq(s.quotations.tripId, id)));
@@ -405,7 +395,7 @@ async function dispatch(req: NextRequest, path: string[]) {
     return json(await studioTurn(a, v as unknown as AgLlmRequest));
   }
   if (route === 'studio/state') {
-    if (req.method === 'GET') {
+    if (read) {
       roles(a, ['admin', 'finance', 'teacher']);
       if (a.mode === 'demo') return json(null);
       const [d] = await db
@@ -516,9 +506,6 @@ async function dispatch(req: NextRequest, path: string[]) {
         'Cache-Control': 'no-store',
       },
     });
-  }
-  if (classification === 'invalid_method') {
-    throw new AppError('Method not allowed', 405);
   }
   throw new AppError('Endpoint not found', 404);
 }
@@ -655,4 +642,3 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
     return failure(e);
   }
 }
-export { POST as PUT, POST as PATCH, POST as DELETE };

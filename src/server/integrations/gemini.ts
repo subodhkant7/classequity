@@ -6,10 +6,10 @@ import { aggregateData, ownTrip } from '../data';
 import { AppError } from '../errors';
 import { db } from '@/db';
 import { assessments, registrations } from '@/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { uid } from '../services';
 import { providerAiAllowed } from '@/lib/hosted-config';
-import { assertMutableWorkspace, isCanonicalDemoRegistrationId } from '../demo-policy';
+import { assertMutableWorkspace, canonicalDemoRegistrationIds } from '../demo-policy';
 let modelsPromise: Promise<string[]> | undefined;
 const quotationResponseSchema = quoteSchema
   .extend({
@@ -80,18 +80,17 @@ export async function assistant(
     await quota(`assistant:${a.schoolId}`, 60);
   }
   const t = await ownTrip(a, tripId);
-  const rawRegs = await db
+  const regs = await db
     .select({ id: registrations.id })
     .from(registrations)
     .where(
-      a.mode === 'demo'
-        ? eq(registrations.tripId, t.id)
-        : and(eq(registrations.tripId, t.id), eq(registrations.status, 'REGISTERED')),
+      and(
+        eq(registrations.tripId, t.id),
+        a.mode === 'demo'
+          ? inArray(registrations.id, canonicalDemoRegistrationIds)
+          : eq(registrations.status, 'REGISTERED'),
+      ),
     );
-  const regs =
-    a.mode === 'demo'
-      ? rawRegs.filter((r) => isCanonicalDemoRegistrationId(r.id))
-      : rawRegs;
   const price = seatPrice(t.tiers, regs.length);
   const facts = {
     trip: t.name,
