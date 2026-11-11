@@ -1,4 +1,6 @@
-# Uses the EXISTING free classequity-db. This Blueprint creates no database.
+# HISTORICAL REFERENCE ONLY: this is not an active Blueprint sync.
+# Uses an EXISTING classequity-db (now on an independently managed paid plan).
+# This file creates no database. Verify branch and resources before adapting.
 # Set the external/internal DATABASE_URL privately. Do not commit it here.
 services:
   - type: web
@@ -6,7 +8,7 @@ services:
     runtime: node
     plan: free
     region: singapore
-    branch: codex/hosted-webhook-verification
+    branch: codex/hosted-webhook-verification # historical deployed source; do not auto-switch to main
     # Existing schema is checked without writes. Migrations/seeding are controlled separately.
     buildCommand: npm ci --include=dev && npm run release:check && npm run build
     startCommand: npm start
