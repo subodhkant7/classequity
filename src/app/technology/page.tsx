@@ -28,7 +28,7 @@ const systems = [
     name: 'Gemini',
     icon: Sparkles,
     tag: 'Local generation verified',
-    copy: 'Local verification covered quotation extraction, English/Hindi parent assistance and aggregate financial intelligence. Hosted generation remains unverified. Extraction requires human review, and Gemini has no payment or eligibility authority.',
+    copy: 'Hosted verification confirmed English/Hindi parent assistance in the restricted sandbox. Local verification covered PDF quotation extraction and aggregate financial intelligence; hosted PDF extraction and Studio generation remain unverified. Extraction requires human review, and Gemini has no payment or eligibility authority.',
     source: 'src/server/integrations/gemini.ts',
     doc: 'ARCHITECTURE.md',
   },
@@ -60,7 +60,7 @@ const systems = [
     name: 'Render',
     icon: Database,
     tag: 'HTTPS application · PostgreSQL hosted',
-    copy: 'The hosted ClassEquity site runs over HTTPS on Render with PostgreSQL. The verification report records the deployed revision and the genuine signed PayPal event delivery. The local showcase uses a separate fictional database.',
+    copy: 'The hosted ClassEquity site runs over HTTPS on Render with PostgreSQL. The verification report records the deployed revision and the genuine signed PayPal event delivery. The local showcase uses an isolated sample database.',
     source: 'src/db/schema.ts',
     doc: 'HOSTED_WEBHOOK_VERIFICATION.md',
   },
@@ -159,15 +159,15 @@ export default function Technology() {
           <div>
             <h3>Still to verify before release</h3>
             <p>
-              Real WhatsApp delivery. Production identity, treasury controls, audit hardening and
-              operational monitoring.
+              Hosted PDF extraction, hosted Studio AI generation, and hosted WhatsApp callbacks.
+              Production identity, treasury controls, audit hardening and operational monitoring.
             </p>
           </div>
         </div>
         <p>
-          The tour is synthetic and browser-local. The sandbox payment was a verification example,
-          not a school contribution. ClassEquity is not escrow, a charity platform or an autonomous
-          financial agent.
+          The interactive tour uses browser-local sample data. The sandbox payment was a
+          verification example, not a school contribution. ClassEquity is not escrow, a charity
+          platform or an autonomous financial agent.
         </p>
       </section>
       <section className="small-cta public-wrap">

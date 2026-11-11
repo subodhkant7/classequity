@@ -232,8 +232,8 @@ export function Shell({
           <div className="demo-strip">
             <ShieldCheck size={13} />
             {a.mode === 'demo'
-              ? 'You’re exploring a fictional school. All sample payments and messages are simulated.'
-              : 'Sandbox integration workspace · Synthetic students · Human buyer approval required · USD only'}
+              ? 'Interactive demo workspace · Sample school data · All payments and messages are simulated.'
+              : 'Sandbox integration workspace · Sample student records · Human buyer approval required · USD only'}
           </div>
           {children}
         </main>

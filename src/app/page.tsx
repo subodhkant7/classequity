@@ -92,7 +92,7 @@ const previews = [
     kicker: 'AG Studio / AG Grid',
     text: 'Native editable charts, custom widgets and aggregate AI intelligence.',
     value: '$157.70 gap',
-    detail: 'Synthetic cohort · $532.30 net',
+    detail: 'Sample cohort · $532.30 net',
   },
   {
     title: 'A familiar conversation',
@@ -101,7 +101,7 @@ const previews = [
     kicker: 'Parent communication',
     text: 'Grounded answers and secure links through the communication workflow.',
     value: 'English / हिन्दी',
-    detail: 'Live WhatsApp delivery unverified',
+    detail: 'Outbound Sandbox verified · callbacks unverified',
   },
 ];
 export default function Home() {
@@ -138,7 +138,7 @@ export default function Home() {
         <div className="hero-art">
           <div className="scene-label">
             <span className="status-dot" />
-            Oakwood Academy <small>Fictional school · real product mechanics</small>
+            Oakwood Academy <small>Demo school · real product mechanics</small>
           </div>
           <TripScene />
           <div className="hero-pricing">
@@ -163,7 +163,7 @@ export default function Home() {
             </Link>
           ))}
         </div>
-        <small>Sandbox verified · synthetic demo · pre-deployment</small>
+        <small>PayPal Sandbox verified · sample school data · working application</small>
       </div>
       <section className="public-section public-wrap problem-section reveal">
         <SectionHeading

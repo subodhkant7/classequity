@@ -1,8 +1,8 @@
 # Security and privacy
 
-This is a synthetic-data hackathon MVP, not a production school information system.
+This is a sample-data hackathon MVP, not a production school information system.
 
-The hosted sandbox is public at https://classequity.onrender.com. Its freely accessible demo roles are confined to synthetic data and simulated payments/messages. HOSTED_RESTRICT_PUBLIC_AI=true restricts cloud Gemini tools to password-protected sandbox roles; public parent assistance uses grounded local responses. Demo identities cannot switch into sandbox membership or its financial operations. Production payment mode remains unavailable. The hosted phase did not provision Twilio credentials or copy the client Studio trial without confirmed public-use scope. A later local outbound Twilio Sandbox delivery was independently confirmed; genuine hosted inbound/status callbacks remain unverified.
+The hosted sandbox is public at https://classequity.onrender.com. Its freely accessible demo accounts are confined to sample data and simulated payments/messages. HOSTED_RESTRICT_PUBLIC_AI=true restricts cloud Gemini tools to password-protected sandbox roles; public parent assistance uses grounded local responses. Demo accounts cannot switch into sandbox membership or its financial operations. Production payment mode remains unavailable. The hosted phase did not provision Twilio credentials or copy the client Studio trial without confirmed public-use scope. A later local outbound Twilio Sandbox delivery was independently confirmed; genuine hosted inbound/status callbacks remain unverified.
 
 Build release preflight uses a read-only transaction against the existing dedicated database. Startup/restart never migrates or seeds. HTTPS readiness checks database connectivity and returns no private values. Private environment handoff and PostgreSQL backup artifacts are ignored and restricted locally; both the pre-deployment and refreshed archives passed an isolated PostgreSQL 17 restore. The existing database external IP allowlist remains broad, and shared-password sandbox identity remains a hackathon limitation. This is not a production security certification.
 

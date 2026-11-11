@@ -7,7 +7,7 @@ export const showcaseTiers: Tier[] = [
 ];
 export function pricingExample(count: number) {
   if (!Number.isInteger(count) || count < 1 || count > 40)
-    throw Error('Use 1–40 fictional registrations');
+    throw Error('Use 1–40 sample registrations');
   const cents = seatPrice(showcaseTiers, count);
   return {
     count,
@@ -108,8 +108,8 @@ export const presentationOverview: Awaited<ReturnType<typeof dashboardData>> = [
       id: 'presentation-science',
       schoolId: 'presentation-school',
       name: 'A day of discovery',
-      destination: 'Fictional science museum',
-      description: 'Admission, workshop and transport. Synthetic presentation data.',
+      destination: 'Exploratorium Learning Visits',
+      description: 'Admission, workshop and transport. Sample demonstration data.',
       date: '2026-11-20',
       deadline: '2026-11-15',
       capacity: 40,

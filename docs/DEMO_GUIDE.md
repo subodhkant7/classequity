@@ -6,18 +6,18 @@ Run `npm run showcase`, then open `http://localhost:3100/` for the product intro
 
 ## Guided product exploration
 
-1. **Plan an adventure.** Meet fictional Oakwood Academy and the museum trip. Change the registration slider; see the applicable estimate and the next threshold.
-2. **Understand the quotation.** Open the original synthetic SVG, review the recorded Gemini extraction and try the local review checkbox. No activity or price is saved.
-3. **Bring families together.** Consent to a fictional $32 ceiling, add a local registration and unlock the $27 tier. Switch the illustrative conversation to Hindi. No name or invitation token is collected.
+1. **Plan an adventure.** Meet Oakwood Academy, our demo school, and the museum trip. Change the registration slider; see the applicable estimate and the next threshold.
+2. **Understand the quotation.** Open the sample vendor quotation SVG, review the recorded Gemini extraction and try the local review checkbox. No activity or price is saved.
+3. **Bring families together.** Consent to a $32 seat price ceiling, add a sample registration and unlock the $27 tier. Switch the illustrative conversation to Hindi. No name or invitation token is collected.
 4. **Include privately.** Switch teacher/finance/sponsor explanations. No recipient mapping is disclosed and no access is granted. Change pledges, confirmed contributions and fees to see why five supported seats still cost $115.
 5. **Verify every payment.** Step through the local state illustration, including unknown outcomes and a duplicate request. Separately read the recorded $1 sandbox proof: $1 captured, $1 refunded, $0.54 retained fee, −$0.54 net. This chapter sends no payment request.
-6. **See the whole picture.** Use the actual AG Studio custom widgets, native funding chart and reconciliation grid with synthetic aggregates. Replay the labeled recorded AI view. The public report never calls Gemini or saved-state APIs. Its final link opens the real authenticated `/analytics` application.
+6. **See the whole picture.** Use the actual AG Studio custom widgets, native funding chart and reconciliation grid with sample aggregates. Replay the labeled recorded AI view. The public report never calls Gemini or saved-state APIs. Its final link opens the real authenticated `/analytics` application.
 
 Use chapter navigation, previous/next, Replay chapter, Skip animation or Reset demonstration at any time. `?chapter=adventure|quotation|families|support|payments|intelligence` opens a specific chapter. Reduced-motion preference preserves all information without decorative animation.
 
 ## Functional application
 
-`/login` opens the separate operational product. Demo-role entry persists synthetic records and simulated payments; sandbox operator entry is separate. Real application links retain authentication and role authorization. Do not use the shared sandbox workflow for presentation experiments. Financial capture/refund authorization from the previous phase is consumed and does not authorize another test.
+`/login` opens the separate operational product. Demo-role entry persists sample records and simulated payments; sandbox operator entry is separate. Real application links retain authentication and role authorization. Do not use the shared sandbox workflow for presentation experiments. Financial capture/refund authorization from the previous phase is consumed and does not authorize another test.
 
 For isolated application verification:
 

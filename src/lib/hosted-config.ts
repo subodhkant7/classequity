@@ -32,7 +32,7 @@ export function validateHostedConfig(env: Record<string, string | undefined>) {
     env.DEMO_MODE !== 'true' ||
     env.HOSTED_RESTRICT_PUBLIC_AI !== 'true'
   )
-    throw Error('This release supports sandbox payments and the fictional demo workspace only.');
+    throw Error('This release supports sandbox payments and the interactive demo workspace only.');
   if (env.CE_TEST_SCHEMA || env.CE_PREVIEW_ISOLATED === 'true' || env.LOCAL_DATABASE_DIR)
     throw Error('Local test overrides cannot be used for the hosted service.');
 }

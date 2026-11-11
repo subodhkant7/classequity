@@ -87,7 +87,7 @@ export function RecordedAI() {
               <Check size={14} />
             </div>
             <p className="fine-print">
-              Recorded Gemini extraction from our fictional quotation. Source review required.
+              Recorded Gemini extraction from our sample vendor quotation. Source review required.
             </p>
           </div>
         ) : active === 1 ? (

@@ -12,7 +12,7 @@ export function Invite({ token }: { token: string }) {
         <ShieldCheck size={30} />
         <h1 style={{ fontSize: 28 }}>Your family’s invitation.</h1>
         <p className="muted">
-          Open a private session to register a fictional student, record consent, and view only your
+          Open a private session to register a sample student, record consent, and view only your
           family’s payment. This link works once and expires automatically.
         </p>
         {error && <Notice error>{error}</Notice>}

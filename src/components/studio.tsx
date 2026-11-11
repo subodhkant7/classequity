@@ -101,7 +101,7 @@ class DomainWidget {
       ? `${d.payments.filter((p) => p.status === 'COMPLETED').length} captured · ${d.payments.filter((p) => p.status === 'FAILED').length} failed · ${d.payments.filter((p) => p.status === 'REFUNDED').length} refunded · ${d.payments.filter((p) => p.status === 'UNKNOWN').length} unknown`
       : funding
         ? d.totals.ready
-          ? `Net funding covers all ${d.coverage.coveredSeats} seats and fees. ${d.mode === 'demo' ? 'Synthetic demonstration.' : 'Sandbox captures / finance-attested treasury.'}`
+          ? `Net funding covers all ${d.coverage.coveredSeats} seats and fees. ${d.mode === 'demo' ? 'Interactive demo scenario.' : 'Sandbox captures / finance-attested treasury.'}`
           : `Required: ${money(d.totals.required)}. ${d.coverage.coveredSeats} covered, ${d.coverage.parentPaidSeats} parent paid, ${d.coverage.fullyAssistedSeats} fully assisted. Fee accounts pending: ${d.totals.feePending}; reserved ${money(d.totals.feeReserve)}.`
         : next
           ? `${next.min - d.registrationCount} more registrations unlock ${money(next.cents)} seats, with ${money((d.seatCents - next.cents) * next.min)} projected cohort savings. Consent and price freeze required.`

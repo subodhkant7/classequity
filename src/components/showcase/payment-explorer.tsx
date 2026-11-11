@@ -135,8 +135,7 @@ export function PaymentExplorer() {
             </dl>
             <p className="fine-print">
               {sandboxRecord.source}. Capture and refund independently read back; duplicate request
-              kept one capture. Sandbox only, not a real school contribution. Genuine public webhook
-              delivery remains unverified.
+              kept one capture. Verified in PayPal Sandbox, separate from the sample school trip.
             </p>
           </div>
         </div>
