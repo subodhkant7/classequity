@@ -43,12 +43,12 @@ The deployed Render web service may need time to wake after inactivity. If hoste
 | --- | --- | --- |
 | **PayPal** | Two separately authorized $1 Sandbox capture/refund exercises; the hosted exercise received genuine signed approval, capture and refund callbacks, with independent readback and safe redelivery | **Sandbox only**, not live money; recorded events are separate from the fictional school demonstration |
 | **Fee reconciliation** | Each completed $1 full refund retained a reported **$0.54** fee, producing **−$0.54** net for that transaction | Do not generalize this fee to other merchants or transactions |
-| **Gemini** | Actual local Flash-Lite generation, PDF quote extraction, English/Hindi trip answers and editable AG Studio report creation | Hosted cloud generation **not independently verified**; the public tour uses labeled recorded/illustrative examples; a PNG issuer may require manual entry |
+| **Gemini** | Hosted Flash-Lite answered English and Hindi trip questions in the restricted fictional sandbox. Local tests also verified PDF quote extraction and editable AG Studio report creation. | Hosted PDF extraction returned HTTP 502, and hosted Studio generation was untested. Public tour examples are recorded or illustrative. A PNG issuer may require manual entry. |
 | **Twilio WhatsApp** | One authorized outbound Sandbox message reached provider-reported **delivered** | Genuine hosted inbound/status callbacks remain unverified; public message demo is simulated |
 | **AG Studio / AG Grid** | Genuine native interactive reports and widgets rendered and exercised | Commercial vendor terms apply to AG Studio/Enterprise dependencies |
 | **APIMatic** | PayPal/Twilio Context Plugins informed implementation contracts; the installed official **@paypal/paypal-server-sdk** is APIMatic-generated | APIMatic is a development/SDK contributor, **not** a payment processor or runtime backend |
 
-Detailed evidence: [PayPal hosted verification](docs/HOSTED_WEBHOOK_VERIFICATION.md) · [Gemini and Twilio provider verification](docs/PROVIDER_LIVE_VERIFICATION.md) · [APIMatic integration](docs/APIMATIC_INTEGRATION.md) · [Release manifest](docs/RELEASE_MANIFEST.json).
+Detailed evidence: [PayPal hosted verification](docs/HOSTED_WEBHOOK_VERIFICATION.md) · [Hosted Gemini verification](docs/HOSTED_GEMINI_VERIFICATION.md) · [Local Gemini and Twilio provider verification](docs/PROVIDER_LIVE_VERIFICATION.md) · [APIMatic integration](docs/APIMATIC_INTEGRATION.md) · [Release manifest](docs/RELEASE_MANIFEST.json).
 
 ## Architecture and safety boundaries
 
@@ -181,7 +181,7 @@ The most recent integration merge reported **74 unit/service tests, six financia
 ## Known limits and production boundary
 
 - Fictional school/parent data; PayPal **Sandbox**, not live payments or demonstrated school adoption.
-- Hosted Gemini generation and genuine hosted Twilio callback delivery remain unverified; local Gemini workflows and one Twilio outbound Sandbox delivery were verified separately.
+- Hosted Gemini verification covers English and Hindi trip assistance. Hosted PDF extraction failed, Studio agent generation was untested, and genuine hosted Twilio callbacks remain unverified. [Hosted Gemini verification](docs/HOSTED_GEMINI_VERIFICATION.md) · [Local Gemini and Twilio provider verification](docs/PROVIDER_LIVE_VERIFICATION.md)
 - PNG quote issuer extraction may need manual correction; human review is mandatory.
 - Sandbox operator access uses a shared password, not independent IdP/MFA.
 - Paid PostgreSQL reduces free-tier expiry risk but does not remove cold-start, backup or operational risk. The web service is deployed manually.
