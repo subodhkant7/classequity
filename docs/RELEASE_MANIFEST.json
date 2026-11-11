@@ -111,7 +111,35 @@
     ]
   },
   "integrations": {
-    "geminiHosted": "HOSTED_GENERATION_UNVERIFIED",
+    "geminiHosted": "HOSTED_GEMINI_PARTIALLY_VERIFIED",
+    "hostedGeminiApplicationVerification": {
+      "evidence": "HOSTED_GEMINI_VERIFICATION.md",
+      "checkedAt": "2026-11-11T08:57:44.028Z",
+      "runtimeCommit": "e673ad86537315167037f877386be6a9ede599ad",
+      "documentationBaseCommit": "6c629f2eff8cbfdde581f5bbbdb434c7aa4cb81e",
+      "workspace": "restricted fictional sandbox",
+      "model": "gemini-2.5-flash-lite",
+      "providerEligibleApplicationRequests": 3,
+      "assistant": {
+        "route": "/api/assistant",
+        "verifiedLanguages": ["en", "hi"],
+        "httpStatus": 200,
+        "source": "Gemini · school-grounded",
+        "fallback": false
+      },
+      "quotationPdf": {
+        "httpStatus": 502,
+        "assessment": "FAILED",
+        "reviewRecordCreated": false
+      },
+      "studioAgent": {
+        "status": "UNTESTED",
+        "providerTurns": 0,
+        "existingReportPreserved": true
+      },
+      "publicAiRestrictionVerified": true,
+      "unchangedSandboxFinancialTables": 11
+    },
     "previousHostedGeminiBillingTierLookupHttp": 403,
     "geminiRecordedEvidence": ["ai-evidence.json", "studio-agent-evidence.json"],
     "twilioHosted": "UNSIGNED_INBOUND_AND_STATUS_REJECTED_HOSTED_SIGNED_CALLBACKS_UNVERIFIED",
@@ -132,7 +160,7 @@
   },
   "knownLimitations": [
     "Manual deployment and Render web service cold starts",
-    "Hosted Gemini generation unverified",
+    "Hosted Gemini verification covers English and Hindi assistance. Hosted PDF extraction failed and hosted Studio agent generation was untested.",
     "Gemini quotation PNG issuer may require manual entry",
     "Genuine hosted Twilio signed callbacks unverified",
     "Sandbox operator uses a shared password",

@@ -13,7 +13,7 @@ Baseline `f7e5d7f7c2b921e978fa28f2184b5f3a7dc691a3` on branch `codex/provider-li
 | Parent assistant           | Both English and Hindi returned HTTP 200 with `Gemini · school-grounded`. Each gave November 20, 2026 and $23.00. The Hindi answer used Devanagari. Neither response disclosed recipients or claimed an individual payment status.                                                                                                                |
 | AG Studio                  | One comparison task produced two completed Gemini turns. The first called `build_financial_view` and the second returned a message. The browser rendered and reopened the editable `AI · Trip funding comparison` report with zero uncaught page errors.                                                                                          |
 
-The dashboard, analytics, finance and registration projections matched before and after the AI checks. Pricing activation, approval and payment actions were outside the probe. These are local application results. Hosted generation remains unverified.
+The dashboard, analytics, finance and registration projections matched before and after the local AI checks. The separate November 11 Render test verified English and Hindi assistant generation in the restricted fictional sandbox. Hosted PDF extraction returned HTTP 502, and hosted Studio agent generation remains untested. [Hosted Gemini verification](HOSTED_GEMINI_VERIFICATION.md)
 
 ## WhatsApp
 

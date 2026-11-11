@@ -15,14 +15,14 @@
 - [ ] Confirm the final README clone, `npm ci && npm run showcase`, fictional role login and interactive charts with a clean environment.
 - [ ] Confirm the README environment template matches checked-in `.env.example`, local and hosted code constraints, and the Render deployment configuration. Review any historical branch in `render.yaml` before Blueprint usage.
 - [ ] Confirm the deployed HTTPS app and `/api/health` still work with its existing paid PostgreSQL database; review backup/restore readiness, DB IP allowlist, and remaining web cold-start behavior.
-- [ ] Confirm all technical claims in README, Devpost and video distinguish **real sandbox provider proof**, **local Gemini verification**, **local Twilio outbound delivery**, **fictional application simulation** and **unverified hosted integrations**.
+- [ ] Check that README, Devpost and video distinguish the verified hosted Gemini assistant, local Gemini quotation and Studio results, PayPal Sandbox proof, local Twilio outbound delivery, and fictional simulations. [Hosted Gemini verification](HOSTED_GEMINI_VERIFICATION.md)
 
 ## 2. Evidence boundary
 
 | Feature | What was verified | What must not be claimed |
 | --- | --- | --- |
 | PayPal | Genuine hosted Sandbox approval/capture/refund callbacks, provider readback, duplicate/redelivery protection and retained-fee reconciliation | Live-money processing, real school adoption, or new transactions while visiting the public tour |
-| Gemini | Local real generation, quote PDF extraction, English/Hindi answers, editable AG Studio agent report | Hosted provider generation proven or autonomous payment/assistance decisions |
+| Gemini | Genuine hosted English and Hindi assistance, plus local PDF extraction and local editable AG Studio agent reports | Successful hosted PDF extraction, hosted Studio agent generation or autonomous payment or assistance decisions |
 | Twilio | One authorized real outbound WhatsApp Sandbox message provider-confirmed `delivered` | Verified genuine hosted inbound/status callbacks or universal production messaging |
 | AG Studio | Native report widgets and actual editable UI | MIT licence of commercial Enterprise dependencies or unrestricted usage |
 | Public roles | Fictional school/parent/finance workflows; browser-local illustrations | Production identity assurance or personal-data readiness |
@@ -30,7 +30,7 @@
 
 ## 3. Manual publication and submission order
 
-1. Owner reviews and merges the documentation PR after successful CI. **No automatic repo visibility change.**
+1. Owner confirms the documentation merges and GitHub Actions results before approving publication.
 2. Owner completes the final full-history/secret/licence checks immediately before publication.
 3. Owner changes the repository visibility in GitHub to **Public**, then opens the URL in a signed-out browser.
 4. Owner checks public README links, `LICENSE` recognition, `.env.example`, reproducibility and hosted demo access from a clean browser.
@@ -42,7 +42,7 @@
 
 - Existing Render service uses manual deployments and may cold-start; deployment SHA can trail `main`.
 - The shared-password sandbox operator is hackathon-only, not commercial authentication.
-- Hosted Gemini generation and genuine hosted Twilio callbacks remain unverified.
+- Hosted Gemini PDF extraction returned HTTP 502, hosted Studio agent generation was untested, and genuine hosted Twilio callbacks remain unverified.
 - Quote PNG issuer extraction can require manual entry.
 - AG Studio/Enterprise licence terms govern usage beyond permitted evaluation.
 - External PostgreSQL IP allowlisting and production privacy/security hardening require further work.
