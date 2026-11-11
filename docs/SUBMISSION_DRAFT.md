@@ -25,7 +25,7 @@ Trip prices depend on participation. Spreadsheets, chat threads, hardship reques
 
 The hosted one-dollar sandbox exercise completed one capture and one full refund. Genuine signed approval, capture and refund callbacks arrived on the public HTTPS receiver. Independent readbacks confirmed the result, including $0.54 in retained fees. Duplicate requests and actual redelivery left the ledger unchanged. [Redacted verification](HOSTED_WEBHOOK_VERIFICATION.md)
 
-Gemini extracts fictional vendor quotations, answers approved trip questions in English or Hindi, and helps an authenticated AG Studio agent explain financial aggregates. Humans approve pricing, consent, assistance and payment actions. Integer-cent code computes the authoritative figures. The deployed assistant generated verified English and Hindi answers through the restricted fictional sandbox. Local tests verified PDF extraction and a rendered, editable agent-created report. The hosted PDF attempt returned HTTP 502 and hosted agent generation was untested. The public tour labels its recorded and illustrative examples. [Hosted Gemini verification](HOSTED_GEMINI_VERIFICATION.md) · [Local provider verification](PROVIDER_LIVE_VERIFICATION.md)
+Gemini extracts sample vendor quotations, answers approved trip questions in English or Hindi, and helps an authenticated AG Studio agent explain financial aggregates. Humans approve pricing, consent, assistance and payment actions. Integer-cent code computes the authoritative figures. The deployed assistant generated verified English and Hindi answers through the restricted sandbox workspace. Local tests verified PDF extraction and a rendered, editable agent-created report. The hosted PDF attempt returned HTTP 502 and hosted agent generation was untested. The public tour labels its recorded and illustrative examples. [Hosted Gemini verification](HOSTED_GEMINI_VERIFICATION.md) · [Local provider verification](PROVIDER_LIVE_VERIFICATION.md)
 
 ## Tools and innovation
 
@@ -39,11 +39,11 @@ Concurrency required durable capture claims, refund balance reservations and ver
 
 ## Testing instructions for judges
 
-Open `/demo` for the credential-free tour. Open `/login` and use the fictional School admin, Parent and Finance admin roles to work with persisted demo data and editable analytics. Allow the Render web service time to wake after inactivity. The PostgreSQL database is on a paid plan. Use the README's `npm ci` and `npm run showcase` path if the hosted service is unavailable. The local preview creates its own fictional database and runs without provider credentials. [Judge access and continuity](HACKATHON_READINESS.md) · [Setup](../README.md)
+Open `/demo` for the credential-free tour. Open `/login` and use the School admin, Parent and Finance admin demo accounts to work with persisted sample data and editable analytics. Allow the Render web service time to wake after inactivity. The PostgreSQL database is on a paid plan. Use the README's `npm ci` and `npm run showcase` path if the hosted service is unavailable. The local preview creates its own isolated sample database and runs without provider credentials. [Judge access and continuity](HACKATHON_READINESS.md) · [Setup](../README.md)
 
 ## Limitations
 
-The project uses fictional school data and PayPal Sandbox. The restricted sandbox operator uses a shared password. Render hosts the application and a paid PostgreSQL database. The local showcase is the independently tested judging fallback. AG Studio has a vendor evaluation arrangement for judging and commercial terms for broader deployment. [Third-party notices](../THIRD_PARTY_NOTICES.md)
+The project uses sample school data and PayPal Sandbox. The restricted sandbox operator uses a shared password. Render hosts the application and a paid PostgreSQL database. The local showcase is the independently tested judging fallback. AG Studio has a vendor evaluation arrangement for judging and commercial terms for broader deployment. [Third-party notices](../THIRD_PARTY_NOTICES.md)
 
 ## Final owner-controlled submission steps
 

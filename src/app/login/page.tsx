@@ -34,7 +34,7 @@ export default function Login() {
             ← Back to ClassEquity
           </Link>
           <h1 style={{ marginTop: 30 }}>Welcome to your school.</h1>
-          <p>Choose a role to explore Oakwood Academy, our fictional demo school.</p>
+          <p>Choose a role to explore Oakwood Academy, our demo school.</p>
           <div className="tabs">
             <button
               disabled={!hydrated}
@@ -139,8 +139,8 @@ export default function Login() {
             </Button>
             <p className="muted" style={{ fontSize: 10, textAlign: 'center' }}>
               {mode === 'demo'
-                ? 'Synthetic identities and simulated payments. No real money moves.'
-                : 'Synthetic identities. PayPal sandbox only. No live payments.'}
+                ? 'Demo accounts and simulated payments. No real money moves.'
+                : 'Demo accounts. PayPal Sandbox only. No live payments.'}
             </p>
           </form>
         </div>

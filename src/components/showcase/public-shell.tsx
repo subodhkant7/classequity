@@ -83,8 +83,8 @@ export function PublicShell({ children }: { children: ReactNode }) {
         <div>
           <h2>Know the boundary</h2>
           <p>
-            Fictional demonstration data. PayPal sandbox lifecycle and signed callbacks verified.
-            Real WhatsApp delivery remains unverified.
+            Sample school data. PayPal Sandbox lifecycle and signed callbacks verified.
+            Hosted WhatsApp callbacks remain unverified.
           </p>
           <a href="https://github.com/subodhkant7/classequity" target="_blank" rel="noreferrer">
             Private source & documentation <ArrowUpRight size={13} />

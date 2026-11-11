@@ -2,11 +2,15 @@
 
 **Every child belongs on the trip. Every payment is accounted for.**
 
-ClassEquity is an MIT-licensed, hackathon-stage school-trip coordination and financial-accountability application. It brings **group pricing, parent consent, confidential assistance, PayPal Sandbox reconciliation, and AI-supported administration** into one experience.
+ClassEquity is an AI-powered school-trip coordination and financial accountability platform.
 
-**Live demo:** https://classequity.onrender.com · **Interactive tour:** https://classequity.onrender.com/demo · **Try functional fictional roles:** https://classequity.onrender.com/login
+It combines group pricing, parental consent, confidential financial assistance, PayPal payment reconciliation, Gemini-powered assistance and interactive AG Studio analytics.
 
-> **Scope:** This project is a working prototype using fictional school/family data and PayPal **Sandbox**, not a real-money payment platform or a production school information system. Public demonstrations and recorded provider verification are intentionally distinguished throughout.
+Schools can coordinate group participation and support families while maintaining a reliable view of payment status, refunds, fees and available funding.
+
+The live demonstration uses sample school data and includes separately verified PayPal Sandbox integration evidence.
+
+**Live demo:** https://classequity.onrender.com · **Interactive tour:** https://classequity.onrender.com/demo · **Explore demo accounts:** https://classequity.onrender.com/login
 
 ## The problem
 
@@ -18,32 +22,34 @@ A successful payment request is not proof of settlement. A refund can leave proc
 
 ClassEquity links **affordability** with **financial truth**:
 
-1. **Review quotations.** Gemini extracts a fictional vendor quote into structured tiers and terms; an authorized human must review the result before activating pricing.
-2. **Unlock group prices.** The example trip falls from **$32** per seat (1–19 registrations) to **$27** (20–29) and **$23** (30+). Families approve price ceilings; an obligation is frozen only within the applicable consent.
+1. **Review quotations.** Gemini extracts a sample vendor quotation into structured tiers and terms; an authorized human must review the result before activating pricing.
+2. **Unlock group prices.** The demonstration trip falls from **$32** per seat (1–19 registrations) to **$27** (20–29) and **$23** (30+). Families approve price ceilings; an obligation is frozen only within the applicable consent.
 3. **Keep assistance private.** Finance manages individual assistance; teacher and sponsor views receive authorized aggregate information rather than recipient identities.
-4. **Verify funding.** PayPal Sandbox operations use durable request identities, authenticated webhooks, independent provider readback, explicit fee/refund accounting, and no blind retries after ambiguous outcomes. Synthetic contributions and promises do not masquerade as provider-confirmed cash.
+4. **Verify funding.** PayPal Sandbox operations use durable request identities, authenticated webhooks, independent provider readback, explicit fee/refund accounting, and no blind retries after ambiguous outcomes. Simulated contributions and uncaptured promises do not masquerade as provider-confirmed cash.
 5. **Explain the result.** Native AG Studio/AG Grid views display reconciliation, funding gaps and editable reports. Gemini can assist with permitted aggregates but has **no payment, pricing, consent or assistance mutation authority**.
 
 **Why it differs:** Lowering the quoted seat price is only one part of making a trip accessible. ClassEquity also makes the consent, privacy and verified **net** funding behind each seat inspectable.
 
 ## Try the working application
 
+The interactive demonstration uses sample school and family data. Payment simulations are separate from the verified PayPal Sandbox transactions.
+
 | Experience | What to try | Evidence boundary |
 | --- | --- | --- |
-| [Interactive tour](https://classequity.onrender.com/demo) | Six chapters: pricing, quote review, families, assistance, payments and financial intelligence | Client-side fictional interactions; no provider calls or saved changes |
-| [How it works](https://classequity.onrender.com/how-it-works) | Pricing and funding calculators | Fictional scenario |
-| [Functional workspace](https://classequity.onrender.com/login) | Choose **Interactive demo**, then School admin, Parent, Teacher or Finance admin | Persisted **synthetic** data, simulated payments/messages; no credentials required |
+| [Interactive tour](https://classequity.onrender.com/demo) | Six chapters: pricing, quote review, families, assistance, payments and financial intelligence | Browser-local interactive demonstration; no provider calls or saved changes |
+| [How it works](https://classequity.onrender.com/how-it-works) | Pricing and funding calculators | Interactive financial scenario |
+| [Interactive demo workspace](https://classequity.onrender.com/login) | Choose **Interactive demo**, then School admin, Parent, Teacher or Finance admin | Persisted sample data, simulated payments/messages; no credentials required |
 | [Technology and evidence](https://classequity.onrender.com/technology) | Integration boundaries and recorded results | Earlier sandbox/local verification; not a fresh provider operation |
 
-The deployed Render web service may need time to wake after inactivity. If hosted access is impaired, the credential-free local showcase below reproduces the functional fictional workflow without provider credentials.
+The deployed Render web service may need time to wake after inactivity. If hosted access is impaired, the credential-free local showcase below reproduces the interactive demo workflow without provider credentials.
 
 ### What was actually verified?
 
 | Integration | Observed result | Limit |
 | --- | --- | --- |
-| **PayPal** | Two separately authorized $1 Sandbox capture/refund exercises; the hosted exercise received genuine signed approval, capture and refund callbacks, with independent readback and safe redelivery | **Sandbox only**, not live money; recorded events are separate from the fictional school demonstration |
+| **PayPal** | Two separately authorized $1 Sandbox capture/refund exercises; the hosted exercise received genuine signed approval, capture and refund callbacks, with independent readback and safe redelivery | **Sandbox only**, not live money; recorded events are separate from the sample school demonstration |
 | **Fee reconciliation** | Each completed $1 full refund retained a reported **$0.54** fee, producing **−$0.54** net for that transaction | Do not generalize this fee to other merchants or transactions |
-| **Gemini** | Hosted Flash-Lite answered English and Hindi trip questions in the restricted fictional sandbox. Local tests also verified PDF quote extraction and editable AG Studio report creation. | Hosted PDF extraction returned HTTP 502, and hosted Studio generation was untested. Public tour examples are recorded or illustrative. A PNG issuer may require manual entry. |
+| **Gemini** | Hosted Flash-Lite answered English and Hindi trip questions in the restricted sandbox workspace. Local tests also verified PDF quote extraction and editable AG Studio report creation. | Hosted PDF extraction returned HTTP 502, and hosted Studio generation was untested. Public tour examples are recorded or illustrative. A PNG issuer may require manual entry. |
 | **Twilio WhatsApp** | One authorized outbound Sandbox message reached provider-reported **delivered** | Genuine hosted inbound/status callbacks remain unverified; public message demo is simulated |
 | **AG Studio / AG Grid** | Genuine native interactive reports and widgets rendered and exercised | Commercial vendor terms apply to AG Studio/Enterprise dependencies |
 | **APIMatic** | PayPal/Twilio Context Plugins informed implementation contracts; the installed official **@paypal/paypal-server-sdk** is APIMatic-generated | APIMatic is a development/SDK contributor, **not** a payment processor or runtime backend |
@@ -58,7 +64,7 @@ Detailed evidence: [PayPal hosted verification](docs/HOSTED_WEBHOOK_VERIFICATION
 - **External tools:** PayPal Sandbox through the official APIMatic-generated Server SDK; Gemini via Google Gen AI SDK; Twilio via its official SDK; native AG Studio/AG Grid.
 - **Hosting:** Render HTTPS Node service and a paid PostgreSQL instance; current deployment and repository revisions are documented separately.
 
-**Security model:** Separate fictional demo and restricted sandbox tenants; finance-only assistance mappings; server-side role/ownership checks; scoped single-use links; PayPal and Twilio signature validation; bounded AI inputs; and no direct AI authority over financial operations. The restricted sandbox uses a shared operator password and is **not production-grade identity**. See [Architecture](docs/ARCHITECTURE.md) and [Security and limitations](docs/SECURITY.md).
+**Security model:** Separate public demo and restricted sandbox tenants; finance-only assistance mappings; server-side role/ownership checks; scoped single-use links; PayPal and Twilio signature validation; bounded AI inputs; and no direct AI authority over financial operations. The restricted sandbox uses a shared operator password and is **not production-grade identity**. See [Architecture](docs/ARCHITECTURE.md) and [Security and limitations](docs/SECURITY.md).
 
 ## Requirements and quick start (no credentials needed)
 
@@ -72,7 +78,7 @@ npm ci
 npm run showcase
 ~~~
 
-Open **http://localhost:3100**. The showcase launches an isolated fictional PGlite database, creates temporary local-only session secrets and **disables provider credentials in its child process**. Select any fictional role at **/login** to explore the application and native analytics. It does not use the hosted PostgreSQL database or PayPal/Twilio/Gemini services. Stop with Ctrl+C.
+Open **http://localhost:3100**. The showcase launches an isolated local PGlite database with sample data, creates temporary local-only session secrets and **disables provider credentials in its child process**. Select any demo account role at **/login** to explore the application and native analytics. It does not use the hosted PostgreSQL database or PayPal/Twilio/Gemini services. Stop with Ctrl+C.
 
 The project is presently kept private pending the final publication approval; cloning from GitHub requires access until it becomes public.
 
@@ -96,7 +102,7 @@ DATABASE_URL=
 # Generate two distinct strong secrets; do not reuse them
 SESSION_SECRET=
 ADMIN_PASSWORD=
-# The public fictional demo is intentionally enabled for this hackathon
+# The public interactive demo workspace is enabled for this hackathon
 DEMO_MODE=true
 # MUST be true on hosted public deployments; local dev can set false if authorized
 HOSTED_RESTRICT_PUBLIC_AI=false
@@ -127,7 +133,7 @@ For a separate development workspace (not the credential-free showcase):
 
 1. Populate `.env` with independent, non-production secrets and `APP_URL=http://localhost:3000`.
 2. Leave `DATABASE_URL` blank to use durable local PGlite, or provide a dedicated disposable PostgreSQL database.
-3. Run the reviewed migrations and fictional seed **only on your own dedicated database**:
+3. Run the reviewed migrations and sample seed **only on your own dedicated database**:
 
 ~~~bash
 npm ci
@@ -145,7 +151,7 @@ Do not point migrations, seeding or test commands at the published ClassEquity d
 **This is an operator procedure, not an automatic deployment.** Deploy only to a database and provider accounts you control.
 
 1. **Provision PostgreSQL 17.** Create an empty dedicated database named **classequity**. Keep its credentials private; prefer Render's internal connection URL for a same-region web service. Require TLS where appropriate and narrow the database's external IP allowlist. Do not use a shared database or reuse the existing ClassEquity demo database.
-2. **Initialize the new database once.** From a trusted one-off environment with `DATABASE_URL` pointing to your new database, run the reviewed `npm run db:migrate` and then `npm run db:seed` to create the fictional workspaces. Inspect the target database and migration files first. **Do not run migrations or seeding in the web service startup command**; do not seed a database that already contains real records.
+2. **Initialize the new database once.** From a trusted one-off environment with `DATABASE_URL` pointing to your new database, run the reviewed `npm run db:migrate` and then `npm run db:seed` to create the demo and sandbox workspaces. Inspect the target database and migration files first. **Do not run migrations or seeding in the web service startup command**; do not seed a database that already contains real records.
 3. **Create a Render Node web service** from your fork. Use Node **22.23.1**, a compatible region, and your reviewed deployment branch. Set:
 
    | Render setting | Value |
@@ -155,9 +161,9 @@ Do not point migrations, seeding or test commands at the published ClassEquity d
    | Health-check path | `/api/health` |
    | Runtime | Node |
 
-   The build preflight is **read-only** and requires the initialized migration ledger and fictional workspaces to exist. A failing preflight is a reason to inspect the database, **not** to blindly replay setup.
+   The build preflight is **read-only** and requires the initialized migration ledger and seeded workspaces to exist. A failing preflight is a reason to inspect the database, **not** to blindly replay setup.
 4. **Configure environment variables** privately in Render using the template above. Set `APP_URL=https://your-actual-host`, `DATABASE_URL` to your dedicated PostgreSQL connection, `HOSTED_RESTRICT_PUBLIC_AI=true`, `DEMO_MODE=true`, and `PAYPAL_ENV=sandbox`. Use distinct `SESSION_SECRET` and `ADMIN_PASSWORD`. The hosted release preflight also requires PayPal Sandbox credentials and a Gemini key; the public demo must not receive AI/provider authority.
-5. **Deploy and verify.** Confirm HTTPS health at `/api/health`, then open `/demo` and the fictional roles through `/login` in a clean browser. Test tenant/role restrictions. Check hosting logs **without printing secrets**. For paid database plans, separately verify backups and restore readiness; web-service cold starts may still occur.
+5. **Deploy and verify.** Confirm HTTPS health at `/api/health`, then open `/demo` and the demo accounts through `/login` in a clean browser. Test tenant/role restrictions. Check hosting logs **without printing secrets**. For paid database plans, separately verify backups and restore readiness; web-service cold starts may still occur.
 6. **Optional provider webhooks.** Register your own PayPal Sandbox webhook destination **`https://your-actual-host/api/webhooks/paypal`**, subscribe to the supported approval/capture/refund events, and store its real `PAYPAL_WEBHOOK_ID` privately. Do not send new captures/refunds without independent authorization. For a separately authorized Twilio WhatsApp sandbox, inbound is **`POST /api/webhooks/twilio`** and status is **`POST /api/webhooks/twilio/status`**; validate exact HTTPS URL/signature, participant opt-in and callback delivery. Hosted Twilio callbacks have **not** been independently verified for this project.
 
 **Important:** [`render.yaml`](render.yaml) was originally a reference for an existing manually provisioned service, not an automatically synchronized infrastructure stack. Review its branch, plan and environment variables before applying it as a Blueprint; it does **not** create PostgreSQL and must not be used to overwrite someone else's deployment. Migrations/seeding are never implicit during build/start.
@@ -180,7 +186,7 @@ The most recent integration merge reported **74 unit/service tests, six financia
 
 ## Known limits and production boundary
 
-- Fictional school/parent data; PayPal **Sandbox**, not live payments or demonstrated school adoption.
+- Sample school and family records; PayPal **Sandbox**, not live payments or production school deployment.
 - Hosted Gemini verification covers English and Hindi trip assistance. Hosted PDF extraction failed, Studio agent generation was untested, and genuine hosted Twilio callbacks remain unverified. [Hosted Gemini verification](docs/HOSTED_GEMINI_VERIFICATION.md) · [Local Gemini and Twilio provider verification](docs/PROVIDER_LIVE_VERIFICATION.md)
 - PNG quote issuer extraction may need manual correction; human review is mandatory.
 - Sandbox operator access uses a shared password, not independent IdP/MFA.

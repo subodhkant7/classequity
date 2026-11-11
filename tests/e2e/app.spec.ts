@@ -107,7 +107,7 @@ test('new trip, single-use invitation, registration consent, private support, fr
   await family.goto(url);
   await family.getByRole('button', { name: 'Open secure parent portal' }).click();
   await expect(family).toHaveURL(/\/parent\?trip=/, { timeout: 30000 });
-  await family.getByLabel('Fictional student name').fill('Morgan Synthetic Example');
+  await family.getByLabel('Sample student name').fill('Morgan Synthetic Example');
   await family.getByRole('checkbox').check();
   await family.getByRole('button', { name: 'Register & record consent' }).click();
   await expect(family.getByText('Registration and consent recorded.')).toBeVisible({
@@ -179,7 +179,7 @@ test('fully assisted seat coverage follows recorded treasury funds in the financ
   await family.goto(url);
   await family.getByRole('button', { name: 'Open secure parent portal' }).click();
   await expect(family).toHaveURL(/\/parent/);
-  await family.getByLabel('Fictional student name').fill('Fully Assisted Fictional Example');
+  await family.getByLabel('Sample student name').fill('Fully Assisted Fictional Example');
   await family.getByRole('checkbox').check();
   await family.getByRole('button', { name: 'Register & record consent' }).click();
   await expect(family.getByText('Registration and consent recorded.')).toBeVisible();

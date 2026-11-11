@@ -86,7 +86,7 @@ export default function Parent({
         <Brand />
         <div className="flex">
           <Badge tone={a.mode === 'demo' ? 'green' : 'amber'}>
-            {a.mode === 'demo' ? 'Synthetic parent demo' : 'Sandbox family portal'}
+            {a.mode === 'demo' ? 'Interactive parent demo' : 'Sandbox family portal'}
           </Badge>
           <button
             aria-label="Sign out"
@@ -105,8 +105,8 @@ export default function Parent({
         <div className="demo-strip">
           <ShieldCheck size={14} />{' '}
           {a.mode === 'demo'
-            ? 'Fictional student identities. Payments and receipts are simulated.'
-            : 'Synthetic student records · PayPal sandbox only · No live charges'}
+            ? 'Sample student records. Payments and receipts are simulated.'
+            : 'Sample student records · PayPal Sandbox only · No live charges'}
         </div>
         <div className="parent-intro">
           <div className="eyebrow muted">YOUR FAMILY’S NEXT ADVENTURE</div>
@@ -281,8 +281,8 @@ export default function Parent({
                         }}
                       >
                         <Field
-                          label="Fictional student name"
-                          hint="Use synthetic identities only for this hackathon demo."
+                          label="Sample student name"
+                          hint="Use sample names only for this demonstration."
                         >
                           <input
                             name="student"
@@ -454,7 +454,7 @@ export default function Parent({
                     <ShieldCheck size={20} />
                     <p>
                       {a.mode === 'demo'
-                        ? 'Demo payments never call PayPal. Receipts are synthetic examples.'
+                        ? 'Demo payments never call PayPal. Receipts are simulated examples.'
                         : 'Use your personal PayPal sandbox buyer account. A human must complete buyer approval. Never use a live PayPal account here.'}
                     </p>
                   </div>
@@ -514,7 +514,7 @@ export default function Parent({
                     <h3 style={{ marginTop: 15 }}>Request support privately.</h3>
                     <p>
                       Only separately authorized finance personnel can review this request. No
-                      documents are needed for the synthetic demo. Do not share hardship documents
+                      documents are needed for the interactive demo. Do not share hardship documents
                       through WhatsApp or AI.
                     </p>
                     {d.registrations.map((r) => (

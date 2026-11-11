@@ -6,10 +6,10 @@ Submission closes November 12 at noon Pacific, or November 13 at 01:30 IST. Judg
 
 | Surface                                           | What judges can exercise                                                                                                                                  |
 | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Public homepage, calculators and six-chapter tour | Client-side scenarios, recorded sandbox evidence, explicitly illustrative or recorded AI, and editable native Studio on fictional aggregates              |
-| Fictional roles from `/login`                     | Actual persisted demo workflow for school, family and finance, with synthetic payments and role restrictions                                              |
-| Restricted sandbox                                | Password-protected operator access, tenant isolation and authenticated Gemini adapter. Judge access uses fictional roles instead of operator credentials. |
-| Clean local showcase                              | `npm ci` and `npm run showcase`, which build a reproducible fictional workspace at localhost:3100                                                         |
+| Public homepage, calculators and six-chapter tour | Client-side scenarios, recorded sandbox evidence, explicitly illustrative or recorded AI, and editable native Studio on sample aggregates                 |
+| Demo accounts from `/login`                       | Actual persisted demo workflow for school, family and finance, with simulated payments and role restrictions                                              |
+| Restricted sandbox                                | Password-protected operator access, tenant isolation and authenticated Gemini adapter. Judge access uses demo accounts instead of operator credentials.   |
+| Clean local showcase                              | `npm ci` and `npm run showcase`, which build a reproducible local demo workspace at localhost:3100                                                        |
 
 The first hosted browser run encountered Render's cold-start screen and delayed asset loading. A new session after health readiness passed all ten hosted checks. The anonymous tour issued zero application or external requests and had zero uncaught page errors. The console displayed AG Studio’s vendor trial notice. The release manifest records the tested revision, counts and evidence. [Release manifest](RELEASE_MANIFEST.json)
 

@@ -80,7 +80,7 @@ test('judges can open the fictional parent and finance workspaces without creden
       await page.getByRole('button', { name: 'Enter the demo' }).click();
       await expect(page).toHaveURL(role === 'parent' ? /\/parent$/ : /\/dashboard$/);
       if (role === 'parent') {
-        await expect(page.getByText('Synthetic parent demo')).toBeVisible();
+        await expect(page.getByText(/^(?:Interactive|Synthetic) parent demo$/)).toBeVisible();
         await expect(page.getByText('The adventure', { exact: true })).toBeVisible();
         expect((await page.request.get('/api/trips/demo-science/finance')).status()).toBe(403);
       } else {

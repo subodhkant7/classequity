@@ -311,7 +311,7 @@ function Chat({ a, tripId, simulator = false }: { a: Actor; tripId: string; simu
             <h3>Oakwood trip assistant</h3>
             <p>
               {simulator
-                ? 'WhatsApp simulator · synthetic families'
+                ? 'WhatsApp simulator · sample families'
                 : `${a.name} · Your school’s approved information`}
             </p>
           </div>
@@ -920,7 +920,7 @@ export default function Workspace({
                               <Badge tone={statusTone(p.status)}>{readable(p.status)}</Badge>
                             </td>
                             <td className="muted">
-                              {p.mode === 'demo' ? 'Synthetic example' : 'Provider readback'}
+                              {p.mode === 'demo' ? 'Simulated example' : 'Provider readback'}
                             </td>
                           </tr>
                         ))}
@@ -1087,7 +1087,7 @@ export default function Workspace({
               <div className="card">
                 <h2>Registration list</h2>
                 <p className="muted" style={{ fontSize: 11, margin: '12px 0 18px' }}>
-                  {regs.length} fictional students. No hardship information is included.
+                  {regs.length} sample students. No hardship information is included.
                 </p>
                 <Link href="/registrations" className="btn secondary">
                   View registrations <ArrowUpRight size={14} />
@@ -1104,7 +1104,7 @@ export default function Workspace({
               <h2>
                 Ready for discovery <Badge tone="green">{regs.length} registered</Badge>
               </h2>
-              <p>{d.trip.name} · Synthetic student identities only</p>
+              <p>{d.trip.name} · Sample student records only</p>
             </div>
             <div style={{ maxWidth: 240 }}>
               <input
@@ -1347,7 +1347,7 @@ export default function Workspace({
               <Metric
                 label="Gross captured"
                 value={money(d.totals.gross)}
-                foot={a.mode === 'demo' ? 'Synthetic captures' : 'PayPal readback'}
+                foot={a.mode === 'demo' ? 'Simulated captures' : 'PayPal readback'}
                 icon={Wallet}
               />
               <Metric
@@ -1388,7 +1388,7 @@ export default function Workspace({
                 <table>
                   <thead>
                     <tr>
-                      <th>Fictional student</th>
+                      <th>Sample student</th>
                       <th>Status</th>
                       <th>Approved allocation</th>
                       <th>Decision</th>
@@ -1496,7 +1496,7 @@ export default function Workspace({
                               onClick={() =>
                                 run(
                                   () => api('payments/reconcile', { operationId: o.id }),
-                                  'Provider status checked. Demo operations retain their labeled synthetic state.',
+                                  'Provider status checked. Demo operations retain their labeled simulated state.',
                                 )
                               }
                             >
@@ -1575,7 +1575,7 @@ export default function Workspace({
               <p>
                 Record an authorized treasury contribution.{' '}
                 {a.mode === 'demo'
-                  ? 'These records are synthetic.'
+                  ? 'These records are simulated demo entries.'
                   : 'These are finance attestations, separately identified from PayPal captures.'}
               </p>
               <form
@@ -1626,7 +1626,7 @@ export default function Workspace({
               {finance?.contributions.map((c) => (
                 <p key={c.id}>
                   {money(c.cents)} · {c.source} ·{' '}
-                  {c.mode === 'demo' ? 'Synthetic' : 'Finance attested'} ·{' '}
+                  {c.mode === 'demo' ? 'Simulated' : 'Finance attested'} ·{' '}
                   {new Date(c.createdAt).toLocaleDateString()}
                 </p>
               ))}
@@ -1640,14 +1640,14 @@ export default function Workspace({
                   <h3>See what fully funded looks like.</h3>
                   <p>
                     Simulate all pending captures and a school reserve covering fees and refunded
-                    seat costs. This changes only the fictional demo scenario.
+                    seat costs. This changes only the interactive demo scenario.
                   </p>
                 </div>
                 <Button
                   onClick={() =>
                     run(
                       () => api(`trips/${d.trip.id}/simulate-funded`, {}),
-                      'Fully funded simulation applied. Captures and fee reserve are synthetic.',
+                      'Fully funded simulation applied. Captures and fee reserve are simulated.',
                     )
                   }
                 >

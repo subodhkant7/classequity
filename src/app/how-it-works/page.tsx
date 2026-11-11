@@ -30,7 +30,7 @@ export default function How() {
       </header>
       <section id="pricing" className="public-section public-wrap explainer-split">
         <SectionHeading eyebrow="01 · Plan together" title="More learners. A better group price.">
-          These are the fictional vendor’s configured tiers. At 30 registrations, 30 × $23 =
+          These are the sample vendor quotation’s configured tiers. At 30 registrations, 30 × $23 =
           $690—$270 below a $32-per-seat baseline. Pricing is deterministic, not AI arithmetic. A
           school reviews and freezes the final price within parent consent.
         </SectionHeading>

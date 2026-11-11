@@ -5,7 +5,7 @@ import { chapters } from '@/lib/showcase';
 export const metadata: Metadata = {
   title: 'Interactive product tour',
   description:
-    'Explore six chapters of ClassEquity, from a fictional museum trip to real editable financial intelligence. No sign-in or provider credentials needed.',
+    'Explore six chapters of ClassEquity, from a demonstration museum trip to real editable financial intelligence. No sign-in or provider credentials needed.',
 };
 export default async function Demo({
   searchParams,

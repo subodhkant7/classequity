@@ -82,10 +82,10 @@ test('six-chapter tour, local reset and actual AG Studio work without authentica
   await page.getByRole('checkbox').check();
   await expect(page.getByRole('status').first()).toContainText('No activity or price was saved');
   await page.getByRole('button', { name: 'Next chapter' }).click();
-  await expect(page.getByRole('button', { name: 'Add fictional registration' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Add sample registration' })).toBeDisabled();
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Add fictional registration' }).click();
-  await expect(page.getByText('20 fictional registrations.', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Add sample registration' }).click();
+  await expect(page.getByText('20 sample registrations.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'हिन्दी', exact: true }).click();
   await expect(page.locator('.answer')).toHaveAttribute('lang', 'hi');
   await page.getByRole('button', { name: 'Next chapter' }).click();
@@ -137,7 +137,7 @@ test('mobile navigation, deep links, replay and reduced motion remain usable at 
     await noOverflow(page);
   }
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Add fictional registration' }).click();
+  await page.getByRole('button', { name: 'Add sample registration' }).click();
   await page.getByRole('button', { name: 'Replay chapter' }).click();
   await expect(page.getByRole('checkbox')).not.toBeChecked();
   await page.getByRole('button', { name: 'Skip animation' }).click();
@@ -158,7 +158,9 @@ test('public AI tabs respond to arrow keys and technology claims are bounded', a
   await expect(page.getByText('Sandbox delivery verified', { exact: true })).toBeVisible();
   await expect(page.getByText(/Hosted signed callbacks remain unverified/)).toBeVisible();
   await expect(page.getByText('Local generation verified', { exact: true })).toBeVisible();
-  await expect(page.getByText(/Hosted generation remains unverified/)).toBeVisible();
+  await expect(
+    page.getByText(/hosted PDF extraction and Studio generation remain unverified/),
+  ).toBeVisible();
   await expect(page.getByText('Signed sandbox lifecycle verified', { exact: true })).toBeVisible();
   await noOverflow(page);
   await page.screenshot({

@@ -33,7 +33,7 @@ function QuoteChapter() {
   return (
     <div className="quote-chapter">
       <div className="quote-paper">
-        <span className="eyebrow">Fictional vendor · Q-CE-2026-001</span>
+        <span className="eyebrow">Sample vendor quotation · Q-CE-2026-001</span>
         <h3>
           Exploratorium
           <br />
@@ -63,7 +63,7 @@ function QuoteChapter() {
           written cancellation quote.
         </p>
         <a href="/sample-vendor-quote.svg" target="_blank" rel="noreferrer" className="text-button">
-          Open original synthetic fixture ↗
+          Open sample vendor quotation ↗
         </a>
       </div>
       <div className="quote-extraction">
@@ -108,7 +108,7 @@ function QuoteChapter() {
             checked={approved}
             onChange={(e) => setApproved(e.target.checked)}
           />
-          I reviewed the fictional source and approve these tiers for this local demonstration.
+          I reviewed the sample quotation and approve these tiers for this demonstration.
         </label>
         {approved && (
           <p className="chapter-success" role="status">
@@ -149,17 +149,17 @@ function FamiliesChapter() {
         </div>
         <label className="consent-check">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-          I consent to a maximum fictional seat price of $32.
+          I consent to a maximum seat price of $32 for this demonstration.
         </label>
         <button
           className="public-button"
           disabled={!consent || count >= 40}
           onClick={() => setCount((n) => n + 1)}
         >
-          Add fictional registration <ArrowRight size={15} />
+          Add sample registration <ArrowRight size={15} />
         </button>
         <p aria-live="polite" className="chapter-success">
-          {count} fictional registrations.{' '}
+          {count} sample registrations.{' '}
           {count >= 30
             ? 'The $23 group tier is unlocked.'
             : count >= 20
@@ -192,8 +192,8 @@ function FamiliesChapter() {
             : 'Group participation can lower the estimate. The school freezes the final price within your approved ceiling; a frozen obligation cannot silently increase.'}
         </p>
         <p className="fine-print">
-          Illustrative approved-information answer. The real parent assistant calls Gemini. Live
-          Twilio message delivery remains unverified.
+          Illustrative approved-information answer. The real parent assistant calls Gemini. Hosted
+          Twilio callbacks remain unverified.
         </p>
         <Link href="/parent" className="text-button">
           Open the authenticated parent experience ↗
@@ -223,7 +223,7 @@ function SupportChapter() {
               : 'A voluntary commitment and aggregate support need. No family identities or eligibility data.'}
         </p>
         <small>
-          Synthetic privacy illustration. This selector grants no access to the real workspace.
+          Interactive privacy illustration. This selector grants no access to the real workspace.
         </small>
       </div>
       <FundingLab />
@@ -297,7 +297,7 @@ export function DemoTour({ initialChapter = 0 }: { initialChapter?: number }) {
             <div>
               <TripScene />
               <div className="trip-facts">
-                <span>Oakwood Academy · fictional</span>
+                <span>Oakwood Academy · demo school</span>
                 <strong>A day of discovery</strong>
                 <span>Nov 20, 2026 · 40 places · consent deadline Nov 15</span>
               </div>
@@ -315,7 +315,7 @@ export function DemoTour({ initialChapter = 0 }: { initialChapter?: number }) {
         ) : (
           <div className="intelligence-chapter">
             <div className="studio-explanation">
-              <span className="local-label">Real AG Studio · synthetic aggregates</span>
+              <span className="local-label">Real AG Studio · sample aggregates</span>
               <h3>
                 Ask a better question.
                 <br />

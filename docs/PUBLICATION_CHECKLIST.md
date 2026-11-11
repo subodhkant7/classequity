@@ -12,10 +12,10 @@
 - [ ] Verify the prior disposable test session is revoked and no reusable cookie survives in a public log, artifact or document.
 - [ ] Review `LICENSE`, `THIRD_PARTY_NOTICES.md` and vendor licence scope. ClassEquity is MIT; **AG Studio, AG Grid Enterprise and AG Charts Enterprise are not relicensed by MIT**.
 - [ ] Verify the exact archive intended to be published is reproducible from the audited source, excluding `output/`, `.data/`, `.env*` (except `.env.example`), credentials, private logs and backups.
-- [ ] Confirm the final README clone, `npm ci && npm run showcase`, fictional role login and interactive charts with a clean environment.
+- [ ] Confirm the final README clone, `npm ci && npm run showcase`, demo account login and interactive charts with a clean environment.
 - [ ] Confirm the README environment template matches checked-in `.env.example`, local and hosted code constraints, and the Render deployment configuration. Review any historical branch in `render.yaml` before Blueprint usage.
 - [ ] Confirm the deployed HTTPS app and `/api/health` still work with its existing paid PostgreSQL database; review backup/restore readiness, DB IP allowlist, and remaining web cold-start behavior.
-- [ ] Check that README, Devpost and video distinguish the verified hosted Gemini assistant, local Gemini quotation and Studio results, PayPal Sandbox proof, local Twilio outbound delivery, and fictional simulations. [Hosted Gemini verification](HOSTED_GEMINI_VERIFICATION.md)
+- [ ] Check that README, Devpost and video distinguish the verified hosted Gemini assistant, local Gemini quotation and Studio results, PayPal Sandbox proof, local Twilio outbound delivery, and simulated demo interactions. [Hosted Gemini verification](HOSTED_GEMINI_VERIFICATION.md)
 
 ## 2. Evidence boundary
 
@@ -25,7 +25,7 @@
 | Gemini | Genuine hosted English and Hindi assistance, plus local PDF extraction and local editable AG Studio agent reports | Successful hosted PDF extraction, hosted Studio agent generation or autonomous payment or assistance decisions |
 | Twilio | One authorized real outbound WhatsApp Sandbox message provider-confirmed `delivered` | Verified genuine hosted inbound/status callbacks or universal production messaging |
 | AG Studio | Native report widgets and actual editable UI | MIT licence of commercial Enterprise dependencies or unrestricted usage |
-| Public roles | Fictional school/parent/finance workflows; browser-local illustrations | Production identity assurance or personal-data readiness |
+| Public roles | Sample school/parent/finance workflows; browser-local illustrations | Production identity assurance or personal-data readiness |
 | Render | HTTPS web service and independently confirmed paid PostgreSQL instance | Guaranteed zero downtime, every source commit deployed, or complete production hardening |
 
 ## 3. Manual publication and submission order
