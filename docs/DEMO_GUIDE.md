@@ -17,7 +17,7 @@ Use chapter navigation, previous/next, Replay chapter, Skip animation or Reset d
 
 ## Functional application
 
-`/login` opens the separate operational product. Demo-role entry persists sample records and simulated payments; sandbox operator entry is separate. Real application links retain authentication and role authorization. Do not use the shared sandbox workflow for presentation experiments. Financial capture/refund authorization from the previous phase is consumed and does not authorize another test.
+`/login` opens the separate operational product. Public **Interactive demo** role entry serves a read-only canonical Oakwood Academy reference dataset on the server (`$690.00` required, `$532.30` net, `$157.70` gap, `3` unresolved operations) so independent visitors cannot contaminate one another's view or exhaust shared quotas. Interactive pricing previews, local trips, funded scenarios, simulated payments/contributions/refunds, and Studio report changes stay strictly in the visitor's own browser tab (`sessionStorage`), with **Reset demo preview** / **Restore starter report** controls and automatic cleanup on sign-out. Direct server writes in `demo` mode return `HTTP 403 DEMO_READ_ONLY`. Restricted **Sandbox workspace** entry retains full persistent multi-actor server workflows; do not use the shared sandbox workflow for unapproved payment experiments. Financial capture/refund authorization from the previous phase is consumed and does not authorize another test.
 
 For isolated application verification:
 

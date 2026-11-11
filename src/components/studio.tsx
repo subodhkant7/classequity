@@ -30,7 +30,7 @@ import {
 } from 'ag-studio';
 import { CheckCircle2 } from 'lucide-react';
 import { money } from '@/lib/domain';
-import { tripStudioFields, tierStudioFields } from '@/lib/studio-fields';
+import { tripStudioFields, tierStudioFields, operationStudioFields } from '@/lib/studio-fields';
 import type { dashboardData } from '@/server/data';
 import { api, Notice } from './ui';
 type Overview = Awaited<ReturnType<typeof dashboardData>>;
@@ -378,6 +378,8 @@ export const geminiAdapter: AgLlmAdapter = {
     return { complete, stream };
   },
 };
+const DEMO_STUDIO_STORAGE_KEY = 'ce_demo_studio_report_v1';
+
 export default function Studio({
   overview,
   license,
@@ -388,23 +390,44 @@ export default function Studio({
   presentation?: boolean;
 }) {
   const apiRef = useRef<AgStudioApi<Registry> | null>(null);
+  const initialReadyRef = useRef(false);
+  const suppressNextUpdateRef = useRef(false);
+  const isDemo = presentation || overview[0]?.mode === 'demo';
   const [pageId, setPageId] = useState('Financial overview');
   const [state, setState] = useState<AgReportState<Registry> | null>(null);
   const [saved, setSaved] = useState('');
   const [error, setError] = useState('');
   useEffect(() => {
+    if (license) AgStudioLicenseManager.setLicenseKey(license);
     if (presentation) {
       setState(initial);
+      setPageId(initial.selectedPageId);
       return;
     }
-    if (license) AgStudioLicenseManager.setLicenseKey(license);
+    if (isDemo) {
+      try {
+        const raw = window.sessionStorage.getItem(DEMO_STUDIO_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as AgReportState<Registry>;
+          if (parsed && Array.isArray(parsed.pages) && parsed.pages.length > 0) {
+            setState(parsed);
+            setPageId(parsed.selectedPageId || initial.selectedPageId);
+            setSaved('Preview updated in this browser.');
+            return;
+          }
+        }
+      } catch {}
+      setState(initial);
+      setPageId(initial.selectedPageId);
+      return;
+    }
     api<AgReportState<Registry> | null>('studio/state')
       .then((s) => {
         setState(s || initial);
         setPageId((s || initial).selectedPageId);
       })
       .catch(() => setState(initial));
-  }, [license, presentation]);
+  }, [isDemo, license, presentation]);
   const context = useMemo<Context>(() => ({ overview }), [overview]);
   const data = useMemo<AgDataSourcesDefinition<Registry>>(
     () => ({
@@ -444,6 +467,7 @@ export default function Studio({
         },
         {
           id: 'operations',
+          fields: operationStudioFields,
           name: 'Payment status counts',
           data: overview.flatMap((d) =>
             Object.entries(
@@ -639,33 +663,46 @@ export default function Studio({
             className="btn ghost"
             style={{ fontSize: 9, minHeight: 24, padding: '3px 7px' }}
             onClick={() => {
+              if (isDemo && !presentation) {
+                try {
+                  window.sessionStorage.removeItem(DEMO_STUDIO_STORAGE_KEY);
+                } catch {}
+                setSaved('Starter report restored.');
+              }
+              suppressNextUpdateRef.current = true;
               const studio = apiRef.current;
               if (studio) {
                 studio.setState(initial);
-                setState(initial);
-                setPageId(initial.selectedPageId);
               }
+              setState(initial);
+              setPageId(initial.selectedPageId);
             }}
           >
             Restore starter report
           </button>
         </span>
-        {presentation && (
+        {isDemo && (
           <button
             className="text-button"
             onClick={() => {
-              const api = apiRef.current;
-              if (!api) return;
+              const studio = apiRef.current;
               const template = initial.pages.find((p) => p.id === 'Trip comparison')!;
               const page = { ...template, id: 'Recorded AI · Trip comparison' };
-              const next = {
-                ...api.getState(),
+              const baseState = studio ? studio.getState() : state;
+              const next: AgReportState<Registry> = {
+                ...baseState,
                 selectedPageId: page.id,
                 pages: [...initial.pages, page],
               };
-              api.setState(next);
+              if (studio) studio.setState(next);
               setState(next);
               setPageId(page.id);
+              if (!presentation) {
+                try {
+                  window.sessionStorage.setItem(DEMO_STUDIO_STORAGE_KEY, JSON.stringify(next));
+                } catch {}
+              }
+              setSaved('Preview updated in this browser.');
             }}
           >
             Replay recorded AI view
@@ -676,9 +713,23 @@ export default function Studio({
           value={pageId}
           style={{ width: 230, fontSize: 11, padding: 7 }}
           onChange={(e) => {
-            setPageId(e.target.value);
+            const nextPageId = e.target.value;
+            setPageId(nextPageId);
             const studio = apiRef.current;
-            if (studio) studio.setState({ ...studio.getState(), selectedPageId: e.target.value });
+            const nextState: AgReportState<Registry> = {
+              ...(studio ? studio.getState() : state),
+              selectedPageId: nextPageId,
+            };
+            if (studio) studio.setState(nextState);
+            setState(nextState);
+            if (isDemo) {
+              if (!presentation) {
+                try {
+                  window.sessionStorage.setItem(DEMO_STUDIO_STORAGE_KEY, JSON.stringify(nextState));
+                } catch {}
+              }
+              setSaved('Preview updated in this browser.');
+            }
           }}
         >
           {state.pages.map((p) => (
@@ -698,13 +749,33 @@ export default function Studio({
             initialState={state}
             widgets={widgets}
             context={context}
-            ai={presentation ? undefined : ai}
+            ai={isDemo ? undefined : ai}
             onApiReady={(e) => {
               apiRef.current = e.api as unknown as AgStudioApi<Registry>;
+              window.requestAnimationFrame(() => {
+                window.requestAnimationFrame(() => {
+                  initialReadyRef.current = true;
+                });
+              });
             }}
             onErrorRaised={(e) => setError(e.errorDetails.join('; '))}
             onStateUpdated={(e) => {
-              if (presentation) return;
+              if (suppressNextUpdateRef.current) {
+                suppressNextUpdateRef.current = false;
+                return;
+              }
+              if (!initialReadyRef.current) return;
+              if (presentation) {
+                setSaved('Preview updated in this browser.');
+                return;
+              }
+              if (isDemo) {
+                try {
+                  window.sessionStorage.setItem(DEMO_STUDIO_STORAGE_KEY, JSON.stringify(e.state));
+                } catch {}
+                setSaved('Preview updated in this browser.');
+                return;
+              }
               void api('studio/state', e.state)
                 .then(() => setSaved('Report saved'))
                 .catch(() => setError('Report changes could not be saved.'));

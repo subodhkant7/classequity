@@ -38,7 +38,7 @@ The interactive demonstration uses sample school and family data. Payment simula
 | --- | --- | --- |
 | [Interactive tour](https://classequity.onrender.com/demo) | Six chapters: pricing, quote review, families, assistance, payments and financial intelligence | Browser-local interactive demonstration; no provider calls or saved changes |
 | [How it works](https://classequity.onrender.com/how-it-works) | Pricing and funding calculators | Interactive financial scenario |
-| [Interactive demo workspace](https://classequity.onrender.com/login) | Choose **Interactive demo**, then School admin, Parent, Teacher or Finance admin | Persisted sample data, simulated payments/messages; no credentials required |
+| [Interactive demo workspace](https://classequity.onrender.com/login) | Choose **Interactive demo**, then School admin, Parent, Teacher or Finance admin | Read-only canonical Oakwood Academy server dataset (`$157.70` gap), browser-local interactive previews (`sessionStorage`), per-session quotas, simulated payments/messages, `403 DEMO_READ_ONLY` on server writes; no credentials required |
 | [Technology and evidence](https://classequity.onrender.com/technology) | Integration boundaries and recorded results | Earlier sandbox/local verification; not a fresh provider operation |
 
 The deployed Render web service may need time to wake after inactivity. If hosted access is impaired, the credential-free local showcase below reproduces the interactive demo workflow without provider credentials.
@@ -64,7 +64,7 @@ Detailed evidence: [PayPal hosted verification](docs/HOSTED_WEBHOOK_VERIFICATION
 - **External tools:** PayPal Sandbox through the official APIMatic-generated Server SDK; Gemini via Google Gen AI SDK; Twilio via its official SDK; native AG Studio/AG Grid.
 - **Hosting:** Render HTTPS Node service and a paid PostgreSQL instance; current deployment and repository revisions are documented separately.
 
-**Security model:** Separate public demo and restricted sandbox tenants; finance-only assistance mappings; server-side role/ownership checks; scoped single-use links; PayPal and Twilio signature validation; bounded AI inputs; and no direct AI authority over financial operations. The restricted sandbox uses a shared operator password and is **not production-grade identity**. See [Architecture](docs/ARCHITECTURE.md) and [Security and limitations](docs/SECURITY.md).
+**Security model:** Separate public demo and restricted sandbox tenants; server-enforced read-only public demo boundary (`HTTP 403 DEMO_READ_ONLY` on server writes, canonical read-time filtering, browser-local interactive simulations via `sessionStorage`, and per-session quota isolation); finance-only assistance mappings; server-side role/ownership checks; scoped single-use links; PayPal and Twilio signature validation; bounded AI inputs; and no direct AI authority over financial operations. The restricted sandbox retains full persistent workflows using a shared operator password and is **not production-grade identity**. See [Architecture](docs/ARCHITECTURE.md) and [Security and limitations](docs/SECURITY.md).
 
 ## Requirements and quick start (no credentials needed)
 

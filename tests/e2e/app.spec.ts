@@ -6,6 +6,16 @@ async function login(page: import('@playwright/test').Page, role = 'School admin
   await page.getByRole('button', { name: 'Enter the demo' }).click();
   await expect(page).toHaveURL(role === 'Parent' ? /\/parent/ : /\/dashboard/, { timeout: 30000 });
 }
+async function loginSandbox(page: import('@playwright/test').Page, role = 'School admin') {
+  await page.goto('/login');
+  await page.getByRole('button', { name: 'Sandbox workspace' }).click();
+  await page.getByRole('button', { name: new RegExp(role) }).click();
+  await page
+    .getByLabel('Sandbox administrator password')
+    .fill(process.env.ADMIN_PASSWORD || 'synthetic-ci-admin-password-for-tests');
+  await page.getByRole('button', { name: 'Open sandbox workspace' }).click();
+  await expect(page).toHaveURL(/\/dashboard/, { timeout: 30000 });
+}
 test('landing, school overview, registration search, and actual AG Studio render', async ({
   page,
 }) => {
@@ -81,12 +91,12 @@ test('WhatsApp simulator answers through shared service and mobile layout fits',
   await page.screenshot({ path: 'output/playwright/dashboard-mobile.png', fullPage: true });
 });
 
-test('new trip, single-use invitation, registration consent, private support, freeze and parent receipt', async ({
+test('new trip, single-use invitation, registration consent, private support, freeze and parent obligation', async ({
   page,
   browser,
 }) => {
   test.setTimeout(120000);
-  await login(page);
+  await loginSandbox(page);
   await page.getByRole('button', { name: 'Create a trip' }).click();
   await page.getByLabel('Activity name', { exact: true }).fill(`Discovery workshop ${Date.now()}`);
   await page.getByLabel('Destination', { exact: true }).fill('Fictional discovery center');
@@ -122,7 +132,7 @@ test('new trip, single-use invitation, registration consent, private support, fr
   });
   const financeContext = await browser.newContext();
   const financePage = await financeContext.newPage();
-  await login(financePage, 'Finance admin');
+  await loginSandbox(financePage, 'Finance admin');
   const info = await financePage.request.get(`/api/trips/${tripId}/finance`);
   const restricted = await info.json();
   expect(restricted.allocations).toHaveLength(1);
@@ -137,10 +147,9 @@ test('new trip, single-use invitation, registration consent, private support, fr
   await family.reload();
   await family.getByRole('button', { name: 'My payments & receipts', exact: true }).click();
   await expect(family.getByText('$16.00', { exact: true })).toBeVisible({ timeout: 30000 });
-  await family.getByRole('button', { name: 'Simulate payment' }).click();
-  await expect(family.getByText('Simulated receipt', { exact: true })).toBeVisible({
-    timeout: 30000,
-  });
+  await expect(
+    family.getByRole('button', { name: 'Open PayPal sandbox checkout' }),
+  ).toBeVisible({ timeout: 30000 });
   await family.goto(url);
   await family.getByRole('button', { name: 'Open secure parent portal' }).click();
   await expect(family.getByText('This invitation is expired or already used.')).toBeVisible();
@@ -153,7 +162,7 @@ test('fully assisted seat coverage follows recorded treasury funds in the financ
   browser,
 }) => {
   test.setTimeout(120000);
-  await login(page, 'Finance admin');
+  await loginSandbox(page, 'Finance admin');
   const origin = { Origin: base };
   const created = await page.request.post('/api/trips', {
     headers: origin,

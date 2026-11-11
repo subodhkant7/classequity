@@ -7,7 +7,7 @@ Submission closes November 12 at noon Pacific, or November 13 at 01:30 IST. Judg
 | Surface                                           | What judges can exercise                                                                                                                                  |
 | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Public homepage, calculators and six-chapter tour | Client-side scenarios, recorded sandbox evidence, explicitly illustrative or recorded AI, and editable native Studio on sample aggregates                 |
-| Demo accounts from `/login`                       | Actual persisted demo workflow for school, family and finance, with simulated payments and role restrictions                                              |
+| Demo accounts from `/login`                       | Read-only canonical Oakwood Academy server dataset (`$157.70` gap), browser-local interactive simulations (`sessionStorage`), per-session rate-limit buckets, role restrictions, and `403 DEMO_READ_ONLY` write guards so concurrent judges cannot contaminate each other |
 | Restricted sandbox                                | Password-protected operator access, tenant isolation and authenticated Gemini adapter. Judge access uses demo accounts instead of operator credentials.   |
 | Clean local showcase                              | `npm ci` and `npm run showcase`, which build a reproducible local demo workspace at localhost:3100                                                        |
 

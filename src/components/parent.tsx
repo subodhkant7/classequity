@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   ArrowRight,
   ShieldCheck,
@@ -18,12 +18,33 @@ import {
 } from 'lucide-react';
 import type { Actor } from '@/server/auth';
 import type { parentData } from '@/server/data';
-import { money } from '@/lib/domain';
+import { money, seatPrice } from '@/lib/domain';
 import { Badge, Button, Empty, Field, Notice, api } from './ui';
 import { Brand } from './brand';
 import Museum from './museum';
 import { Chat } from './workspace';
 type ParentData = Awaited<ReturnType<typeof parentData>>;
+
+interface DemoParentLocalState {
+  previewRegistrations?: number;
+  previewCeilingCents?: number;
+  simulatedPaidObligationIds?: string[];
+  simulatedSponsors?: { id: string; cents: number }[];
+  pairingCode?: string;
+}
+
+const DEMO_PARENT_STORAGE_KEY = 'ce_demo_parent_v1';
+
+function readDemoParentLocalState(): DemoParentLocalState {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.sessionStorage.getItem(DEMO_PARENT_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as DemoParentLocalState) : {};
+  } catch {
+    return {};
+  }
+}
+
 export default function Parent({
   a,
   trips,
@@ -35,17 +56,153 @@ export default function Parent({
 }) {
   const router = useRouter();
   const [tripId, setTripId] = useState(selected || trips[0]?.id || '');
-  const [d, setD] = useState<ParentData | null>(null);
+  const [rawD, setRawD] = useState<ParentData | null>(null);
+  const [demoLocal, setDemoLocal] = useState<DemoParentLocalState>(() =>
+    a.mode === 'demo' ? readDemoParentLocalState() : {},
+  );
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [tab, setTab] = useState('trip');
   const [sponsorCents, setSponsorCents] = useState(2300);
   const [phone, setPhone] = useState('');
   const [pair, setPair] = useState('');
+
+  const updateDemoLocal = useCallback(
+    (updater: (prev: DemoParentLocalState) => DemoParentLocalState) => {
+      setDemoLocal((prev) => {
+        const next = updater(prev);
+        if (typeof window !== 'undefined') {
+          try {
+            window.sessionStorage.setItem(DEMO_PARENT_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+        }
+        return next;
+      });
+    },
+    [],
+  );
+
+  const resetDemoLocal = useCallback(() => {
+    setDemoLocal({});
+    setPair('');
+    if (typeof window !== 'undefined') {
+      try {
+        window.sessionStorage.removeItem(DEMO_PARENT_STORAGE_KEY);
+      } catch {}
+    }
+    setNotice('Demo preview reset to canonical family portal records.');
+  }, []);
+
+  const hasDemoLocalChanges = useMemo(
+    () =>
+      a.mode === 'demo' &&
+      Boolean(
+        demoLocal.previewRegistrations !== undefined ||
+          demoLocal.previewCeilingCents !== undefined ||
+          (demoLocal.simulatedPaidObligationIds &&
+            demoLocal.simulatedPaidObligationIds.length > 0) ||
+          (demoLocal.simulatedSponsors && demoLocal.simulatedSponsors.length > 0) ||
+          demoLocal.pairingCode,
+      ),
+    [a.mode, demoLocal],
+  );
+
+  const d = useMemo<ParentData | null>(() => {
+    if (!rawD) return null;
+    if (a.mode !== 'demo') return rawD;
+    const regCount = demoLocal.previewRegistrations ?? rawD.registrationCount;
+    const previewSeat =
+      demoLocal.previewRegistrations !== undefined
+        ? seatPrice(rawD.trip.tiers, regCount)
+        : rawD.seatCents;
+    const ceilingCents =
+      demoLocal.previewCeilingCents ?? rawD.consents[0]?.ceilingCents ?? 3200;
+    const consents = rawD.consents.map((c, idx) =>
+      idx === 0 ? { ...c, ceilingCents, accepted: true } : c,
+    );
+    const extraObligations = (demoLocal.simulatedSponsors ?? []).map((sp) => ({
+      id: sp.id,
+      tripId: rawD.trip.id,
+      snapshotId: rawD.snapshot?.id ?? 'demo-snapshot',
+      userId: a.userId,
+      registrationId: null,
+      commitmentId: `commit-${sp.id}`,
+      kind: 'SPONSOR',
+      cents: sp.cents,
+      createdAt: new Date(),
+    }));
+    const obligations = [...rawD.obligations, ...extraObligations];
+    const paidIds = new Set(demoLocal.simulatedPaidObligationIds ?? []);
+    const operations = obligations
+      .map((ob) => {
+        const existing = rawD.operations.find((o) => o.obligationId === ob.id);
+        if (paidIds.has(ob.id)) {
+          return (
+            existing
+              ? { ...existing, status: 'COMPLETED', errorCode: null }
+              : {
+                  id: `demo-sim-op-${ob.id}`,
+                  schoolId: a.schoolId,
+                  obligationId: ob.id,
+                  mode: 'demo' as const,
+                  orderId: `SIM-ORDER-${ob.id}`,
+                  requestKey: `sim-req-${ob.id}`,
+                  captureKey: `sim-cap-${ob.id}`,
+                  status: 'COMPLETED',
+                  approvalUrl: null,
+                  errorCode: null,
+                  version: 2,
+                  captureRequestedAt: new Date(),
+                  updatedAt: new Date(),
+                  createdAt: new Date(),
+                }
+          );
+        }
+        return existing ?? null;
+      })
+      .filter((o): o is NonNullable<typeof o> => Boolean(o));
+    const receipts = operations
+      .filter((op) => op.status === 'COMPLETED')
+      .map((op) => {
+        const existing = rawD.receipts.find((r) => r.operationId === op.id);
+        if (existing) return existing;
+        const ob = obligations.find((b) => b.id === op.obligationId);
+        return {
+          id: `demo-sim-cap-${op.id}`,
+          operationId: op.id,
+          providerId: `SIM-CAP-${op.id.toUpperCase()}`,
+          cents: ob?.cents ?? previewSeat,
+          feeCents: 90,
+          feeKnown: true,
+          provenance: 'SYNTHETIC',
+          verifiedAt: null,
+          providerUpdatedAt: null,
+          status: 'COMPLETED',
+          refundedCents: 0,
+          pendingRefundCents: 0,
+          createdAt: new Date(),
+        };
+      });
+    const addedSponsorCents = (demoLocal.simulatedSponsors ?? []).reduce((n, s) => n + s.cents, 0);
+    return {
+      ...rawD,
+      registrationCount: regCount,
+      seatCents: previewSeat,
+      consents,
+      obligations,
+      operations,
+      receipts,
+      totals: {
+        ...rawD.totals,
+        sponsorCommitted: rawD.totals.sponsorCommitted + addedSponsorCents,
+      },
+    };
+  }, [a.mode, a.schoolId, a.userId, demoLocal, rawD]);
+
   const load = useCallback(async () => {
     if (!tripId) return;
     try {
-      setD(await api<ParentData>(`trips/${tripId}/parent`));
+      setRawD(await api<ParentData>(`trips/${tripId}/parent`));
     } catch (e) {
       setError((e as Error).message);
     }
@@ -64,8 +221,20 @@ export default function Parent({
       setError((e as Error).message);
     }
   };
-  const pay = async (id: string) =>
-    run(
+  const pay = async (id: string) => {
+    if (a.mode === 'demo') {
+      updateDemoLocal((prev) => ({
+        ...prev,
+        simulatedPaidObligationIds: Array.from(
+          new Set([...(prev.simulatedPaidObligationIds ?? []), id]),
+        ),
+      }));
+      setNotice(
+        'Preview updated in this browser. Simulated capture recorded locally; no PayPal money moved.',
+      );
+      return;
+    }
+    return run(
       async () => {
         const result = await api<{ approvalUrl: string | null }>('payments/order', {
           obligationId: id,
@@ -74,12 +243,10 @@ export default function Parent({
           window.location.assign(result.approvalUrl);
           return;
         }
-        if (a.mode === 'demo') await api('payments/capture', { obligationId: id });
       },
-      a.mode === 'demo'
-        ? 'Simulated capture recorded. No PayPal money moved.'
-        : 'Sandbox order prepared. Complete buyer approval, then finalize capture.',
+      'Sandbox order prepared. Complete buyer approval, then finalize capture.',
     );
+  };
   return (
     <>
       <header className="parent-header spread">
@@ -92,6 +259,11 @@ export default function Parent({
             aria-label="Sign out"
             className="icon-button"
             onClick={async () => {
+              try {
+                window.sessionStorage.removeItem('ce_demo_workspace_v1');
+                window.sessionStorage.removeItem('ce_demo_parent_v1');
+                window.sessionStorage.removeItem('ce_demo_studio_report_v1');
+              } catch {}
               await api('auth/logout', {});
               router.push('/');
               router.refresh();
@@ -149,6 +321,27 @@ export default function Parent({
         </div>
         {error && <Notice error>{error}</Notice>}
         {notice && <Notice>{notice}</Notice>}
+        {hasDemoLocalChanges && (
+          <div
+            className="spread"
+            style={{
+              padding: '10px 14px',
+              marginBottom: 16,
+              borderRadius: 10,
+              background: '#edf2e5',
+              border: '1px solid #d3dacb',
+              fontSize: 12,
+            }}
+          >
+            <span>
+              <strong>Preview updated in this browser.</strong> Shared demo records remain
+              unchanged.
+            </span>
+            <Button variant="ghost" onClick={resetDemoLocal}>
+              Reset demo preview
+            </Button>
+          </div>
+        )}
         {!d ? (
           <div className="loading">
             <LoaderCircle size={18} />
@@ -224,9 +417,81 @@ export default function Parent({
                               <Badge tone="green">Registered</Badge>
                             </div>
                             <p style={{ fontSize: 10 }}>
-                              Parent consent recorded. Any increase above the latest consent ceiling
-                              needs renewed approval.
+                              Parent consent recorded up to{' '}
+                              <strong>
+                                {money(d.consents[0]?.ceilingCents ?? d.seatCents)}
+                              </strong>
+                              . Any increase above the latest consent ceiling needs renewed
+                              approval.
                             </p>
+                            {a.mode === 'demo' && (
+                              <div
+                                style={{
+                                  paddingTop: 10,
+                                  borderTop: '1px solid #e4e9e2',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: 8,
+                                }}
+                              >
+                                <div className="spread" style={{ fontSize: 10 }}>
+                                  <strong>Interactive consent & tier preview (browser-local)</strong>
+                                  <Badge
+                                    tone={
+                                      (d.consents[0]?.ceilingCents ?? 3200) >= d.seatCents
+                                        ? 'green'
+                                        : 'amber'
+                                    }
+                                  >
+                                    {(d.consents[0]?.ceilingCents ?? 3200) >= d.seatCents
+                                      ? `Consent covers ${money(d.seatCents)}`
+                                      : `Renewed consent required for ${money(d.seatCents)}`}
+                                  </Badge>
+                                </div>
+                                <div className="flex" style={{ flexWrap: 'wrap', gap: 6 }}>
+                                  {[2300, 2700, 3200].map((cents) => (
+                                    <button
+                                      key={cents}
+                                      type="button"
+                                      className="btn secondary"
+                                      style={{ fontSize: 10, minHeight: 28, padding: '4px 9px' }}
+                                      onClick={() => {
+                                        updateDemoLocal((prev) => ({
+                                          ...prev,
+                                          previewCeilingCents: cents,
+                                        }));
+                                        setNotice(
+                                          `Preview updated in this browser. Consent ceiling set to ${money(cents)} locally.`,
+                                        );
+                                      }}
+                                    >
+                                      Consent ceiling {money(cents)}
+                                    </button>
+                                  ))}
+                                </div>
+                                <div className="flex" style={{ flexWrap: 'wrap', gap: 6 }}>
+                                  {[19, 20, 30].map((count) => (
+                                    <button
+                                      key={count}
+                                      type="button"
+                                      className="btn ghost"
+                                      style={{ fontSize: 10, minHeight: 28, padding: '4px 9px' }}
+                                      onClick={() => {
+                                        updateDemoLocal((prev) => ({
+                                          ...prev,
+                                          previewRegistrations: count,
+                                        }));
+                                        setNotice(
+                                          `Preview updated in this browser. Group size set to ${count} students (${money(seatPrice(d.trip.tiers, count))}/seat) locally.`,
+                                        );
+                                      }}
+                                    >
+                                      Preview {count} students ({money(seatPrice(d.trip.tiers, count))})
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                             {!d.snapshot && (
                               <div className="flex" style={{ flexWrap: 'wrap' }}>
                                 <Button
@@ -397,12 +662,18 @@ export default function Parent({
                                 {op && (
                                   <Button
                                     variant="ghost"
-                                    onClick={() =>
-                                      run(
+                                    onClick={() => {
+                                      if (a.mode === 'demo') {
+                                        setNotice(
+                                          'Preview updated in this browser. Demo payment status remains simulated.',
+                                        );
+                                        return;
+                                      }
+                                      return run(
                                         () => api('payments/reconcile', { operationId: op.id }),
                                         'Payment status refreshed.',
-                                      )
-                                    }
+                                      );
+                                    }}
                                   >
                                     <RefreshCw size={13} />
                                     Check status
@@ -494,12 +765,28 @@ export default function Parent({
                     />
                   </Field>
                   <Button
-                    onClick={() =>
-                      run(
+                    onClick={() => {
+                      if (a.mode === 'demo') {
+                        updateDemoLocal((prev) => ({
+                          ...prev,
+                          simulatedSponsors: [
+                            ...(prev.simulatedSponsors ?? []),
+                            {
+                              id: `demo-sim-sponsor-${(prev.simulatedSponsors?.length ?? 0) + 1}`,
+                              cents: sponsorCents,
+                            },
+                          ],
+                        }));
+                        setNotice(
+                          `Preview updated in this browser. Your ${money(sponsorCents)} sponsorship commitment is simulated locally.`,
+                        );
+                        return;
+                      }
+                      return run(
                         () => api(`trips/${tripId}/sponsor`, { cents: sponsorCents }),
                         `Your ${money(sponsorCents)} sponsorship commitment is recorded. Complete its separate payment from My payments.`,
-                      )
-                    }
+                      );
+                    }}
                   >
                     Commit {money(sponsorCents)} voluntarily <HeartHandshake size={16} />
                   </Button>
@@ -556,19 +843,30 @@ export default function Parent({
                     </Field>
                     <Button
                       variant="secondary"
-                      onClick={() =>
-                        run(async () => {
+                      onClick={() => {
+                        if (a.mode === 'demo') {
+                          const code = 'LINK DEMO-PREVIEW';
+                          setPair(code);
+                          updateDemoLocal((prev) => ({ ...prev, pairingCode: code }));
+                          setNotice(
+                            'Preview updated in this browser. WhatsApp pairing code simulated locally.',
+                          );
+                          return;
+                        }
+                        return run(async () => {
                           const result = await api<{ pairingCode: string }>('messages/connect', {
                             tripId,
                             phone,
                           });
                           setPair(result.pairingCode);
-                        }, 'Send the pairing code from your own WhatsApp number to confirm opt-in.')
-                      }
+                        }, 'Send the pairing code from your own WhatsApp number to confirm opt-in.');
+                      }}
                     >
                       Create pairing code
                     </Button>
-                    {pair && <code className="receipt">{pair}</code>}
+                    {(pair || demoLocal.pairingCode) && (
+                      <code className="receipt">{pair || demoLocal.pairingCode}</code>
+                    )}
                   </section>
                 </div>
               </div>

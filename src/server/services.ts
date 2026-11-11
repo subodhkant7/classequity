@@ -7,6 +7,7 @@ import { seatPrice, tripInput } from '@/lib/domain';
 import { type Actor, hash, roles } from './auth';
 import { AppError, requireValue } from './errors';
 import { ownTrip } from './data';
+import { assertMutableWorkspace } from './demo-policy';
 export const uid = () => randomUUID();
 export async function record(
   a: Actor,
@@ -14,11 +15,13 @@ export async function record(
   entityId: string,
   detail: Record<string, unknown> = {},
 ) {
+  assertMutableWorkspace(a);
   await db
     .insert(s.audit)
     .values({ id: uid(), schoolId: a.schoolId, userId: a.userId, action, entityId, detail });
 }
 export async function createTrip(a: Actor, input: unknown) {
+  assertMutableWorkspace(a);
   roles(a, ['admin', 'finance']);
   const v = tripInput.parse(input);
   const id = uid();
@@ -27,12 +30,15 @@ export async function createTrip(a: Actor, input: unknown) {
   return id;
 }
 export async function updateSchool(a: Actor, name: string) {
+  assertMutableWorkspace(a);
   roles(a, ['admin']);
   const valid = z.string().trim().min(3).max(100).parse(name);
   await db.update(s.schools).set({ name: valid }).where(eq(s.schools.id, a.schoolId));
   await record(a, 'SCHOOL_UPDATED', a.schoolId);
 }
 export async function updateTrip(a: Actor, id: string, input: unknown) {
+  await ownTrip(a, id);
+  assertMutableWorkspace(a);
   roles(a, ['admin', 'finance']);
   const v = tripInput.parse(input);
   await db.transaction(async (tx) => {
@@ -55,6 +61,8 @@ export async function updateTrip(a: Actor, id: string, input: unknown) {
   await record(a, 'TRIP_UPDATED', id);
 }
 export async function register(a: Actor, id: string, input: unknown) {
+  await ownTrip(a, id);
+  assertMutableWorkspace(a);
   roles(a, ['parent']);
   const v = z
     .object({
@@ -90,13 +98,16 @@ export async function register(a: Actor, id: string, input: unknown) {
   await record(a, 'REGISTRATION_CONSENT_RECORDED', id);
 }
 export async function withdraw(a: Actor, registrationId: string) {
-  roles(a, ['parent']);
   const [r] = await db
     .select()
     .from(s.registrations)
-    .where(and(eq(s.registrations.id, registrationId), eq(s.registrations.parentId, a.userId)));
+    .where(eq(s.registrations.id, registrationId));
   if (!r) throw new AppError('Registration not found', 404);
   await ownTrip(a, r.tripId);
+  if (a.role === 'parent' && r.parentId !== a.userId)
+    throw new AppError('Registration not found', 404);
+  assertMutableWorkspace(a);
+  roles(a, ['parent']);
   await db.transaction(async (tx) => {
     const [t] = await tx.select().from(s.trips).where(eq(s.trips.id, r.tripId)).for('update');
     if (t.state !== 'OPEN')
@@ -109,26 +120,30 @@ export async function withdraw(a: Actor, registrationId: string) {
   await record(a, 'REGISTRATION_WITHDRAWN', registrationId);
 }
 export async function consent(a: Actor, registrationId: string, ceilingCents: number) {
-  roles(a, ['parent']);
   z.number().int().positive().max(10000000).parse(ceilingCents);
   const [r] = await db
     .select()
     .from(s.registrations)
-    .where(and(eq(s.registrations.id, registrationId), eq(s.registrations.parentId, a.userId)));
+    .where(eq(s.registrations.id, registrationId));
   requireValue(r);
   const t = await ownTrip(a, r.tripId);
+  if (a.role === 'parent' && r.parentId !== a.userId) throw new AppError('Not found', 404);
+  assertMutableWorkspace(a);
+  roles(a, ['parent']);
   if (t.state !== 'OPEN') throw new AppError('Final consent already recorded');
   await db.insert(s.consents).values({ id: uid(), registrationId, ceilingCents, accepted: true });
   await record(a, 'CONSENT_RENEWED', registrationId);
 }
 export async function requestAssistance(a: Actor, registrationId: string) {
-  roles(a, ['parent']);
   const [r] = await db
     .select()
     .from(s.registrations)
-    .where(and(eq(s.registrations.id, registrationId), eq(s.registrations.parentId, a.userId)));
+    .where(eq(s.registrations.id, registrationId));
   requireValue(r);
   const t = await ownTrip(a, r.tripId);
+  if (a.role === 'parent' && r.parentId !== a.userId) throw new AppError('Not found', 404);
+  assertMutableWorkspace(a);
+  roles(a, ['parent']);
   if (t.state !== 'OPEN')
     throw new AppError('Contact finance: pricing has already been finalized.');
   await db
@@ -138,7 +153,6 @@ export async function requestAssistance(a: Actor, registrationId: string) {
   await record(a, 'PRIVATE_SUPPORT_REQUESTED', r.id);
 }
 export async function approveAssistance(a: Actor, allocationId: string, cents: number) {
-  roles(a, ['finance']);
   z.number().int().nonnegative().max(10000000).parse(cents);
   const [allocation] = await db
     .select()
@@ -146,6 +160,8 @@ export async function approveAssistance(a: Actor, allocationId: string, cents: n
     .where(eq(s.assistance.id, allocationId));
   requireValue(allocation);
   await ownTrip(a, allocation.tripId);
+  assertMutableWorkspace(a);
+  roles(a, ['finance']);
   await db.transaction(async (tx) => {
     const [t] = await tx
       .select()
@@ -167,8 +183,9 @@ export async function approveAssistance(a: Actor, allocationId: string, cents: n
   await record(a, 'ASSISTANCE_APPROVED', allocationId, { cents });
 }
 export async function freeze(a: Actor, id: string) {
-  roles(a, ['admin', 'finance']);
   await ownTrip(a, id);
+  assertMutableWorkspace(a);
+  roles(a, ['admin', 'finance']);
   await db.transaction(async (tx) => {
     const [t] = await tx.select().from(s.trips).where(eq(s.trips.id, id)).for('update');
     if (t.state !== 'OPEN') throw new AppError('The final price is already frozen.');
@@ -234,9 +251,10 @@ export async function freeze(a: Actor, id: string) {
   await record(a, 'PRICE_FROZEN', id);
 }
 export async function sponsor(a: Actor, id: string, cents: number) {
-  roles(a, ['parent']);
   z.number().int().min(100).max(100000).parse(cents);
   await ownTrip(a, id);
+  assertMutableWorkspace(a);
+  roles(a, ['parent']);
   return db.transaction(async (tx) => {
     await tx.select().from(s.trips).where(eq(s.trips.id, id)).for('update');
     const commitmentId = uid();
@@ -261,8 +279,9 @@ export async function sponsor(a: Actor, id: string, cents: number) {
   });
 }
 export async function invite(a: Actor, id: string) {
-  roles(a, ['admin', 'finance']);
   await ownTrip(a, id);
+  assertMutableWorkspace(a);
+  roles(a, ['admin', 'finance']);
   const userId = uid();
   await db.insert(s.users).values({
     id: userId,
@@ -284,97 +303,13 @@ export async function invite(a: Actor, id: string) {
   return `${process.env.APP_URL || 'http://localhost:3000'}/invite/${token}`;
 }
 export async function fullyFundedDemo(a: Actor, id: string) {
-  roles(a, ['finance']);
-  if (a.mode !== 'demo') throw new AppError('Simulation is only available in demo mode', 403);
   await ownTrip(a, id);
-  await db.transaction(async (tx) => {
-    await tx.select().from(s.trips).where(eq(s.trips.id, id)).for('update');
-    const obs = await tx.select().from(s.obligations).where(eq(s.obligations.tripId, id));
-    if (!obs.length) throw new AppError('Freeze a price first.');
-    let reserve = 0;
-    for (const ob of obs.filter((o) => o.cents > 0)) {
-      let [op] = await tx.select().from(s.operations).where(eq(s.operations.obligationId, ob.id));
-      if (!op) {
-        [op] = await tx
-          .insert(s.operations)
-          .values({
-            id: uid(),
-            schoolId: a.schoolId,
-            obligationId: ob.id,
-            mode: 'demo',
-            requestKey: uid(),
-            status: 'COMPLETED',
-          })
-          .returning();
-      }
-      await tx
-        .update(s.operations)
-        .set({ status: 'COMPLETED', errorCode: null })
-        .where(eq(s.operations.id, op.id));
-      const [cap] = await tx.select().from(s.captures).where(eq(s.captures.operationId, op.id));
-      if (cap) {
-        reserve += cap.feeCents + cap.refundedCents;
-        await tx
-          .update(s.captures)
-          .set({
-            status:
-              cap.refundedCents === cap.cents
-                ? 'REFUNDED'
-                : cap.refundedCents > 0
-                  ? 'PARTIALLY_REFUNDED'
-                  : 'COMPLETED',
-          })
-          .where(eq(s.captures.id, cap.id));
-        if (cap.refundedCents > 0)
-          await tx
-            .update(s.operations)
-            .set({ status: cap.refundedCents === cap.cents ? 'REFUNDED' : 'PARTIALLY_REFUNDED' })
-            .where(eq(s.operations.id, op.id));
-      } else {
-        reserve += 85;
-        await tx.insert(s.captures).values({
-          id: uid(),
-          operationId: op.id,
-          providerId: `SIM-${uid()}`,
-          cents: ob.cents,
-          feeCents: 85,
-          feeKnown: true,
-          provenance: 'SYNTHETIC',
-          status: 'COMPLETED',
-        });
-      }
-    }
-    const prior = await tx
-      .select()
-      .from(s.contributions)
-      .where(and(eq(s.contributions.tripId, id), eq(s.contributions.mode, 'demo')));
-    const needed = Math.max(0, reserve - prior.reduce((n, c) => n + c.cents, 0));
-    if (needed > 0) {
-      const contributionId = uid();
-      await tx.insert(s.contributions).values({
-        id: contributionId,
-        tripId: id,
-        mode: 'demo',
-        cents: needed,
-        source: 'Demonstration treasury',
-        evidence: 'Synthetic fee and refund reserve; no actual funds',
-        authorizedBy: a.userId,
-      });
-      await tx.insert(s.audit).values({
-        id: uid(),
-        schoolId: a.schoolId,
-        userId: a.userId,
-        action: 'SYNTHETIC_SCHOOL_CONTRIBUTION',
-        entityId: contributionId,
-        detail: { cents: needed, tripId: id },
-      });
-    }
-  });
-  await record(a, 'FULLY_FUNDED_SIMULATION', id, {
-    note: 'Synthetic captures and simulated school reserve for fees and refunded seat costs. No PayPal funds moved.',
-  });
+  assertMutableWorkspace(a);
+  roles(a, ['finance']);
+  throw new AppError('Simulation is only available in browser-local demo mode', 403);
 }
 export async function createSchool(a: Actor, name: string) {
+  assertMutableWorkspace(a);
   roles(a, ['admin']);
   const valid = z.string().trim().min(3).max(100).parse(name);
   const id = uid();
@@ -389,8 +324,9 @@ export async function createSchool(a: Actor, name: string) {
 }
 
 export async function schoolContribution(a: Actor, tripId: string, input: unknown) {
-  roles(a, ['finance']);
   await ownTrip(a, tripId);
+  assertMutableWorkspace(a);
+  roles(a, ['finance']);
   const v = z
     .object({
       cents: z.number().int().positive().max(10000000),

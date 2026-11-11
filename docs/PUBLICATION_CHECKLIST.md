@@ -25,7 +25,7 @@
 | Gemini | Genuine hosted English and Hindi assistance (`gemini-2.5-flash-lite`), plus local PDF extraction and local editable AG Studio agent reports | Successful hosted PDF extraction, hosted Studio agent generation or autonomous payment or assistance decisions |
 | Twilio | One authorized real outbound WhatsApp Sandbox message provider-confirmed `delivered` | Verified genuine hosted inbound/status callbacks or universal production messaging |
 | AG Studio | Native report widgets and actual editable UI | MIT licence of commercial Enterprise dependencies or unrestricted usage |
-| Public roles | Sample school/parent/finance workflows; browser-local illustrations | Production identity assurance or personal-data readiness |
+| Public roles | Read-only canonical sample school/parent/finance reference dataset, browser-local `sessionStorage` simulations, per-session quotas, and `403 DEMO_READ_ONLY` write boundaries | Persistent public demo mutations, production identity assurance, or personal-data readiness |
 | Render | HTTPS web service and independently confirmed paid PostgreSQL instance | Guaranteed zero downtime, every source commit deployed, or complete production hardening |
 
 ## 3. Manual publication and submission order

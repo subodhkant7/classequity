@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { schools } from '@/db/schema';
 import { optionalActor } from '@/server/auth';
+import { CANONICAL_DEMO_SCHOOL_NAME } from '@/server/demo-policy';
 import { Shell } from './shell';
 import Workspace from './workspace';
 export async function Protected({ view, tripId }: { view: string; tripId?: string }) {
@@ -10,8 +11,9 @@ export async function Protected({ view, tripId }: { view: string; tripId?: strin
   if (!a) redirect('/login');
   if (a.role === 'parent') redirect('/parent');
   const [school] = await db.select().from(schools).where(eq(schools.id, a.schoolId));
+  const schoolName = a.mode === 'demo' ? CANONICAL_DEMO_SCHOOL_NAME : school.name;
   return (
-    <Shell a={a} school={school.name}>
+    <Shell a={a} school={schoolName}>
       {a.mode === 'demo' && process.env.HOSTED_RESTRICT_PUBLIC_AI === 'true' && (
         <p className="notice">
           Interactive demo workspace · sample school data. Live Gemini tools require restricted

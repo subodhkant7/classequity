@@ -5,27 +5,82 @@ import type { Actor } from './auth';
 import { roles } from './auth';
 import { AppError, requireValue } from './errors';
 import { funding, seatPrice, seatCoverage, availableCapture } from '@/lib/domain';
+import {
+  assertMutableWorkspace,
+  CANONICAL_DEMO_SNAPSHOT_ID,
+  CANONICAL_DEMO_TIERS,
+  CANONICAL_DEMO_TRIP_ID,
+  canonicalDemoOperationStatus,
+  isCanonicalDemoAllocationId,
+  isCanonicalDemoCaptureId,
+  isCanonicalDemoCommitmentId,
+  isCanonicalDemoConsentId,
+  isCanonicalDemoObligationId,
+  isCanonicalDemoRegistrationId,
+  normalizeCanonicalDemoTrip,
+} from './demo-policy';
 export async function ownTrip(a: Actor, id: string) {
+  if (a.mode === 'demo' && id !== CANONICAL_DEMO_TRIP_ID)
+    throw new AppError('Not found', 404, 'NOT_FOUND');
   const [trip] = await db
     .select()
     .from(s.trips)
     .where(and(eq(s.trips.id, id), eq(s.trips.schoolId, a.schoolId)));
-  return requireValue(trip);
+  const found = requireValue(trip);
+  return a.mode === 'demo' ? normalizeCanonicalDemoTrip(found) : found;
 }
 export async function tripData(a: Actor, id: string) {
   const trip = await ownTrip(a, id);
-  const regs = await db
+  const rawRegs = await db
     .select()
     .from(s.registrations)
-    .where(and(eq(s.registrations.tripId, id), eq(s.registrations.status, 'REGISTERED')))
+    .where(
+      a.mode === 'demo'
+        ? eq(s.registrations.tripId, id)
+        : and(eq(s.registrations.tripId, id), eq(s.registrations.status, 'REGISTERED')),
+    )
     .orderBy(asc(s.registrations.createdAt), asc(s.registrations.id));
-  const [snapshot] = await db.select().from(s.snapshots).where(eq(s.snapshots.tripId, id));
-  const allocations = await db
+  const regs =
+    a.mode === 'demo'
+      ? rawRegs
+          .filter((r) => isCanonicalDemoRegistrationId(r.id))
+          .map((r) => ({ ...r, status: 'REGISTERED' }))
+      : rawRegs;
+  const rawSnapshots = await db.select().from(s.snapshots).where(eq(s.snapshots.tripId, id));
+  const snapshot =
+    a.mode === 'demo'
+      ? rawSnapshots
+          .filter((sn) => sn.id === CANONICAL_DEMO_SNAPSHOT_ID)
+          .map((sn) => ({
+            ...sn,
+            seatCents: 2300,
+            count: 30,
+            policy: CANONICAL_DEMO_TIERS.map((t) => ({ ...t })),
+          }))
+          .at(0)
+      : rawSnapshots.at(0);
+  const rawAllocations = await db
     .select()
     .from(s.assistance)
-    .where(and(eq(s.assistance.tripId, id), eq(s.assistance.status, 'APPROVED')));
-  const sponsors = await db.select().from(s.commitments).where(eq(s.commitments.tripId, id));
-  const obs = await db.select().from(s.obligations).where(eq(s.obligations.tripId, id));
+    .where(
+      a.mode === 'demo'
+        ? eq(s.assistance.tripId, id)
+        : and(eq(s.assistance.tripId, id), eq(s.assistance.status, 'APPROVED')),
+    );
+  const allocations =
+    a.mode === 'demo'
+      ? rawAllocations
+          .filter((x) => isCanonicalDemoAllocationId(x.id))
+          .map((x) => ({ ...x, status: 'APPROVED', cents: 2300 }))
+      : rawAllocations;
+  const rawSponsors = await db.select().from(s.commitments).where(eq(s.commitments.tripId, id));
+  const sponsors =
+    a.mode === 'demo'
+      ? rawSponsors.filter((x) => isCanonicalDemoCommitmentId(x.id))
+      : rawSponsors;
+  const rawObs = await db.select().from(s.obligations).where(eq(s.obligations.tripId, id));
+  const obs =
+    a.mode === 'demo' ? rawObs.filter((o) => isCanonicalDemoObligationId(o.id)) : rawObs;
   const allOps = obs.length
     ? await db
         .select()
@@ -37,7 +92,17 @@ export async function tripData(a: Actor, id: string) {
           ),
         )
     : [];
-  const ops = allOps.filter((o) => o.mode === a.mode && o.schoolId === a.schoolId);
+  const ops =
+    a.mode === 'demo'
+      ? allOps
+          .filter(
+            (o) =>
+              o.mode === 'demo' &&
+              o.schoolId === a.schoolId &&
+              canonicalDemoOperationStatus(o.id) !== null,
+          )
+          .map((o) => ({ ...o, status: canonicalDemoOperationStatus(o.id)!, errorCode: null }))
+      : allOps.filter((o) => o.mode === a.mode && o.schoolId === a.schoolId);
   const allCaps = ops.length
     ? await db
         .select()
@@ -49,15 +114,25 @@ export async function tripData(a: Actor, id: string) {
           ),
         )
     : [];
-  const caps = allCaps.filter((c) =>
+  const caps =
     a.mode === 'demo'
-      ? c.provenance === 'SYNTHETIC'
-      : c.provenance === 'PAYPAL_SANDBOX' && !!c.verifiedAt,
-  );
-  const contributions = await db
-    .select()
-    .from(s.contributions)
-    .where(and(eq(s.contributions.tripId, id), eq(s.contributions.mode, a.mode)));
+      ? allCaps
+          .filter((c) => c.provenance === 'SYNTHETIC' && isCanonicalDemoCaptureId(c.id))
+          .map((c) => ({
+            ...c,
+            status: 'COMPLETED',
+            refundedCents: 0,
+            pendingRefundCents: 0,
+            feeKnown: true,
+          }))
+      : allCaps.filter((c) => c.provenance === 'PAYPAL_SANDBOX' && !!c.verifiedAt);
+  const contributions =
+    a.mode === 'demo'
+      ? []
+      : await db
+          .select()
+          .from(s.contributions)
+          .where(and(eq(s.contributions.tripId, id), eq(s.contributions.mode, a.mode)));
   const seatCents = snapshot?.seatCents ?? seatPrice(trip.tiers, regs.length);
   const unresolved = ops.filter((o) =>
     ['UNKNOWN', 'PENDING', 'CAPTURING', 'CREATING', 'REFUND_PENDING'].includes(o.status),
@@ -115,7 +190,9 @@ export async function tripData(a: Actor, id: string) {
 }
 export async function dashboardData(a: Actor) {
   roles(a, ['admin', 'finance', 'teacher']);
-  const trips = await db.select().from(s.trips).where(eq(s.trips.schoolId, a.schoolId));
+  const allTrips = await db.select().from(s.trips).where(eq(s.trips.schoolId, a.schoolId));
+  const trips =
+    a.mode === 'demo' ? allTrips.filter((t) => t.id === CANONICAL_DEMO_TRIP_ID) : allTrips;
   return Promise.all(
     trips.map(async (t) => {
       const d = await tripData(a, t.id);
@@ -152,7 +229,7 @@ export async function safeRegistrations(a: Actor, id: string) {
 export async function financeData(a: Actor, id: string) {
   roles(a, ['finance']);
   const d = await tripData(a, id);
-  const allocations = await db
+  const rawAllocations = await db
     .select({
       id: s.assistance.id,
       registrationId: s.assistance.registrationId,
@@ -163,6 +240,12 @@ export async function financeData(a: Actor, id: string) {
     .from(s.assistance)
     .innerJoin(s.registrations, eq(s.assistance.registrationId, s.registrations.id))
     .where(eq(s.assistance.tripId, id));
+  const allocations =
+    a.mode === 'demo'
+      ? rawAllocations
+          .filter((x) => isCanonicalDemoAllocationId(x.id))
+          .map((x) => ({ ...x, status: 'APPROVED', cents: 2300 }))
+      : rawAllocations;
   return {
     allocations,
     contributions: d.contributions,
@@ -181,6 +264,23 @@ export async function parentData(a: Actor, id: string) {
   const obligations = d.obs.filter((o) => o.userId === a.userId);
   const ownOps = d.ops.filter((o) => obligations.some((b) => b.id === o.obligationId));
   const receipts = d.caps.filter((c) => ownOps.some((o) => o.id === c.operationId));
+  const rawConsents = mine.length
+    ? await db
+        .select()
+        .from(s.consents)
+        .where(
+          inArray(
+            s.consents.registrationId,
+            mine.map((r) => r.id),
+          ),
+        )
+    : [];
+  const consents =
+    a.mode === 'demo'
+      ? rawConsents
+          .filter((c) => isCanonicalDemoConsentId(c.id))
+          .map((c) => ({ ...c, ceilingCents: 3200, accepted: true }))
+      : rawConsents;
   return {
     trip: d.trip,
     seatCents: d.seatCents,
@@ -196,17 +296,7 @@ export async function parentData(a: Actor, id: string) {
       gap: d.totals.gap,
       sponsorCommitted: d.totals.sponsorCommitted,
     },
-    consents: mine.length
-      ? await db
-          .select()
-          .from(s.consents)
-          .where(
-            inArray(
-              s.consents.registrationId,
-              mine.map((r) => r.id),
-            ),
-          )
-      : [],
+    consents,
   };
 }
 export async function aggregateData(a: Actor) {
@@ -239,11 +329,14 @@ export async function aggregateData(a: Actor) {
   }));
 }
 export async function ownObligation(a: Actor, id: string) {
+  if (a.mode === 'demo' && !isCanonicalDemoObligationId(id))
+    throw new AppError('Obligation not found', 404);
   const [ob] = await db.select().from(s.obligations).where(eq(s.obligations.id, id));
   if (!ob) throw new AppError('Obligation not found', 404);
   await ownTrip(a, ob.tripId);
   if (a.role === 'parent' && ob.userId !== a.userId)
     throw new AppError('Obligation not found', 404);
+  assertMutableWorkspace(a);
   roles(a, ['parent', 'finance']);
   return ob;
 }

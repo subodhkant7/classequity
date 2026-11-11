@@ -173,6 +173,11 @@ export function Shell({
               className="icon-button"
               style={{ color: '#a9c3ad' }}
               onClick={async () => {
+                try {
+                  window.sessionStorage.removeItem('ce_demo_workspace_v1');
+                  window.sessionStorage.removeItem('ce_demo_parent_v1');
+                  window.sessionStorage.removeItem('ce_demo_studio_report_v1');
+                } catch {}
                 await api('auth/logout', {});
                 router.push('/');
                 router.refresh();

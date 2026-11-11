@@ -37,3 +37,9 @@ export const tierStudioFields: AgFieldDefinition[] = [
   { id: 'threshold', format: 'textFormat' },
   { id: 'seatUsd', format: 'currencyFormat', formatOptions: { format: '$#,##0.00;-$#,##0.00' } },
 ];
+
+export const operationStudioFields: AgFieldDefinition[] = [
+  { id: 'trip', format: 'textFormat' },
+  { id: 'status', format: 'textFormat' },
+  { id: 'count', format: 'integerFormat' },
+];

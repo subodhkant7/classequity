@@ -1,7 +1,7 @@
 import { GoogleGenAI, type Content, type Part, type FunctionDeclaration } from '@google/genai';
 import type { AgLlmRequest, AgLlmResponse, AgAiOutputItem } from 'ag-studio';
 import { quoteSchema, money, seatPrice } from '@/lib/domain';
-import { type Actor, quota, roles } from '../auth';
+import { type Actor, quota, roles, sessionQuotaScope } from '../auth';
 import { aggregateData, ownTrip } from '../data';
 import { AppError } from '../errors';
 import { db } from '@/db';
@@ -9,6 +9,7 @@ import { assessments, registrations } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { uid } from '../services';
 import { providerAiAllowed } from '@/lib/hosted-config';
+import { assertMutableWorkspace, isCanonicalDemoRegistrationId } from '../demo-policy';
 let modelsPromise: Promise<string[]> | undefined;
 const quotationResponseSchema = quoteSchema
   .extend({
@@ -62,6 +63,7 @@ export async function selectedModel() {
   return model;
 }
 async function assessed(a: Actor, kind: string, model: string, status: string) {
+  assertMutableWorkspace(a);
   await db.insert(assessments).values({ id: uid(), schoolId: a.schoolId, kind, model, status });
 }
 export async function assistant(
@@ -71,12 +73,25 @@ export async function assistant(
   language: 'en' | 'hi' = 'en',
   useAI = true,
 ) {
-  await quota(`assistant:${a.schoolId}`, 60);
+  if (a.mode === 'demo') {
+    await quota(`assistant:demo-session:${sessionQuotaScope(a)}`, 60);
+    await quota('assistant:demo-shared', 1200);
+  } else {
+    await quota(`assistant:${a.schoolId}`, 60);
+  }
   const t = await ownTrip(a, tripId);
-  const regs = await db
+  const rawRegs = await db
     .select({ id: registrations.id })
     .from(registrations)
-    .where(and(eq(registrations.tripId, t.id), eq(registrations.status, 'REGISTERED')));
+    .where(
+      a.mode === 'demo'
+        ? eq(registrations.tripId, t.id)
+        : and(eq(registrations.tripId, t.id), eq(registrations.status, 'REGISTERED')),
+    );
+  const regs =
+    a.mode === 'demo'
+      ? rawRegs.filter((r) => isCanonicalDemoRegistrationId(r.id))
+      : rawRegs;
   const price = seatPrice(t.tiers, regs.length);
   const facts = {
     trip: t.name,
@@ -93,7 +108,7 @@ export async function assistant(
     language === 'hi'
       ? `${t.name}: ${t.destination}। यात्रा ${t.date} को है। ${regs.length} पंजीकरण, समूह का अनुमानित मूल्य ${money(price)}। भुगतान की अंतिम तिथि ${t.deadline} है। अपनी स्थिति और सहमति के लिए सुरक्षित पैरेंट पोर्टल खोलें।`
       : `${t.name} visits ${t.destination} on ${t.date}. There are ${regs.length} registrations; the group seat price is ${money(price)} (${t.state === 'FROZEN' ? 'finalized' : 'estimated'}). Payment is due ${t.deadline}. Open your secure parent portal for your own registration, consent, and payment status.`;
-  if (!useAI || !providerAiAllowed(a.mode) || !process.env.GEMINI_API_KEY)
+  if (a.mode === 'demo' || !useAI || !providerAiAllowed(a.mode) || !process.env.GEMINI_API_KEY)
     return { text: local, source: 'Grounded local assistant', model: null };
   try {
     const model = await selectedModel();
@@ -116,6 +131,7 @@ export async function assistant(
 }
 export async function extractQuote(a: Actor, file: File) {
   roles(a, ['admin', 'finance']);
+  assertMutableWorkspace(a);
   requireProviderAi(a);
   await quota(`quote:${a.schoolId}`, 8);
   if (file.size > 6 * 1024 * 1024 || file.size < 8)
@@ -202,6 +218,7 @@ function partsFor(item: AgLlmRequest['input'][number], names: Map<string, string
 }
 export async function studioTurn(a: Actor, request: AgLlmRequest): Promise<AgLlmResponse> {
   roles(a, ['admin', 'finance', 'teacher']);
+  assertMutableWorkspace(a);
   requireProviderAi(a);
   await quota(`studio:${a.schoolId}`, 80);
   const aggregate = await aggregateData(a);
