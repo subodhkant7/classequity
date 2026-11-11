@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
   "release": "ClassEquity PayPal AI Hackathon 2026",
-  "status": "READY_FOR_PUBLICATION_APPROVAL",
+  "status": "HISTORICAL_PR4_BASELINE_RECORD",
+  "historicalBaselineNotice": "Historical pre-isolation release snapshot anchored to PR #4 and deployment dep-dbnkuf3m8hqs73cgouj0 (runtime e673ad86537315167037f877386be6a9ede599ad). Subsequent public-demo isolation (PR #7), Finance fetch-loop closure (PR #8), GitHub public visibility, and current CI/deployment states are verified separately.",
   "startingSourceCommit": "9d070f4942f682eeda9a58936d1f44768d608763",
   "consolidatedSourceCommit": "16f3731b3923c2b381c500e791d611f75c2132d6",
   "githubActions": {

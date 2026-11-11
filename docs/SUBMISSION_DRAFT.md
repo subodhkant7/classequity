@@ -3,7 +3,7 @@
 - **Project name** ClassEquity
 - **Tagline** Every child belongs on the trip. Every payment is accounted for.
 - **Working demo** [classequity.onrender.com](https://classequity.onrender.com)
-- **Public source URL** `[ADD PUBLIC REPOSITORY URL AFTER APPROVAL]`
+- **Public source URL** https://github.com/subodhkant7/classequity
 - **YouTube URL** `[ADD FINAL PUBLIC YOUTUBE URL]`
 
 ## Overview
@@ -47,7 +47,7 @@ The project uses sample school data and PayPal Sandbox. The restricted sandbox o
 
 ## Final owner-controlled submission steps
 
-1. Complete the [publication checklist](PUBLICATION_CHECKLIST.md), including a fresh all-ref secret/history scan and licensing verification, before changing repository visibility.
-2. After explicit approval, publish the repository and replace the public-source URL placeholder above with the verified public link.
+1. Complete the [publication checklist](PUBLICATION_CHECKLIST.md) and confirm the final `main` CI run and deployed `/api/health` SHA match.
+2. Keep the verified public repository link (`https://github.com/subodhkant7/classequity`) attached cleanly without secrets or ignored local artifacts.
 3. Upload the approved under-three-minute ClassEquity MP4 to YouTube as **Public**, verify playback in a signed-out browser, and replace the video URL placeholder above. Do not commit the large MP4 or raw recording artifacts.
 4. Attach only reviewed, non-sensitive screenshots. Confirm every provider and AI claim reflects the separately verified evidence boundaries before manual Devpost submission.

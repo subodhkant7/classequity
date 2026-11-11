@@ -1,6 +1,6 @@
 # Explore ClassEquity locally
 
-The same public experience is hosted at [https://classequity.onrender.com](https://classequity.onrender.com). Free hosting may take time to wake after idling. Hosting, sandbox webhook registration and genuine signed-event proof are separate gates; see [hosted verification](HOSTED_WEBHOOK_VERIFICATION.md). Public workspace payments/messages are simulations and cloud AI tools require restricted sandbox access. Never share the operator password or private buyer approval links in a presentation.
+The same public experience is hosted at [https://classequity.onrender.com](https://classequity.onrender.com). The Render web service may take time to wake after idling (PostgreSQL runs on a paid plan). Hosting, sandbox webhook registration and genuine signed-event proof are separate gates; see [hosted verification](HOSTED_WEBHOOK_VERIFICATION.md). Public workspace payments/messages are simulations and cloud AI tools require restricted sandbox access. Never share the operator password or private buyer approval links in a presentation.
 
 Run `npm run showcase`, then open `http://localhost:3100/` for the product introduction, `/how-it-works` for the pricing/funding labs, `/demo` for the complete guided tour and `/technology` for integration roles and verification boundaries. These public pages require no sign-in or provider credentials. Every tour change is local to the browser.
 
