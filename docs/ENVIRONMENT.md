@@ -16,9 +16,9 @@ The migration runner verifies the intended database name, rejects DROP/TRUNCATE 
 
 ## Hosting
 
-The free-plan Singapore Node web service is `classequity` at https://classequity.onrender.com, in the user-confirmed My Workspace. There are no project containers; both database and web service are workspace-level resources. The service uses the existing database's internal URL. `render.yaml` is the reviewed configuration reference, not an active Blueprint sync: the single existing-database web service was created directly and its settings verified through Render. No duplicate database is declared or created. Auto-deploy and preview deployment are off; private branches are deployed manually without merging.
+The Singapore Node web service is `classequity` at https://classequity.onrender.com, in the user-confirmed My Workspace. There are no project containers; both database and web service are workspace-level resources. The service uses the existing database's internal URL. `render.yaml` is the reviewed configuration reference, not an active Blueprint sync: the single existing-database web service was created directly and its settings verified through Render. No duplicate database is declared or created. Auto-deploy and preview deployment are off; reviewed commits on `main` are deployed manually by commit SHA.
 
-Render tracks `codex/hosted-webhook-verification` with manual deployment. See the [release manifest](RELEASE_MANIFEST.json) for the consolidated source and exact deployed revision.
+Render tracks `main` with manual commit-pinned deployment (`autoDeploy: off`). The [historical release manifest](RELEASE_MANIFEST.json) anchors the earlier PR #4 / `e673ad86...` baseline; check `https://classequity.onrender.com/api/health` for the active runtime SHA.
 
 The start command is only `npm start`. `npm run release:check` runs during the build and uses an explicitly read-only transaction to check the existing migration ledger and fictional schools. No migration or seed runs on startup, restart or cold start. A schema mismatch stops the build; reviewed migrations must be applied separately. The local migration runner now normalizes PGlite raw-result envelopes, checks prior hashes after taking the advisory lock, and is tested through repeated setup without resetting data.
 

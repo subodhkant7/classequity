@@ -1,11 +1,12 @@
 # ClassEquity public-source publication checklist
 
-**Release status: PRIVATE / AWAITING OWNER APPROVAL.** This document prepares a publication review; it does **not** authorize making GitHub public, deployment, payment actions, YouTube upload or Devpost submission.
+**Repository status: PUBLIC (`https://github.com/subodhkant7/classequity`) · DEVPOST / YOUTUBE SUBMISSION OWNER-CONTROLLED.** This checklist tracks release hygiene gates and explicitly preserves owner control over Devpost submission, YouTube visibility, and manual production deployments.
 
-## 1. Publication gates
+## 1. Publication and release gates
 
-- [ ] Confirm the final documentation PR has passed GitHub Actions and has been reviewed and merged into `main`.
-- [ ] Independently verify the intended `main` commit and that any live deployment still identifies its own deployed SHA. Do not claim source and runtime are identical if they are not.
+- [x] Confirm the GitHub repository visibility is **Public** (`https://github.com/subodhkant7/classequity`) and opens cleanly without login (`LICENSE` detected as MIT, `.env.example` and `README.md` verified).
+- [ ] Confirm any pending documentation/code PR has passed GitHub Actions, been reviewed, and merged into `main`.
+- [ ] Independently verify the intended `main` commit and confirm `/api/health` on Render identifies the exact deployed runtime SHA. Do not claim source and runtime are identical if they are not.
 - [ ] Re-run the repository's `npm run secrets:check` and a **full reachable Git history / all-ref Gitleaks scan** at the final publish commit. Review historic files, tags, git objects referenced by branches, action artifacts and generated release archives as separate surfaces.
 - [ ] Confirm no `.env`, private keys, real credentials, bearer/session cookies, customer/buyer identifiers, personal phone numbers, status-callback signing secrets, database dumps, provider approval URLs, Playwright sessions or raw webhook payloads are public.
 - [ ] Account for the previously committed internal operation correlation ID in historical Git objects. It was redacted at the release tip, but publishing the same full Git history can expose the old value. The identifier is not a credential; evaluate whether the associated record can be queried or mutated without a separate authorization check before approving publication.
@@ -19,24 +20,21 @@
 
 ## 2. Evidence boundary
 
-| Feature | What was verified | What must not be claimed |
-| --- | --- | --- |
-| PayPal | Genuine hosted Sandbox approval/capture/refund callbacks, provider readback, duplicate/redelivery protection and retained-fee reconciliation | Live-money processing, real school adoption, or new transactions while visiting the public tour |
-| Gemini | Genuine hosted English and Hindi assistance (`gemini-2.5-flash-lite`), plus local PDF extraction and local editable AG Studio agent reports | Successful hosted PDF extraction, hosted Studio agent generation or autonomous payment or assistance decisions |
-| Twilio | One authorized real outbound WhatsApp Sandbox message provider-confirmed `delivered` | Verified genuine hosted inbound/status callbacks or universal production messaging |
-| AG Studio | Native report widgets and actual editable UI | MIT licence of commercial Enterprise dependencies or unrestricted usage |
-| Public roles | Read-only canonical sample school/parent/finance reference dataset, browser-local `sessionStorage` simulations, per-session quotas, and `403 DEMO_READ_ONLY` write boundaries | Persistent public demo mutations, production identity assurance, or personal-data readiness |
-| Render | HTTPS web service and independently confirmed paid PostgreSQL instance | Guaranteed zero downtime, every source commit deployed, or complete production hardening |
+| Feature      | What was verified                                                                                                                                                             | What must not be claimed                                                                                       |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| PayPal       | Genuine hosted Sandbox approval/capture/refund callbacks, provider readback, duplicate/redelivery protection and retained-fee reconciliation                                  | Live-money processing, real school adoption, or new transactions while visiting the public tour                |
+| Gemini       | Genuine hosted English and Hindi assistance (`gemini-2.5-flash-lite`), plus local PDF extraction and local editable AG Studio agent reports                                   | Successful hosted PDF extraction, hosted Studio agent generation or autonomous payment or assistance decisions |
+| Twilio       | One authorized real outbound WhatsApp Sandbox message provider-confirmed `delivered`                                                                                          | Verified genuine hosted inbound/status callbacks or universal production messaging                             |
+| AG Studio    | Native report widgets and actual editable UI                                                                                                                                  | MIT licence of commercial Enterprise dependencies or unrestricted usage                                        |
+| Public roles | Read-only canonical sample school/parent/finance reference dataset, browser-local `sessionStorage` simulations, per-session quotas, and `403 DEMO_READ_ONLY` write boundaries | Persistent public demo mutations, production identity assurance, or personal-data readiness                    |
+| Render       | HTTPS web service and independently confirmed paid PostgreSQL instance                                                                                                        | Guaranteed zero downtime, every source commit deployed, or complete production hardening                       |
 
-## 3. Manual publication and submission order
+## 3. Manual submission steps (remaining owner actions)
 
-1. Owner confirms the documentation merges and GitHub Actions results before approving publication.
-2. Owner completes the final full-history/secret/licence checks immediately before publication.
-3. Owner changes the repository visibility in GitHub to **Public**, then opens the URL in a signed-out browser.
-4. Owner checks public README links, `LICENSE` recognition, `.env.example`, reproducibility and hosted demo access from a clean browser.
-5. Owner uploads the reviewed final under-three-minute video to YouTube as **Public** and validates logged-out playback and subtitles. Do not upload private raw recordings.
-6. Owner copies the public GitHub and YouTube links into Devpost, attaches reviewed screenshots, verifies English text and eligibility, then manually submits **before the hackathon deadline**.
-7. Owner preserves the paid database and monitors the hosted service through judging. No automated payments/refunds or API smoke tests without separate authorization.
+1. Verify `main` CI results, rendered README links, `.env.example`, and hosted demo access in a clean signed-out browser.
+2. Upload the reviewed final under-three-minute video to YouTube as **Public** and validate logged-out playback and subtitles. Do not upload private raw recordings.
+3. Copy the public GitHub (`https://github.com/subodhkant7/classequity`) and YouTube links into Devpost, attach reviewed screenshots, verify English text and eligibility, then manually submit **before the hackathon deadline**.
+4. Preserve the paid database and monitor the hosted service through judging. No automated payments/refunds or unapproved API smoke tests.
 
 ## 4. Known boundaries that do not silently disappear on publication
 

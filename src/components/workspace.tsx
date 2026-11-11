@@ -83,6 +83,26 @@ const isAbortError = (error: unknown) =>
   error !== null &&
   'name' in error &&
   (error as { name: string }).name === 'AbortError';
+function linkAbortController(ref: { current: AbortController | null }, signal?: AbortSignal) {
+  ref.current?.abort();
+  const controller = new AbortController();
+  ref.current = controller;
+  const onAbort = () => controller.abort();
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort();
+    } else {
+      signal.addEventListener('abort', onAbort, { once: true });
+    }
+  }
+  return {
+    controller,
+    cleanup: () => {
+      signal?.removeEventListener('abort', onAbort);
+      if (ref.current === controller) ref.current = null;
+    },
+  };
+}
 const statusTone = (s: string) =>
   s === 'COMPLETED'
     ? 'green'
@@ -840,8 +860,11 @@ export default function Workspace({
   const [notice, setNotice] = useState('');
   const [editor, setEditor] = useState<'new' | 'edit' | null>(null);
   const [selected, setSelected] = useState(tripId || '');
-  const [regs, setRegs] = useState<Reg>([]);
-  const [rawFinance, setRawFinance] = useState<Finance | null>(null);
+  const [regsState, setRegsState] = useState<{ tripId: string; data: Reg } | null>(null);
+  const [rawFinanceState, setRawFinanceState] = useState<{
+    tripId: string;
+    data: Finance;
+  } | null>(null);
   const [demoLocal, setDemoLocal] = useState<DemoWorkspaceLocalState>({});
   useEffect(() => {
     setDemoLocal(
@@ -896,11 +919,26 @@ export default function Workspace({
     [a.mode, demoLocal],
   );
 
+  const allTripIds = useMemo(
+    () => [
+      ...rawData.map((row) => row.trip.id),
+      ...(a.mode === 'demo' ? (demoLocal.localTrips ?? []).map((row) => row.trip.id) : []),
+    ],
+    [rawData, a.mode, demoLocal.localTrips],
+  );
+  const activeTripId = (selected && allTripIds.includes(selected) ? selected : allTripIds[0]) ?? '';
+  const regs = useMemo(
+    () => (regsState && regsState.tripId === activeTripId ? regsState.data : []),
+    [regsState, activeTripId],
+  );
+  const rawFinance =
+    rawFinanceState && rawFinanceState.tripId === activeTripId ? rawFinanceState.data : null;
+
   const { data, finance } = useMemo(() => {
     if (a.mode !== 'demo') return { data: rawData, finance: rawFinance };
     let currentData = [...rawData];
     let currentFinance = rawFinance;
-    if (currentData[0] && currentFinance) {
+    if (currentData[0] && currentFinance && currentData[0].trip.id === activeTripId) {
       let trip = currentData[0];
       let fin = currentFinance;
       if (demoLocal.fundedScenario) {
@@ -969,14 +1007,24 @@ export default function Workspace({
       currentData = [...currentData, ...demoLocal.localTrips];
     }
     return { data: currentData, finance: currentFinance };
-  }, [a.mode, demoLocal, rawData, rawFinance]);
+  }, [a.mode, activeTripId, demoLocal, rawData, rawFinance]);
 
-  const d = data.find((d) => d.trip.id === selected) ?? data[0];
-  const activeTripId = d?.trip.id ?? '';
+  const d = data.find((d) => d.trip.id === activeTripId) ?? data[0];
   const manage = a.role === 'admin' || a.role === 'finance';
   const refreshSeqRef = useRef(0);
   const extraSeqRef = useRef(0);
   const settingsSeqRef = useRef(0);
+  const refreshAbortRef = useRef<AbortController | null>(null);
+  const extraAbortRef = useRef<AbortController | null>(null);
+  const settingsAbortRef = useRef<AbortController | null>(null);
+  useEffect(
+    () => () => {
+      refreshAbortRef.current?.abort();
+      extraAbortRef.current?.abort();
+      settingsAbortRef.current?.abort();
+    },
+    [],
+  );
   const handlePreviewRegistrations = useCallback(
     (count: number) => {
       updateDemoLocal((prev) => ({ ...prev, previewRegistrations: count }));
@@ -986,9 +1034,10 @@ export default function Workspace({
   );
   const refresh = useCallback(async (signal?: AbortSignal) => {
     const seq = ++refreshSeqRef.current;
-    const stale = () => Boolean(signal?.aborted) || seq !== refreshSeqRef.current;
+    const { controller, cleanup } = linkAbortController(refreshAbortRef, signal);
+    const stale = () => controller.signal.aborted || seq !== refreshSeqRef.current;
     try {
-      const rows = await api<Overview>('dashboard', undefined, { signal });
+      const rows = await api<Overview>('dashboard', undefined, { signal: controller.signal });
       if (stale()) return;
       setRawData(rows);
       setSelected((prev) => prev || rows[0]?.trip.id || '');
@@ -996,7 +1045,8 @@ export default function Workspace({
       if (stale() || isAbortError(e)) return;
       setError((e as Error).message);
     } finally {
-      if (!signal?.aborted && seq === refreshSeqRef.current) setLoading(false);
+      cleanup();
+      if (!controller.signal.aborted && seq === refreshSeqRef.current) setLoading(false);
     }
   }, []);
   useEffect(() => {
@@ -1008,11 +1058,12 @@ export default function Workspace({
     async (signal?: AbortSignal) => {
       if (view !== 'settings') return;
       const seq = ++settingsSeqRef.current;
-      const stale = () => Boolean(signal?.aborted) || seq !== settingsSeqRef.current;
+      const { controller, cleanup } = linkAbortController(settingsAbortRef, signal);
+      const stale = () => controller.signal.aborted || seq !== settingsSeqRef.current;
       try {
         const [nextIntegration, list] = await Promise.all([
-          api<IntegrationMap>('integrations', undefined, { signal }),
-          api<SchoolSummary[]>('schools', undefined, { signal }),
+          api<IntegrationMap>('integrations', undefined, { signal: controller.signal }),
+          api<SchoolSummary[]>('schools', undefined, { signal: controller.signal }),
         ]);
         if (stale()) return;
         setIntegration(nextIntegration);
@@ -1020,6 +1071,8 @@ export default function Workspace({
       } catch (e) {
         if (stale() || isAbortError(e)) return;
         setError((e as Error).message);
+      } finally {
+        cleanup();
       }
     },
     [view],
@@ -1038,32 +1091,35 @@ export default function Workspace({
   const extra = useCallback(
     async (signal?: AbortSignal) => {
       const seq = ++extraSeqRef.current;
-      const stale = () => Boolean(signal?.aborted) || seq !== extraSeqRef.current;
+      const { controller, cleanup } = linkAbortController(extraAbortRef, signal);
+      const stale = () => controller.signal.aborted || seq !== extraSeqRef.current;
       try {
         if (!activeTripId || activeTripId.startsWith('demo-local-trip-')) {
-          setRegs((prev) => (prev.length === 0 ? prev : []));
-          setRawFinance((prev) => (prev === null ? prev : null));
+          setRegsState((prev) => (prev === null ? prev : null));
+          setRawFinanceState((prev) => (prev === null ? prev : null));
           return;
         }
         if (view === 'registrations' || view === 'trip') {
           const nextRegs = await api<Reg>(`trips/${activeTripId}/registrations`, undefined, {
-            signal,
+            signal: controller.signal,
           });
           if (stale()) return;
-          setRegs(nextRegs);
+          setRegsState({ tripId: activeTripId, data: nextRegs });
         }
         if (view === 'finance' && a.role === 'finance') {
           const [nextFinance, nextAudit] = await Promise.all([
-            api<Finance>(`trips/${activeTripId}/finance`, undefined, { signal }),
-            api<AuditEntry[]>('audit', undefined, { signal }),
+            api<Finance>(`trips/${activeTripId}/finance`, undefined, {
+              signal: controller.signal,
+            }),
+            api<AuditEntry[]>('audit', undefined, { signal: controller.signal }),
           ]);
           if (stale()) return;
-          setRawFinance(nextFinance);
+          setRawFinanceState({ tripId: activeTripId, data: nextFinance });
           setAudit(nextAudit);
         }
         if (view === 'messages' && a.role !== 'teacher') {
           const nextConversations = await api<ConversationSummary[]>('messages', undefined, {
-            signal,
+            signal: controller.signal,
           });
           if (stale()) return;
           setConversations(nextConversations);
@@ -1071,6 +1127,8 @@ export default function Workspace({
       } catch (e) {
         if (stale() || isAbortError(e)) return;
         setError((e as Error).message);
+      } finally {
+        cleanup();
       }
     },
     [activeTripId, view, a.role],
@@ -1872,11 +1930,7 @@ export default function Workspace({
                 </div>
                 <Button
                   variant="secondary"
-                  onClick={() =>
-                    run(async () => {
-                      await extra();
-                    }, 'Financial records refreshed.')
-                  }
+                  onClick={() => run(async () => {}, 'Financial records refreshed.')}
                 >
                   <RefreshCw size={14} />
                   Refresh

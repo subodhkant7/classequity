@@ -944,6 +944,31 @@ test('M: rapid sandbox trip switching prevents stale finance responses from over
     await expect(page.getByText('$25.00 · Beta Fresh Treasury')).toBeVisible();
     await expect(page.getByText('Alpha Stale Treasury')).toHaveCount(0);
 
+    // Switching from loaded Trip Alpha to pending Trip Beta clears Trip Alpha's stale finance view immediately.
+    await page.getByLabel('Selected activity').selectOption(tripAlphaId);
+    await expect(page.getByText('$10.00 · Alpha Stale Treasury')).toBeVisible({ timeout: 30000 });
+    let releaseBeta!: () => void;
+    const betaGate = new Promise<void>((resolve) => {
+      releaseBeta = resolve;
+    });
+    let betaSeenResolve!: () => void;
+    const betaSeen = new Promise<void>((resolve) => {
+      betaSeenResolve = resolve;
+    });
+    await page.route(`**/api/trips/${tripBetaId}/finance`, async (route) => {
+      betaSeenResolve();
+      await betaGate;
+      try {
+        await route.continue();
+      } catch {}
+    });
+    await page.getByLabel('Selected activity').selectOption(tripBetaId);
+    await betaSeen;
+    await expect(page.getByText('Alpha Stale Treasury')).toHaveCount(0);
+    releaseBeta();
+    await page.unroute(`**/api/trips/${tripBetaId}/finance`);
+    await expect(page.getByText('$25.00 · Beta Fresh Treasury')).toBeVisible({ timeout: 30000 });
+
     // Explicit operation refresh (`run()`) and manual Refresh button still refresh Sandbox state.
     await page.getByLabel('USD amount', { exact: true }).fill('5.00');
     await page.getByLabel('Funding source', { exact: true }).fill('Beta Followup Grant');
