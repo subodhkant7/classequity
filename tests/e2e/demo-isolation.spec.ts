@@ -152,9 +152,11 @@ test('C: AG Studio customizations stay isolated per visitor browser without call
     await loginDemo(pageB, 'School admin');
     await pageB.getByRole('link', { name: 'Financial intelligence', exact: true }).click();
     await expect(pageB.getByLabel('Report page')).toBeVisible({ timeout: 45000 });
+    await expect(pageB.getByText('Group Unlock', { exact: true }).first()).toBeVisible();
     await expect(pageB.getByLabel('Report page')).toHaveValue('Financial overview');
     await expect(pageB.getByText('Recorded AI · Trip comparison')).toHaveCount(0);
     await expect(pageB.getByText('Preview updated in this browser.')).toHaveCount(0);
+    expect(await pageB.evaluate(() => sessionStorage.getItem('ce_demo_studio_report_v1'))).toBeNull();
   } finally {
     await ctxA.close();
     await ctxB.close();

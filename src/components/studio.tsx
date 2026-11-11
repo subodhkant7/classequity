@@ -430,13 +430,16 @@ export default function Studio({
   previewScope?: string;
 }) {
   const apiRef = useRef<AgStudioApi<Registry> | null>(null);
-  const initialReadyRef = useRef(false);
-  const suppressNextUpdateRef = useRef(false);
   const isDemo = presentation || overview[0]?.mode === 'demo';
   const [pageId, setPageId] = useState('Financial overview');
   const [state, setState] = useState<AgReportState<Registry> | null>(null);
   const [saved, setSaved] = useState('');
   const [error, setError] = useState('');
+  function persistSandboxReport(next: AgReportState<Registry>) {
+    void api('studio/state', next)
+      .then(() => setSaved('Report saved'))
+      .catch(() => setError('Report changes could not be saved.'));
+  }
   useEffect(() => {
     if (license) AgStudioLicenseManager.setLicenseKey(license);
     if (presentation) {
@@ -702,15 +705,16 @@ export default function Studio({
             onClick={() => {
               if (isDemo && !presentation) {
                 removeDemoPreview(DEMO_STUDIO_STORAGE_KEY);
-                suppressNextUpdateRef.current = true;
                 setSaved('Starter report restored.');
               }
               const studio = apiRef.current;
               if (studio) {
                 studio.setState(initial);
+                studio.clearHistory();
               }
               setState(initial);
               setPageId(initial.selectedPageId);
+              if (!isDemo) persistSandboxReport(initial);
             }}
           >
             Restore starter report
@@ -727,7 +731,7 @@ export default function Studio({
               const next: AgReportState<Registry> = {
                 ...baseState,
                 selectedPageId: page.id,
-                pages: [...initial.pages, page],
+                pages: [...baseState.pages.filter((existing) => existing.id !== page.id), page],
               };
               if (studio) studio.setState(next);
               setState(next);
@@ -760,6 +764,8 @@ export default function Studio({
                 writeDemoPreview(DEMO_STUDIO_STORAGE_KEY, previewScope, nextState);
               }
               setSaved('Preview updated in this browser.');
+            } else {
+              persistSandboxReport(nextState);
             }
           }}
         >
@@ -783,23 +789,14 @@ export default function Studio({
             ai={isDemo ? undefined : ai}
             onApiReady={(e) => {
               apiRef.current = e.api as unknown as AgStudioApi<Registry>;
-              window.requestAnimationFrame(() => {
-                window.requestAnimationFrame(() => {
-                  initialReadyRef.current = true;
-                });
-              });
             }}
             onErrorRaised={(e) => setError(e.errorDetails.join('; '))}
             onStateUpdated={(e) => {
-              if (suppressNextUpdateRef.current) {
-                suppressNextUpdateRef.current = false;
-                if (
-                  e.state.selectedPageId === initial.selectedPageId &&
-                  e.state.pages.length === initial.pages.length
-                )
-                  return;
-              }
-              if (!initialReadyRef.current) return;
+              if (!e.durable) return;
+              // Studio emits durable initialization and repair updates without a history entry.
+              // Undo and redo also omit a new entry, but retain their history stacks.
+              const history = apiRef.current?.getHistory();
+              if (!e.change && !history?.undo.length && !history?.redo.length) return;
               if (presentation) {
                 setSaved('Preview updated in this browser.');
                 return;
@@ -811,9 +808,7 @@ export default function Studio({
                 setSaved('Preview updated in this browser.');
                 return;
               }
-              void api('studio/state', e.state)
-                .then(() => setSaved('Report saved'))
-                .catch(() => setError('Report changes could not be saved.'));
+              persistSandboxReport(e.state);
             }}
           />
         </AgStudioProvider>
