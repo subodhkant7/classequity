@@ -2,7 +2,7 @@
 
 **Every child belongs on the trip. Every payment is accounted for.**
 
-ClassEquity is an open-source, hackathon-stage school-trip coordination and financial-accountability application. It brings **group pricing, parent consent, confidential assistance, PayPal Sandbox reconciliation, and AI-supported administration** into one experience.
+ClassEquity is an MIT-licensed, hackathon-stage school-trip coordination and financial-accountability application. It brings **group pricing, parent consent, confidential assistance, PayPal Sandbox reconciliation, and AI-supported administration** into one experience.
 
 **Live demo:** https://classequity.onrender.com · **Interactive tour:** https://classequity.onrender.com/demo · **Try functional fictional roles:** https://classequity.onrender.com/login
 
@@ -147,14 +147,14 @@ Do not point migrations, seeding or test commands at the published ClassEquity d
 1. **Provision PostgreSQL 17.** Create an empty dedicated database named **classequity**. Keep its credentials private; prefer Render's internal connection URL for a same-region web service. Require TLS where appropriate and narrow the database's external IP allowlist. Do not use a shared database or reuse the existing ClassEquity demo database.
 2. **Initialize the new database once.** From a trusted one-off environment with `DATABASE_URL` pointing to your new database, run the reviewed `npm run db:migrate` and then `npm run db:seed` to create the fictional workspaces. Inspect the target database and migration files first. **Do not run migrations or seeding in the web service startup command**; do not seed a database that already contains real records.
 3. **Create a Render Node web service** from your fork. Use Node **22.23.1**, a compatible region, and your reviewed deployment branch. Set:
-   
+
    | Render setting | Value |
    | --- | --- |
    | Build command | `npm ci --include=dev && npm run release:check && npm run build` |
    | Start command | `npm start` |
    | Health-check path | `/api/health` |
    | Runtime | Node |
-   
+
    The build preflight is **read-only** and requires the initialized migration ledger and fictional workspaces to exist. A failing preflight is a reason to inspect the database, **not** to blindly replay setup.
 4. **Configure environment variables** privately in Render using the template above. Set `APP_URL=https://your-actual-host`, `DATABASE_URL` to your dedicated PostgreSQL connection, `HOSTED_RESTRICT_PUBLIC_AI=true`, `DEMO_MODE=true`, and `PAYPAL_ENV=sandbox`. Use distinct `SESSION_SECRET` and `ADMIN_PASSWORD`. The hosted release preflight also requires PayPal Sandbox credentials and a Gemini key; the public demo must not receive AI/provider authority.
 5. **Deploy and verify.** Confirm HTTPS health at `/api/health`, then open `/demo` and the fictional roles through `/login` in a clean browser. Test tenant/role restrictions. Check hosting logs **without printing secrets**. For paid database plans, separately verify backups and restore readiness; web-service cold starts may still occur.
