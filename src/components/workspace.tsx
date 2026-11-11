@@ -1,5 +1,12 @@
 'use client';
-import { useState, useEffect, useCallback, type CSSProperties } from 'react';
+import { useState, useEffect, useCallback, useMemo, type CSSProperties } from 'react';
+import { z } from 'zod';
+import {
+  demoPreviewKeys,
+  readDemoPreview,
+  writeDemoPreview,
+  removeDemoPreview,
+} from '@/lib/demo-preview-storage';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -31,7 +38,13 @@ import {
 } from 'lucide-react';
 import type { Actor } from '@/server/auth';
 import type { dashboardData, financeData, safeRegistrations } from '@/server/data';
-import { money, minor, type Tier, quoteSchema } from '@/lib/domain';
+import { money, minor, seatPrice, tripInput, type Tier, quoteSchema } from '@/lib/domain';
+import {
+  applyDemoContributionSimulation,
+  applyDemoFundedSimulation,
+  applyDemoPricingPreview,
+  applyDemoRefundSimulation,
+} from '@/lib/demo-simulation';
 import { Badge, Button, Empty, Field, Modal, Notice, api } from './ui';
 import Museum from './museum';
 const Studio = dynamic(() => import('./studio'), {
@@ -175,7 +188,13 @@ function FundingCard({ d }: { d: Trip }) {
     </div>
   );
 }
-function TripCard({ d }: { d: Trip }) {
+function TripCard({
+  d,
+  onPreviewRegistrations,
+}: {
+  d: Trip;
+  onPreviewRegistrations?: (count: number) => void;
+}) {
   return (
     <div className="card trip-feature">
       <div className="trip-visual">
@@ -238,6 +257,48 @@ function TripCard({ d }: { d: Trip }) {
               </div>
             ))}
         </div>
+        {d.mode === 'demo' && onPreviewRegistrations && (
+          <div
+            style={{
+              marginTop: 14,
+              paddingTop: 12,
+              borderTop: '1px solid #e4e9e2',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+          >
+            <div className="spread" style={{ fontSize: 11 }}>
+              <span>
+                <strong>Interactive group tier preview</strong> (browser-local)
+              </span>
+              <span className="muted">
+                {d.registrationCount} students → {money(d.seatCents)}/seat
+              </span>
+            </div>
+            <input
+              aria-label="Preview student registrations"
+              type="range"
+              min={1}
+              max={d.trip.capacity}
+              value={d.registrationCount}
+              onChange={(e) => onPreviewRegistrations(Number(e.target.value))}
+            />
+            <div className="flex" style={{ flexWrap: 'wrap', gap: 6 }}>
+              {[19, 20, 30].map((count) => (
+                <button
+                  key={count}
+                  type="button"
+                  className="btn secondary"
+                  style={{ fontSize: 10, minHeight: 28, padding: '4px 9px' }}
+                  onClick={() => onPreviewRegistrations(count)}
+                >
+                  Preview {count} students ({money(seatPrice(d.trip.tiers, count))})
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       <div className="card-footer">
         <span>
@@ -272,11 +333,42 @@ function Chat({ a, tripId, simulator = false }: { a: Actor; tripId: string; simu
     setMessages((m) => [...m, { role: 'user', text: value, source: '' }]);
     setBusy(true);
     try {
-      const reply = await api<{ text: string; source: string }>(
-        simulator ? 'messages/simulate' : 'assistant',
-        simulator ? { tripId, text: value, language } : { tripId, message: value, language },
-      );
-      setMessages((m) => [...m, { role: 'assistant', ...reply }]);
+      if (simulator && a.mode === 'demo') {
+        if (
+          /\b(link|register|registration|status|pay|payment|portal)\b|लिंक|भुगतान|पंजीकरण/i.test(
+            value,
+          )
+        ) {
+          setMessages((m) => [
+            ...m,
+            {
+              role: 'assistant',
+              text:
+                language === 'hi'
+                  ? 'पंजीकरण, सहमति और अपनी भुगतान स्थिति के लिए सुरक्षित पैरेंट पोर्टल खोलें: /parent (ब्राउज़र-लोकल डेमो सिमुलेशन)।'
+                  : 'Open your interactive parent demo portal for registration, consent, and simulated payment status: /parent (browser-local demo preview).',
+              source: 'Simulator · browser-local demo link',
+            },
+          ]);
+        } else {
+          const reply = await api<{ text: string; source: string }>('assistant', {
+            tripId,
+            message: value,
+            language,
+            useAI: false,
+          });
+          setMessages((m) => [
+            ...m,
+            { role: 'assistant', text: reply.text, source: 'Simulator · grounded school policy' },
+          ]);
+        }
+      } else {
+        const reply = await api<{ text: string; source: string }>(
+          simulator ? 'messages/simulate' : 'assistant',
+          simulator ? { tripId, text: value, language } : { tripId, message: value, language },
+        );
+        setMessages((m) => [...m, { role: 'assistant', ...reply }]);
+      }
     } catch (e) {
       setMessages((m) => [
         ...m,
@@ -368,11 +460,15 @@ function Chat({ a, tripId, simulator = false }: { a: Actor; tripId: string; simu
 export { Chat };
 function TripEditor({
   d,
+  mode,
   onSaved,
+  onLocalSave,
   onClose,
 }: {
   d?: Trip;
+  mode: Actor['mode'];
   onSaved: (id: string) => void;
+  onLocalSave?: (input: z.infer<typeof tripInput>) => void;
   onClose: () => void;
 }) {
   const [tiers, setTiers] = useState<Tier[]>(
@@ -394,15 +490,21 @@ function TripEditor({
           setError('');
           const f = new FormData(e.currentTarget);
           try {
-            const result = await api<{ id?: string }>(d ? `trips/${d.trip.id}` : 'trips', {
-              name: f.get('name'),
-              destination: f.get('destination'),
-              description: f.get('description'),
-              date: f.get('date'),
-              deadline: f.get('deadline'),
+            const payload = {
+              name: String(f.get('name') ?? ''),
+              destination: String(f.get('destination') ?? ''),
+              description: String(f.get('description') ?? ''),
+              date: String(f.get('date') ?? ''),
+              deadline: String(f.get('deadline') ?? ''),
               capacity: Number(f.get('capacity')),
               tiers,
-            });
+            };
+            if (mode === 'demo' && onLocalSave) {
+              const parsed = tripInput.parse(payload);
+              onLocalSave(parsed);
+              return;
+            }
+            const result = await api<{ id?: string }>(d ? `trips/${d.trip.id}` : 'trips', payload);
             onSaved(result.id || d!.trip.id);
           } catch (e) {
             setError((e as Error).message);
@@ -642,26 +744,91 @@ function Quotations({
     </section>
   );
 }
+const localDemoTrip = z.custom<Trip>((value: unknown) => {
+  if (!value || typeof value !== 'object') return false;
+  const trip = value as Partial<Trip>;
+  const snapshot = trip.snapshot;
+  return (
+    trip.mode === 'demo' &&
+    typeof trip.trip?.id === 'string' &&
+    trip.trip.id.startsWith('demo-local-trip-') &&
+    (snapshot === null ||
+      (snapshot?.tripId === trip.trip.id &&
+        Number.isSafeInteger(snapshot.seatCents) &&
+        Number.isSafeInteger(snapshot.count))) &&
+    tripInput.safeParse(trip.trip).success &&
+    Number.isSafeInteger(trip.seatCents) &&
+    Number.isSafeInteger(trip.registrationCount) &&
+    Array.isArray(trip.payments) &&
+    trip.payments.length === 0 &&
+    !!trip.totals &&
+    Number.isSafeInteger(trip.totals.required) &&
+    Number.isSafeInteger(trip.totals.gap) &&
+    !!trip.coverage &&
+    Number.isSafeInteger(trip.coverage.unresolvedSeats)
+  );
+});
+const demoWorkspaceSchema = z.object({
+  previewRegistrations: z.number().int().min(1).max(500).optional(),
+  fundedScenario: z.boolean().optional(),
+  contributions: z
+    .array(
+      z.object({
+        cents: z.number().int().positive().max(10_000_000),
+        source: z.string().max(160),
+        evidence: z.string().max(500),
+      }),
+    )
+    .max(100)
+    .optional(),
+  refunds: z
+    .array(
+      z.object({
+        captureId: z.string().max(120),
+        cents: z.number().int().positive().max(10_000_000).optional(),
+        clientKey: z.string().max(150),
+      }),
+    )
+    .max(100)
+    .optional(),
+  localTrips: z.array(localDemoTrip).max(50).optional(),
+  schoolName: z.string().max(120).optional(),
+});
+type DemoWorkspaceLocalState = z.infer<typeof demoWorkspaceSchema>;
+const DEMO_WORKSPACE_STORAGE_KEY = demoPreviewKeys.workspace;
+
 export default function Workspace({
   a,
+  previewScope,
   view,
   tripId,
   studioLicense,
 }: {
   a: Actor;
+  previewScope?: string;
   view: string;
   tripId?: string;
   studioLicense?: string;
 }) {
   const router = useRouter();
-  const [data, setData] = useState<Overview>([]);
+  const [rawData, setRawData] = useState<Overview>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [editor, setEditor] = useState<'new' | 'edit' | null>(null);
   const [selected, setSelected] = useState(tripId || '');
   const [regs, setRegs] = useState<Reg>([]);
-  const [finance, setFinance] = useState<Finance | null>(null);
+  const [rawFinance, setRawFinance] = useState<Finance | null>(null);
+  const [demoLocal, setDemoLocal] = useState<DemoWorkspaceLocalState>({});
+  useEffect(() => {
+    setDemoLocal(
+      readDemoPreview(
+        DEMO_WORKSPACE_STORAGE_KEY,
+        previewScope,
+        (value) => demoWorkspaceSchema.safeParse(value).data,
+      ) ?? {},
+    );
+  }, [previewScope]);
   const [search, setSearch] = useState('');
   const [invitation, setInvitation] = useState('');
   const [integration, setIntegration] = useState<Record<
@@ -683,12 +850,126 @@ export default function Workspace({
   const [audit, setAudit] = useState<
     { id: string; action: string; entityId: string; createdAt: string }[]
   >([]);
+
+  const updateDemoLocal = useCallback(
+    (updater: (prev: DemoWorkspaceLocalState) => DemoWorkspaceLocalState) => {
+      setDemoLocal((prev) => {
+        const next = updater(prev);
+        writeDemoPreview(DEMO_WORKSPACE_STORAGE_KEY, previewScope, next);
+        return next;
+      });
+    },
+    [previewScope],
+  );
+
+  const resetDemoLocal = useCallback(() => {
+    setDemoLocal({});
+    removeDemoPreview(DEMO_WORKSPACE_STORAGE_KEY);
+    setNotice('Demo preview reset to canonical Oakwood Academy records.');
+  }, []);
+
+  const hasDemoLocalChanges = useMemo(
+    () =>
+      a.mode === 'demo' &&
+      Boolean(
+        demoLocal.previewRegistrations !== undefined ||
+        demoLocal.fundedScenario ||
+        (demoLocal.contributions && demoLocal.contributions.length > 0) ||
+        (demoLocal.refunds && demoLocal.refunds.length > 0) ||
+        (demoLocal.localTrips && demoLocal.localTrips.length > 0) ||
+        demoLocal.schoolName,
+      ),
+    [a.mode, demoLocal],
+  );
+
+  const { data, finance } = useMemo(() => {
+    if (a.mode !== 'demo') return { data: rawData, finance: rawFinance };
+    let currentData = [...rawData];
+    let currentFinance = rawFinance;
+    if (currentData[0] && currentFinance) {
+      let trip = currentData[0];
+      let fin = currentFinance;
+      if (demoLocal.fundedScenario) {
+        const res = applyDemoFundedSimulation(trip, fin);
+        trip = res.trip;
+        fin = res.finance;
+      }
+      for (const c of demoLocal.contributions ?? []) {
+        try {
+          const res = applyDemoContributionSimulation(trip, fin, c);
+          trip = res.trip;
+          fin = res.finance;
+        } catch {}
+      }
+      let seenKeys: Record<string, number> = {};
+      for (const r of demoLocal.refunds ?? []) {
+        try {
+          const res = applyDemoRefundSimulation(
+            trip,
+            fin,
+            r.captureId,
+            r.cents,
+            r.clientKey,
+            seenKeys,
+          );
+          trip = res.trip;
+          fin = res.finance;
+          seenKeys = res.seenKeys;
+        } catch {}
+      }
+      currentData[0] = trip;
+      currentFinance = fin;
+    } else if (currentData[0] && demoLocal.fundedScenario) {
+      const base = currentData[0];
+      const required = base.totals.required;
+      const fees = 2610;
+      const gross = required;
+      const schoolCents = fees;
+      currentData[0] = {
+        ...base,
+        confirmedSeats: base.registrationCount,
+        outstandingObligationCents: 0,
+        totals: {
+          ...base.totals,
+          gross,
+          fees,
+          refunds: 0,
+          schoolCents,
+          net: required,
+          gap: 0,
+          unresolved: 0,
+          ready: true,
+        },
+        coverage: {
+          ...base.coverage,
+          coveredSeats: base.registrationCount,
+          unresolvedSeats: 0,
+        },
+        payments: base.payments.map((p) => ({ ...p, status: 'COMPLETED' })),
+      };
+    }
+    if (currentData[0] && demoLocal.previewRegistrations !== undefined) {
+      currentData[0] = applyDemoPricingPreview(currentData[0], demoLocal.previewRegistrations);
+    }
+    if (demoLocal.localTrips?.length) {
+      currentData = [...currentData, ...demoLocal.localTrips];
+    }
+    return { data: currentData, finance: currentFinance };
+  }, [a.mode, demoLocal, rawData, rawFinance]);
+
   const d = data.find((d) => d.trip.id === selected) ?? data[0];
   const manage = a.role === 'admin' || a.role === 'finance';
+  const handlePreviewRegistrations = useCallback(
+    (count: number) => {
+      updateDemoLocal((prev) => ({ ...prev, previewRegistrations: count }));
+      setNotice('Preview updated in this browser. Shared demo records remain unchanged.');
+    },
+    [updateDemoLocal],
+  );
   const refresh = useCallback(async () => {
     try {
       const rows = await api<Overview>('dashboard');
-      setData(rows);
+      setRawData(rows);
       if (!selected && rows[0]) setSelected(rows[0].trip.id);
     } catch (e) {
       setError((e as Error).message);
@@ -706,20 +987,20 @@ export default function Workspace({
         const list = await api<{ id: string; name: string; role: string }[]>('schools');
         setSchoolList(list);
         const current = list.find((s) => s.id === a.schoolId);
-        if (current) setSchoolName(current.name);
+        if (current) setSchoolName(demoLocal.schoolName || current.name);
       }
-      if (!d) return;
+      if (!d || d.trip.id.startsWith('demo-local-trip-')) return;
       if (view === 'registrations' || view === 'trip')
         setRegs(await api<Reg>(`trips/${d.trip.id}/registrations`));
       if (view === 'finance' && a.role === 'finance') {
-        setFinance(await api<Finance>(`trips/${d.trip.id}/finance`));
+        setRawFinance(await api<Finance>(`trips/${d.trip.id}/finance`));
         setAudit(await api('audit'));
       }
       if (view === 'messages' && a.role !== 'teacher') setConversations(await api('messages'));
     } catch (e) {
       setError((e as Error).message);
     }
-  }, [d, view, a.role, a.schoolId]);
+  }, [d, view, a.role, a.schoolId, demoLocal.schoolName]);
   useEffect(() => {
     void extra();
   }, [extra]);
@@ -800,6 +1081,26 @@ export default function Workspace({
       </div>
       {error && <Notice error>{error}</Notice>}
       {notice && <Notice>{notice}</Notice>}
+      {hasDemoLocalChanges && (
+        <div
+          className="spread"
+          style={{
+            padding: '10px 14px',
+            marginBottom: 16,
+            borderRadius: 10,
+            background: '#edf2e5',
+            border: '1px solid #d3dacb',
+            fontSize: 12,
+          }}
+        >
+          <span>
+            <strong>Preview updated in this browser.</strong> Shared demo records remain unchanged.
+          </span>
+          <Button variant="ghost" onClick={resetDemoLocal}>
+            Reset demo preview
+          </Button>
+        </div>
+      )}
       {invitation && (
         <Notice>
           Single-use parent invitation (30 minutes):{' '}
@@ -880,7 +1181,10 @@ export default function Workspace({
                   All trips <ArrowUpRight size={13} />
                 </Link>
               </div>
-              <TripCard d={d} />
+              <TripCard
+                d={d}
+                onPreviewRegistrations={a.mode === 'demo' ? handlePreviewRegistrations : undefined}
+              />
               <div className="card table-card">
                 <div className="section-heading">
                   <div>
@@ -999,7 +1303,11 @@ export default function Workspace({
       {d && view === 'trips' && (
         <div className="dashboard-grid">
           {data.map((d) => (
-            <TripCard key={d.trip.id} d={d} />
+            <TripCard
+              key={d.trip.id}
+              d={d}
+              onPreviewRegistrations={a.mode === 'demo' ? handlePreviewRegistrations : undefined}
+            />
           ))}
         </div>
       )}
@@ -1011,7 +1319,10 @@ export default function Workspace({
           </Link>
           <div className="split">
             <div className="stack">
-              <TripCard d={d} />
+              <TripCard
+                d={d}
+                onPreviewRegistrations={a.mode === 'demo' ? handlePreviewRegistrations : undefined}
+              />
               <section className="card stack">
                 <h2>Approved trip information</h2>
                 <p className="muted" style={{ fontSize: 12 }}>
@@ -1037,27 +1348,59 @@ export default function Workspace({
                   <div className="flex" style={{ flexWrap: 'wrap' }}>
                     <Button
                       variant="secondary"
-                      onClick={() =>
-                        run(
+                      onClick={() => {
+                        if (a.mode === 'demo') {
+                          setInvitation(`${window.location.origin}/login`);
+                          setNotice(
+                            'Preview updated in this browser. Shared demo uses the interactive parent demo login rather than persistent invitations.',
+                          );
+                          return;
+                        }
+                        return run(
                           async () =>
                             setInvitation(
                               (await api<{ url: string }>(`trips/${d.trip.id}/invite`, {})).url,
                             ),
                           'Invitation created. Share it privately with one family.',
-                        )
-                      }
+                        );
+                      }}
                     >
                       <Users size={14} />
                       Create parent invitation
                     </Button>
                     {!d.snapshot && (
                       <Button
-                        onClick={() =>
-                          run(
+                        onClick={() => {
+                          if (a.mode === 'demo' && d.trip.id.startsWith('demo-local-trip-')) {
+                            updateDemoLocal((prev) => ({
+                              ...prev,
+                              localTrips: (prev.localTrips ?? []).map((t) =>
+                                t.trip.id === d.trip.id
+                                  ? {
+                                      ...t,
+                                      trip: { ...t.trip, state: 'FROZEN' },
+                                      snapshot: {
+                                        id: `demo-local-snap-${d.trip.id}`,
+                                        tripId: d.trip.id,
+                                        seatCents: d.seatCents,
+                                        count: d.registrationCount,
+                                        policy: d.trip.tiers,
+                                        createdAt: new Date(),
+                                      },
+                                    }
+                                  : t,
+                              ),
+                            }));
+                            setNotice(
+                              'Preview updated in this browser. Local preview trip frozen in this browser.',
+                            );
+                            return;
+                          }
+                          return run(
                             () => api(`trips/${d.trip.id}/freeze`, {}),
                             'Final price frozen. Immutable family obligations created.',
-                          )
-                        }
+                          );
+                        }}
                       >
                         <LockKeyhole size={14} />
                         Freeze final group price
@@ -1157,8 +1500,15 @@ export default function Workspace({
                         <td>
                           <Button
                             variant="ghost"
-                            onClick={() =>
-                              run(
+                            onClick={() => {
+                              if (a.mode === 'demo') {
+                                setInvitation(`${window.location.origin}/login`);
+                                setNotice(
+                                  'Preview updated in this browser. Shared demo uses the interactive parent demo login rather than persistent invitations.',
+                                );
+                                return;
+                              }
+                              return run(
                                 async () =>
                                   setInvitation(
                                     (
@@ -1168,8 +1518,8 @@ export default function Workspace({
                                     ).url,
                                   ),
                                 'One-use family portal link created. Share privately with the named family.',
-                              )
-                            }
+                              );
+                            }}
                           >
                             Create portal link <ArrowUpRight size={12} />
                           </Button>
@@ -1273,7 +1623,7 @@ export default function Workspace({
             <Badge tone="purple">Primary sponsor integration</Badge>
           </div>
           <div className="studio-frame">
-            <Studio overview={data} license={studioLicense} />
+            <Studio overview={data} license={studioLicense} previewScope={previewScope} />
           </div>
           <p className="muted" style={{ fontSize: 10, marginTop: 13 }}>
             Open Studio’s chat panel to ask a question or create a report. Gemini runs through an
@@ -1320,14 +1670,18 @@ export default function Workspace({
                     </div>
                     <Button
                       variant="secondary"
-                      onClick={() =>
-                        run(
+                      onClick={() => {
+                        if (a.mode === 'demo') {
+                          setNotice(
+                            'Preview updated in this browser. Reminder simulated locally; no message was sent.',
+                          );
+                          return;
+                        }
+                        return run(
                           () => api('messages/remind', { conversationId: c.id }),
-                          a.mode === 'demo'
-                            ? 'Reminder simulated. No message was sent.'
-                            : 'Reminder submitted to Twilio; check delivery status.',
-                        )
-                      }
+                          'Reminder submitted to Twilio; check delivery status.',
+                        );
+                      }}
                     >
                       {a.mode === 'demo' ? 'Simulate reminder' : 'Send reminder'}
                     </Button>
@@ -1493,12 +1847,18 @@ export default function Workspace({
                           <div className="flex">
                             <Button
                               variant="ghost"
-                              onClick={() =>
-                                run(
+                              onClick={() => {
+                                if (a.mode === 'demo') {
+                                  setNotice(
+                                    'Preview updated in this browser. Demo operations retain their labeled simulated state.',
+                                  );
+                                  return;
+                                }
+                                return run(
                                   () => api('payments/reconcile', { operationId: o.id }),
                                   'Provider status checked. Demo operations retain their labeled simulated state.',
-                                )
-                              }
+                                );
+                              }}
                             >
                               <RefreshCw size={12} />
                               Reconcile
@@ -1509,19 +1869,35 @@ export default function Workspace({
                                   variant="danger"
                                   onClick={() => {
                                     if (
-                                      window.confirm(
+                                      !window.confirm(
                                         `Authorize a ${money(o.capture!.cents - o.capture!.refundedCents)} ${a.mode === 'demo' ? 'simulated' : 'sandbox'} refund? Processing fees may remain deducted.`,
                                       )
                                     )
-                                      return run(
-                                        () =>
-                                          api('payments/refund', {
-                                            captureId: o.capture!.id,
-                                            cents: o.capture!.cents - o.capture!.refundedCents,
-                                            clientKey: `ui-${o.capture!.id}-${o.capture!.refundedCents}-remaining`,
-                                          }),
-                                        'Refund operation recorded. Provider completion is verified through readback.',
+                                      return;
+                                    const remaining = o.capture!.cents - o.capture!.refundedCents;
+                                    const clientKey = `ui-${o.capture!.id}-${o.capture!.refundedCents}-remaining`;
+                                    if (a.mode === 'demo') {
+                                      updateDemoLocal((prev) => ({
+                                        ...prev,
+                                        refunds: [
+                                          ...(prev.refunds ?? []),
+                                          { captureId: o.capture!.id, cents: remaining, clientKey },
+                                        ],
+                                      }));
+                                      setNotice(
+                                        'Preview updated in this browser. Simulated refund applied locally; shared demo records remain unchanged.',
                                       );
+                                      return;
+                                    }
+                                    return run(
+                                      () =>
+                                        api('payments/refund', {
+                                          captureId: o.capture!.id,
+                                          cents: remaining,
+                                          clientKey,
+                                        }),
+                                      'Refund operation recorded. Provider completion is verified through readback.',
+                                    );
                                   }}
                                 >
                                   Refund remaining
@@ -1548,12 +1924,26 @@ export default function Workspace({
                                       )
                                     )
                                       return;
+                                    const clientKey = `ui-${o.capture!.id}-${o.capture!.refundedCents}-${cents}`;
+                                    if (a.mode === 'demo') {
+                                      updateDemoLocal((prev) => ({
+                                        ...prev,
+                                        refunds: [
+                                          ...(prev.refunds ?? []),
+                                          { captureId: o.capture!.id, cents, clientKey },
+                                        ],
+                                      }));
+                                      setNotice(
+                                        'Preview updated in this browser. Simulated partial refund applied locally; shared demo records remain unchanged.',
+                                      );
+                                      return;
+                                    }
                                     return run(
                                       () =>
                                         api('payments/refund', {
                                           captureId: o.capture!.id,
                                           cents,
-                                          clientKey: `ui-${o.capture!.id}-${o.capture!.refundedCents}-${cents}`,
+                                          clientKey,
                                         }),
                                       'Refund recorded; reconcile for verified status.',
                                     );
@@ -1589,12 +1979,25 @@ export default function Workspace({
                   } catch {
                     return window.alert('Enter an exact USD amount.');
                   }
+                  const source = String(f.get('source') ?? '');
+                  const evidence = String(f.get('evidence') ?? '');
+                  if (a.mode === 'demo') {
+                    updateDemoLocal((prev) => ({
+                      ...prev,
+                      contributions: [...(prev.contributions ?? []), { cents, source, evidence }],
+                    }));
+                    form.reset();
+                    setNotice(
+                      'Preview updated in this browser. Simulated contribution recorded locally; shared demo records remain unchanged.',
+                    );
+                    return;
+                  }
                   return run(async () => {
                     await api('finance/contribution', {
                       tripId: d.trip.id,
                       cents,
-                      source: f.get('source'),
-                      evidence: f.get('evidence'),
+                      source,
+                      evidence,
                     });
                     form.reset();
                   }, 'Authorized contribution and audit recorded.');
@@ -1644,12 +2047,12 @@ export default function Workspace({
                   </p>
                 </div>
                 <Button
-                  onClick={() =>
-                    run(
-                      () => api(`trips/${d.trip.id}/simulate-funded`, {}),
-                      'Fully funded simulation applied. Captures and fee reserve are simulated.',
-                    )
-                  }
+                  onClick={() => {
+                    updateDemoLocal((prev) => ({ ...prev, fundedScenario: true }));
+                    setNotice(
+                      'Preview updated in this browser. Fully funded simulation applied locally; shared demo records remain unchanged.',
+                    );
+                  }}
                 >
                   Run funded scenario
                 </Button>
@@ -1713,6 +2116,13 @@ export default function Workspace({
                 className="flex"
                 onSubmit={(e) => {
                   e.preventDefault();
+                  if (a.mode === 'demo') {
+                    updateDemoLocal((prev) => ({ ...prev, schoolName }));
+                    setNotice(
+                      'Preview updated in this browser. Shared demo school identity remains Oakwood Academy.',
+                    );
+                    return;
+                  }
                   void run(
                     () => api('school', { name: schoolName }),
                     'School name updated. Refresh the page to update the workspace header.',
@@ -1764,6 +2174,13 @@ export default function Workspace({
                   className="flex"
                   onSubmit={(e) => {
                     e.preventDefault();
+                    if (a.mode === 'demo') {
+                      setNewSchool('');
+                      setNotice(
+                        'Preview updated in this browser. Creating additional persistent schools requires restricted sandbox access.',
+                      );
+                      return;
+                    }
                     void run(
                       () => api('schools/create', { name: newSchool }),
                       'School created. Select it above to begin.',
@@ -1853,7 +2270,68 @@ export default function Workspace({
       {editor && (
         <TripEditor
           d={editor === 'edit' ? d : undefined}
+          mode={a.mode}
           onClose={() => setEditor(null)}
+          onLocalSave={(input) => {
+            const localId = editor === 'edit' && d ? d.trip.id : `demo-local-trip-${Date.now()}`;
+            const previewSeat = seatPrice(input.tiers, 1);
+            const newTrip: Trip = {
+              trip: {
+                id: localId,
+                schoolId: a.schoolId,
+                name: input.name,
+                destination: input.destination,
+                description: input.description,
+                date: input.date,
+                deadline: input.deadline,
+                capacity: input.capacity,
+                tiers: input.tiers,
+                state: 'OPEN',
+                reserveCents: 0,
+                createdAt: new Date(),
+              },
+              mode: 'demo',
+              snapshot: null,
+              seatCents: previewSeat,
+              totals: {
+                required: previewSeat,
+                gross: 0,
+                fees: 0,
+                refunds: 0,
+                net: 0,
+                gap: previewSeat,
+                feePending: 0,
+                feeReserve: 0,
+                refundReserve: 0,
+                schoolCents: 0,
+                assistanceRequired: 0,
+                sponsorCommitted: 0,
+                sponsorshipCommitmentGap: 0,
+                ready: false,
+                unresolved: 0,
+              },
+              registrationCount: 1,
+              confirmedSeats: 0,
+              coverage: {
+                parentPaidSeats: 0,
+                fullyAssistedSeats: 0,
+                coveredSeats: 0,
+                unresolvedSeats: 1,
+              },
+              outstandingObligationCents: 0,
+              payments: [],
+            };
+            updateDemoLocal((prev) => ({
+              ...prev,
+              localTrips: [
+                ...(prev.localTrips ?? []).filter((t) => t.trip.id !== localId),
+                newTrip,
+              ],
+            }));
+            setSelected(localId);
+            setEditor(null);
+            setNotice('Preview updated in this browser. Shared demo records remain unchanged.');
+          }}
           onSaved={(id) => {
             setEditor(null);
             void refresh();

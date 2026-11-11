@@ -11,12 +11,19 @@ vi.mock('@google/genai', () => ({
 vi.mock('../src/server/auth', () => ({ quota: vi.fn(), roles: vi.fn() }));
 vi.mock('@/db', () => ({ db: { insert: () => ({ values: vi.fn() }) } }));
 
-const actor: Actor = {
+const demoActor: Actor = {
   schoolId: 'demo-school',
   userId: 'demo-admin',
   name: 'Fictional administrator',
   role: 'admin',
   mode: 'demo',
+};
+const actor: Actor = {
+  schoolId: 'sandbox-school',
+  userId: 'sandbox-admin',
+  name: 'Sandbox administrator',
+  role: 'admin',
+  mode: 'sandbox',
 };
 const model = 'gemini-2.5-flash-lite';
 const file = new File(['%PDF-fixture'], 'fictional.pdf', { type: 'application/pdf' });
@@ -50,6 +57,15 @@ afterAll(() => {
 });
 
 describe('Gemini quotation issuer validation', () => {
+  it('blocks live Gemini quotation extraction in read-only public demo mode', async () => {
+    const callsBefore = generateContent.mock.calls.length;
+    await expect(extractQuote(demoActor, file)).rejects.toMatchObject({
+      status: 403,
+      code: 'DEMO_READ_ONLY',
+    });
+    expect(generateContent).toHaveBeenCalledTimes(callsBefore);
+  });
+
   it.each(['FICTIONAL VENDOR', 'FICTIONAL VENDOR · HACKATHON SAMPLE', ' Unknown ', '  '])(
     'rejects an unresolved issuer (%j)',
     async (vendor) => {

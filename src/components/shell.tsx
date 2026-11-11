@@ -1,4 +1,5 @@
 'use client';
+import { clearDemoPreviews } from '@/lib/demo-preview-storage';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
@@ -173,6 +174,7 @@ export function Shell({
               className="icon-button"
               style={{ color: '#a9c3ad' }}
               onClick={async () => {
+                clearDemoPreviews();
                 await api('auth/logout', {});
                 router.push('/');
                 router.refresh();

@@ -8,11 +8,13 @@ import { ownObligation, ownTrip } from './data';
 import { AppError, requireValue } from './errors';
 import { paypal, ProviderFailure } from './integrations/paypal';
 import { record, uid } from './services';
+import { assertMutableWorkspace } from './demo-policy';
 const conflict = () =>
   new AppError('Operation changed during readback. Reconcile again.', 409, 'STALE_READBACK');
 export async function paymentOrder(a: Actor, obligationId: string) {
   const ob = await ownObligation(a, obligationId);
   const trip = await ownTrip(a, ob.tripId);
+  assertMutableWorkspace(a);
   const [snap] = await db.select().from(s.snapshots).where(eq(s.snapshots.id, ob.snapshotId));
   if (!snap || snap.tripId !== trip.id || trip.state !== 'FROZEN')
     throw new AppError('A frozen funding snapshot is required.', 409);
@@ -296,39 +298,14 @@ export async function settleOperation(operationId: string, refundHint?: string) 
   });
 }
 export async function capturePayment(a: Actor, obligationId: string) {
-  const ob = await ownObligation(a, obligationId);
+  await ownObligation(a, obligationId);
+  assertMutableWorkspace(a);
   const [op] = await db
     .select()
     .from(s.operations)
     .where(eq(s.operations.obligationId, obligationId));
   requireValue(op);
   if (op.mode !== a.mode) throw new AppError('Provider mode mismatch', 409);
-  if (a.mode === 'demo') {
-    if (op.status === 'COMPLETED') return op;
-    if (['REFUNDED', 'PARTIALLY_REFUNDED', 'REVERSED'].includes(op.status))
-      throw new AppError('This capture cannot be repeated.', 409);
-    await db.transaction(async (tx) => {
-      await tx
-        .insert(s.captures)
-        .values({
-          id: uid(),
-          operationId: op.id,
-          providerId: `SIM-${op.id}`,
-          cents: ob.cents,
-          feeCents: 85,
-          feeKnown: true,
-          provenance: 'SYNTHETIC',
-          status: 'COMPLETED',
-        })
-        .onConflictDoNothing({ target: s.captures.operationId });
-      await tx
-        .update(s.operations)
-        .set({ status: 'COMPLETED', updatedAt: new Date() })
-        .where(eq(s.operations.id, op.id));
-    });
-    await record(a, 'SIMULATED_CAPTURE', op.id);
-    return { status: 'COMPLETED' };
-  }
   const current = await settleOperation(op.id);
   if (['COMPLETED', 'PARTIALLY_REFUNDED', 'REFUNDED', 'REVERSED'].includes(current.status))
     return current;
@@ -386,13 +363,14 @@ export async function capturePayment(a: Actor, obligationId: string) {
   }
 }
 export async function reconcile(a: Actor, operationId: string) {
-  roles(a, ['finance', 'parent']);
   const [op] = await db
     .select()
     .from(s.operations)
     .where(and(eq(s.operations.id, operationId), eq(s.operations.schoolId, a.schoolId)));
   requireValue(op);
   await ownObligation(a, op.obligationId);
+  assertMutableWorkspace(a);
+  roles(a, ['finance', 'parent']);
   if (op.mode !== a.mode) throw new AppError('Provider mode mismatch', 409);
   const result = await settleOperation(op.id);
   await record(a, 'PAYMENT_RECONCILED', op.id);
@@ -404,12 +382,13 @@ export async function refundPayment(
   cents?: number,
   clientKey = `full-${captureId}`,
 ) {
-  roles(a, ['finance']);
   const [cap] = await db.select().from(s.captures).where(eq(s.captures.id, captureId));
   requireValue(cap);
   const [op] = await db.select().from(s.operations).where(eq(s.operations.id, cap.operationId));
   requireValue(op);
   await ownObligation(a, op.obligationId);
+  assertMutableWorkspace(a);
+  roles(a, ['finance']);
   if (
     op.mode !== a.mode ||
     (a.mode === 'sandbox' && (cap.provenance !== 'PAYPAL_SANDBOX' || !cap.verifiedAt))

@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { isIP } from 'node:net';
 import { and, eq, gt } from 'drizzle-orm';
 import { db } from '@/db';
 import { sessions, users, memberships, schools, quotas } from '@/db/schema';
@@ -7,10 +8,28 @@ import { sql } from 'drizzle-orm';
 import { AppError } from './errors';
 import type { Mode, Role } from '@/lib/domain';
 export type Actor = { userId: string; schoolId: string; name: string; role: Role; mode: Mode };
+const sessionQuotaKeys = new WeakMap<Actor, string>();
 export const hash = (s: string) => createHash('sha256').update(s).digest('hex');
+export function bindSessionQuotaKey(a: Actor, sessionKey: string): Actor {
+  sessionQuotaKeys.set(a, hash(`session-quota:${sessionKey}`));
+  return a;
+}
+export function sessionQuotaScope(a: Actor): string {
+  if (a.mode === 'demo') return sessionQuotaKeys.get(a) ?? a.userId;
+  return a.userId;
+}
+export function demoPreviewScope(a: Actor): string | undefined {
+  const sessionKey = sessionQuotaKeys.get(a);
+  return a.mode === 'demo' && sessionKey ? hash(`browser-preview:${sessionKey}`) : undefined;
+}
+export function loginClientKey(h: Headers) {
+  const client = process.env.RENDER === 'true' ? h.get('cf-connecting-ip')?.trim() : undefined;
+  return client && isIP(client) ? client : 'unattributed';
+}
 export async function actor(): Promise<Actor> {
   const token = (await cookies()).get('ce_session')?.value;
   if (!token) throw new AppError('Please sign in.', 401, 'UNAUTHENTICATED');
+  const sessionId = hash(token);
   const [s] = await db
     .select({
       userId: users.id,
@@ -26,9 +45,9 @@ export async function actor(): Promise<Actor> {
       memberships,
       and(eq(memberships.userId, users.id), eq(memberships.schoolId, schools.id)),
     )
-    .where(and(eq(sessions.id, hash(token)), gt(sessions.expiresAt, new Date())));
+    .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, new Date())));
   if (!s) throw new AppError('Session expired. Please sign in.', 401, 'UNAUTHENTICATED');
-  return s;
+  return bindSessionQuotaKey(s, sessionId);
 }
 export async function optionalActor() {
   try {
@@ -84,4 +103,12 @@ export async function quota(key: string, max = 30) {
     .returning();
   if (result[0].count > max)
     throw new AppError('Request limit reached. Please try again later.', 429, 'RATE_LIMIT');
+}
+export async function enforceApiQuota(a: Actor) {
+  if (a.mode === 'demo') {
+    await quota(`api:demo-session:${sessionQuotaScope(a)}`, 240);
+    await quota('api:demo-global', 24000);
+    return;
+  }
+  await quota(`api:${a.userId}`, 600);
 }

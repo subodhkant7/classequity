@@ -7,6 +7,7 @@ import { Brand } from '@/components/brand';
 import Museum from '@/components/museum';
 import { Button, Field, Notice, api } from '@/components/ui';
 import type { Role } from '@/lib/domain';
+import { clearDemoPreviews } from '@/lib/demo-preview-storage';
 export default function Login() {
   const hydrated = useHydrated();
   const [mode, setMode] = useState<'demo' | 'sandbox'>('demo');
@@ -64,6 +65,7 @@ export default function Login() {
               setError('');
               try {
                 const r = await api<{ redirect: string }>('auth/login', { mode, role, password });
+                clearDemoPreviews();
                 window.location.assign(r.redirect);
               } catch (e) {
                 setError((e as Error).message);

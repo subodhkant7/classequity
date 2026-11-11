@@ -8,7 +8,10 @@ import { ownTrip } from './data';
 import { assistant } from './integrations/gemini';
 import { sendWhatsapp } from './integrations/twilio';
 import { randomBytes } from 'node:crypto';
+import { assertMutableWorkspace } from './demo-policy';
 export async function secureLink(a: Actor, tripId: string) {
+  await ownTrip(a, tripId);
+  assertMutableWorkspace(a);
   const token = randomBytes(32).toString('hex');
   await db
     .insert(s.invitations)
@@ -49,33 +52,15 @@ export async function simulateMessage(
   language: 'en' | 'hi',
 ) {
   await ownTrip(a, tripId);
-  if (a.mode !== 'demo') throw new AppError('Open demo mode to use the WhatsApp simulator.', 403);
-  const parent: Actor = { ...a, userId: 'demo-parent-23', role: 'parent' };
-  const reply = await conversationReply(parent, tripId, text, language, true);
-  const conversationId = 'demo-conversation';
-  await db.insert(s.messages).values([
-    {
-      id: uid(),
-      conversationId,
-      direction: 'INBOUND',
-      body: text,
-      status: 'received',
-      simulation: true,
-    },
-    {
-      id: uid(),
-      conversationId,
-      direction: 'OUTBOUND',
-      body: reply.text,
-      status: 'delivered',
-      simulation: true,
-    },
-  ]);
-  return reply;
+  assertMutableWorkspace(a);
+  void text;
+  void language;
+  throw new AppError('Open browser-local demo mode to use the WhatsApp simulator.', 403);
 }
 export async function connectPhone(a: Actor, tripId: string, phone: string) {
-  roles(a, ['parent']);
   await ownTrip(a, tripId);
+  assertMutableWorkspace(a);
+  roles(a, ['parent']);
   if (!/^\+[1-9]\d{7,14}$/.test(phone))
     throw new AppError('Use an international number such as +15551234567');
   const address = `whatsapp:${phone}`;
@@ -103,12 +88,13 @@ export async function connectPhone(a: Actor, tripId: string, phone: string) {
   };
 }
 export async function remind(a: Actor, conversationId: string) {
-  roles(a, ['admin', 'finance']);
   const [c] = await db
     .select()
     .from(s.conversations)
     .where(and(eq(s.conversations.id, conversationId), eq(s.conversations.schoolId, a.schoolId)));
   requireValue(c);
+  assertMutableWorkspace(a);
+  roles(a, ['admin', 'finance']);
   if (!c.optedIn || !c.lastInboundAt || Date.now() - c.lastInboundAt.getTime() > 24 * 3600000)
     throw new AppError(
       'A verified opt-in and an open 24-hour customer-service window are required. Outside it, configure an approved template.',

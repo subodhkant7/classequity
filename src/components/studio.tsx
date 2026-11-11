@@ -1,4 +1,11 @@
 'use client';
+import { z } from 'zod';
+import {
+  demoPreviewKeys,
+  readDemoPreview,
+  writeDemoPreview,
+  removeDemoPreview,
+} from '@/lib/demo-preview-storage';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import {
   AgStudio,
@@ -30,7 +37,7 @@ import {
 } from 'ag-studio';
 import { CheckCircle2 } from 'lucide-react';
 import { money } from '@/lib/domain';
-import { tripStudioFields, tierStudioFields } from '@/lib/studio-fields';
+import { tripStudioFields, tierStudioFields, operationStudioFields } from '@/lib/studio-fields';
 import type { dashboardData } from '@/server/data';
 import { api, Notice } from './ui';
 type Overview = Awaited<ReturnType<typeof dashboardData>>;
@@ -378,33 +385,89 @@ export const geminiAdapter: AgLlmAdapter = {
     return { complete, stream };
   },
 };
+const DEMO_STUDIO_STORAGE_KEY = demoPreviewKeys.studio;
+const demoStudioSchema = z
+  .looseObject({
+    selectedPageId: z.string().max(160),
+    pages: z
+      .array(
+        z.looseObject({
+          id: z.string().max(160),
+          widgets: z.record(
+            z.string(),
+            z.looseObject({
+              type: z.string(),
+              dataMapping: z
+                .record(z.string(), z.array(z.looseObject({ id: z.string() })))
+                .optional(),
+            }),
+          ),
+          widgetLayout: z.record(
+            z.string(),
+            z.looseObject({
+              xTrack: z.number(),
+              yTrack: z.number(),
+              xSpan: z.number(),
+              ySpan: z.number(),
+            }),
+          ),
+        }),
+      )
+      .min(1)
+      .max(50),
+  })
+  .refine((report) => report.pages.some((page) => page.id === report.selectedPageId));
+
 export default function Studio({
   overview,
   license,
   presentation = false,
+  previewScope,
 }: {
   overview: Overview;
   license?: string;
   presentation?: boolean;
+  previewScope?: string;
 }) {
   const apiRef = useRef<AgStudioApi<Registry> | null>(null);
+  const isDemo = presentation || overview[0]?.mode === 'demo';
   const [pageId, setPageId] = useState('Financial overview');
   const [state, setState] = useState<AgReportState<Registry> | null>(null);
   const [saved, setSaved] = useState('');
   const [error, setError] = useState('');
+  function persistSandboxReport(next: AgReportState<Registry>) {
+    void api('studio/state', next)
+      .then(() => setSaved('Report saved'))
+      .catch(() => setError('Report changes could not be saved.'));
+  }
   useEffect(() => {
+    if (license) AgStudioLicenseManager.setLicenseKey(license);
     if (presentation) {
       setState(initial);
+      setPageId(initial.selectedPageId);
       return;
     }
-    if (license) AgStudioLicenseManager.setLicenseKey(license);
+    if (isDemo) {
+      const stored = readDemoPreview(DEMO_STUDIO_STORAGE_KEY, previewScope, (value) =>
+        demoStudioSchema.safeParse(value).success ? (value as AgReportState<Registry>) : undefined,
+      );
+      if (stored) {
+        setState(stored);
+        setPageId(stored.selectedPageId);
+        setSaved('Preview updated in this browser.');
+        return;
+      }
+      setState(initial);
+      setPageId(initial.selectedPageId);
+      return;
+    }
     api<AgReportState<Registry> | null>('studio/state')
       .then((s) => {
         setState(s || initial);
         setPageId((s || initial).selectedPageId);
       })
       .catch(() => setState(initial));
-  }, [license, presentation]);
+  }, [isDemo, license, presentation, previewScope]);
   const context = useMemo<Context>(() => ({ overview }), [overview]);
   const data = useMemo<AgDataSourcesDefinition<Registry>>(
     () => ({
@@ -444,6 +507,7 @@ export default function Studio({
         },
         {
           id: 'operations',
+          fields: operationStudioFields,
           name: 'Payment status counts',
           data: overview.flatMap((d) =>
             Object.entries(
@@ -639,33 +703,43 @@ export default function Studio({
             className="btn ghost"
             style={{ fontSize: 9, minHeight: 24, padding: '3px 7px' }}
             onClick={() => {
+              if (isDemo && !presentation) {
+                removeDemoPreview(DEMO_STUDIO_STORAGE_KEY);
+                setSaved('Starter report restored.');
+              }
               const studio = apiRef.current;
               if (studio) {
                 studio.setState(initial);
-                setState(initial);
-                setPageId(initial.selectedPageId);
+                studio.clearHistory();
               }
+              setState(initial);
+              setPageId(initial.selectedPageId);
+              if (!isDemo) persistSandboxReport(initial);
             }}
           >
             Restore starter report
           </button>
         </span>
-        {presentation && (
+        {isDemo && (
           <button
             className="text-button"
             onClick={() => {
-              const api = apiRef.current;
-              if (!api) return;
+              const studio = apiRef.current;
               const template = initial.pages.find((p) => p.id === 'Trip comparison')!;
               const page = { ...template, id: 'Recorded AI · Trip comparison' };
-              const next = {
-                ...api.getState(),
+              const baseState = studio ? studio.getState() : state;
+              const next: AgReportState<Registry> = {
+                ...baseState,
                 selectedPageId: page.id,
-                pages: [...initial.pages, page],
+                pages: [...baseState.pages.filter((existing) => existing.id !== page.id), page],
               };
-              api.setState(next);
+              if (studio) studio.setState(next);
               setState(next);
               setPageId(page.id);
+              if (!presentation) {
+                writeDemoPreview(DEMO_STUDIO_STORAGE_KEY, previewScope, next);
+              }
+              setSaved('Preview updated in this browser.');
             }}
           >
             Replay recorded AI view
@@ -676,9 +750,23 @@ export default function Studio({
           value={pageId}
           style={{ width: 230, fontSize: 11, padding: 7 }}
           onChange={(e) => {
-            setPageId(e.target.value);
+            const nextPageId = e.target.value;
+            setPageId(nextPageId);
             const studio = apiRef.current;
-            if (studio) studio.setState({ ...studio.getState(), selectedPageId: e.target.value });
+            const nextState: AgReportState<Registry> = {
+              ...(studio ? studio.getState() : state),
+              selectedPageId: nextPageId,
+            };
+            if (studio) studio.setState(nextState);
+            setState(nextState);
+            if (isDemo) {
+              if (!presentation) {
+                writeDemoPreview(DEMO_STUDIO_STORAGE_KEY, previewScope, nextState);
+              }
+              setSaved('Preview updated in this browser.');
+            } else {
+              persistSandboxReport(nextState);
+            }
           }}
         >
           {state.pages.map((p) => (
@@ -698,16 +786,29 @@ export default function Studio({
             initialState={state}
             widgets={widgets}
             context={context}
-            ai={presentation ? undefined : ai}
+            ai={isDemo ? undefined : ai}
             onApiReady={(e) => {
               apiRef.current = e.api as unknown as AgStudioApi<Registry>;
             }}
             onErrorRaised={(e) => setError(e.errorDetails.join('; '))}
             onStateUpdated={(e) => {
-              if (presentation) return;
-              void api('studio/state', e.state)
-                .then(() => setSaved('Report saved'))
-                .catch(() => setError('Report changes could not be saved.'));
+              if (!e.durable) return;
+              // Studio emits durable initialization and repair updates without a history entry.
+              // Undo and redo also omit a new entry, but retain their history stacks.
+              const history = apiRef.current?.getHistory();
+              if (!e.change && !history?.undo.length && !history?.redo.length) return;
+              if (presentation) {
+                setSaved('Preview updated in this browser.');
+                return;
+              }
+              if (isDemo) {
+                setState(e.state);
+                setPageId(e.state.selectedPageId);
+                writeDemoPreview(DEMO_STUDIO_STORAGE_KEY, previewScope, e.state);
+                setSaved('Preview updated in this browser.');
+                return;
+              }
+              persistSandboxReport(e.state);
             }}
           />
         </AgStudioProvider>
