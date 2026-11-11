@@ -1,12 +1,17 @@
 'use client';
 import { useState, useEffect, useRef, useId, type ReactNode } from 'react';
 import { LoaderCircle, X, ArrowUpRight, Check, AlertCircle } from 'lucide-react';
-export async function api<T = Record<string, unknown>>(path: string, data?: unknown): Promise<T> {
+export async function api<T = Record<string, unknown>>(
+  path: string,
+  data?: unknown,
+  options?: { signal?: AbortSignal },
+): Promise<T> {
   const r = await fetch(`/api/${path}`, {
     method: data === undefined ? 'GET' : 'POST',
     credentials: 'same-origin',
     headers: data === undefined ? {} : { 'Content-Type': 'application/json' },
     body: data === undefined ? undefined : JSON.stringify(data),
+    signal: options?.signal,
   });
   const result = await r.json();
   if (!r.ok) throw Error(result.error || 'Request failed');

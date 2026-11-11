@@ -156,7 +156,9 @@ test('C: AG Studio customizations stay isolated per visitor browser without call
     await expect(pageB.getByLabel('Report page')).toHaveValue('Financial overview');
     await expect(pageB.getByText('Recorded AI · Trip comparison')).toHaveCount(0);
     await expect(pageB.getByText('Preview updated in this browser.')).toHaveCount(0);
-    expect(await pageB.evaluate(() => sessionStorage.getItem('ce_demo_studio_report_v1'))).toBeNull();
+    expect(
+      await pageB.evaluate(() => sessionStorage.getItem('ce_demo_studio_report_v1')),
+    ).toBeNull();
   } finally {
     await ctxA.close();
     await ctxB.close();
@@ -626,5 +628,363 @@ test('K: exhausting demo assistant quota in one visitor session does not throttl
   } finally {
     await ctxA.close();
     await ctxB.close();
+  }
+});
+
+test('L: demo finance and audit fetches stay strictly bounded across local previews, switching, reload, reset, replacement, and sign-out', async ({
+  browser,
+}) => {
+  test.setTimeout(120000);
+  const ctxA = await browser.newContext({ baseURL: base });
+  const ctxB = await browser.newContext({ baseURL: base });
+  const pageA = await ctxA.newPage();
+  const pageB = await ctxB.newPage();
+
+  const counts = { dashboard: 0, finance: 0, audit: 0, rateLimited: 0 };
+  pageA.on('response', (res) => {
+    const pathname = new URL(res.url()).pathname;
+    if (res.status() === 429) counts.rateLimited += 1;
+    if (pathname === '/api/dashboard') counts.dashboard += 1;
+    if (/^\/api\/trips\/[^/]+\/finance$/.test(pathname)) counts.finance += 1;
+    if (pathname === '/api/audit') counts.audit += 1;
+  });
+
+  const snapshot = () => ({ ...counts });
+  const settleAndCheckDelta = async (
+    label: string,
+    before: ReturnType<typeof snapshot>,
+    maxDelta: { dashboard: number; finance: number; audit: number },
+  ) => {
+    await pageA.waitForLoadState('networkidle');
+    await pageA.waitForTimeout(1000);
+    const after = snapshot();
+    expect(after.rateLimited, `${label} 429 count`).toBe(0);
+    expect(after.dashboard - before.dashboard, `${label} dashboard delta`).toBeLessThanOrEqual(
+      maxDelta.dashboard,
+    );
+    expect(after.finance - before.finance, `${label} finance delta`).toBeLessThanOrEqual(
+      maxDelta.finance,
+    );
+    expect(after.audit - before.audit, `${label} audit delta`).toBeLessThanOrEqual(maxDelta.audit);
+    await expect(pageA.locator('.notice.error')).toHaveCount(0);
+  };
+
+  try {
+    await loginDemo(pageA, 'Finance admin');
+    let mark = snapshot();
+    // 1. Initial mount at /finance (without ?trip=) and /finance?trip=demo-science must stay bounded.
+    await pageA.goto('/finance');
+    await expect(pageA.getByRole('heading', { name: 'Confidential allocations' })).toBeVisible();
+    await settleAndCheckDelta('initial /finance mount', mark, {
+      dashboard: 1,
+      finance: 1,
+      audit: 1,
+    });
+
+    // 2. Pricing preview from dashboard followed by /finance?trip=demo-science.
+    await pageA.goto('/dashboard');
+    await expect(pageA.getByRole('button', { name: 'Preview 19 students ($32.00)' })).toBeVisible();
+    await pageA.waitForLoadState('networkidle');
+    mark = snapshot();
+    await pageA.getByRole('button', { name: 'Preview 19 students ($32.00)' }).click();
+    await expect(pageA.getByText('$32.00 per student').first()).toBeVisible();
+    await settleAndCheckDelta('pricing preview', mark, {
+      dashboard: 0,
+      finance: 0,
+      audit: 0,
+    });
+
+    mark = snapshot();
+    await pageA.goto('/finance?trip=demo-science');
+    await expect(pageA.getByRole('heading', { name: 'Confidential allocations' })).toBeVisible();
+    await settleAndCheckDelta('/finance with pricing preview', mark, {
+      dashboard: 1,
+      finance: 1,
+      audit: 1,
+    });
+
+    // 3. Funded scenario preview on /finance must trigger 0 extra finance/audit fetches.
+    mark = snapshot();
+    await pageA.getByRole('button', { name: 'Run funded scenario' }).click();
+    await expect(pageA.getByText('0 unresolved operation outcomes')).toBeVisible();
+    await settleAndCheckDelta('funded scenario preview', mark, {
+      dashboard: 0,
+      finance: 0,
+      audit: 0,
+    });
+
+    // 4. Local contribution preview on /finance must trigger 0 extra finance/audit fetches.
+    mark = snapshot();
+    await pageA.getByLabel('USD amount', { exact: true }).fill('10.00');
+    await pageA.getByLabel('Funding source', { exact: true }).fill('Local regression grant');
+    await pageA
+      .getByLabel('Authorization / receipt reference', { exact: true })
+      .fill('LOCAL-FIN-GRANT-01');
+    await pageA.getByRole('button', { name: 'Record authorized contribution' }).click();
+    await expect(pageA.getByText('$10.00 · Local regression grant')).toBeVisible();
+    await settleAndCheckDelta('contribution preview', mark, {
+      dashboard: 0,
+      finance: 0,
+      audit: 0,
+    });
+
+    // 5. Local refund preview on /finance must trigger 0 extra finance/audit fetches.
+    mark = snapshot();
+    pageA.once('dialog', (dialog) => dialog.accept());
+    await pageA.getByRole('button', { name: 'Refund remaining' }).first().click();
+    await expect(pageA.getByText(/Simulated refund applied locally/)).toBeVisible();
+    await settleAndCheckDelta('refund preview', mark, {
+      dashboard: 0,
+      finance: 0,
+      audit: 0,
+    });
+
+    // 6. Reload preserves local preview without extra loops.
+    mark = snapshot();
+    await pageA.reload();
+    await expect(pageA.getByText('$10.00 · Local regression grant')).toBeVisible();
+    await expect(pageA.getByText('0 unresolved operation outcomes')).toBeVisible();
+    await settleAndCheckDelta('reload with local finance previews', mark, {
+      dashboard: 1,
+      finance: 1,
+      audit: 1,
+    });
+
+    // 7. Create a local trip on dashboard and switch trips cleanly.
+    await pageA.getByRole('link', { name: 'Overview', exact: true }).click();
+    await expect(pageA).toHaveURL(/\/dashboard/);
+    await pageA.getByRole('button', { name: 'Create a trip' }).click();
+    await pageA.getByLabel('Activity name', { exact: true }).fill('Bounded Switch Trip');
+    await pageA.getByLabel('Destination', { exact: true }).fill('Botanical Preview');
+    await pageA
+      .getByLabel('Approved parent information')
+      .fill('Browser-local trip used to verify trip switching.');
+    await pageA.getByRole('button', { name: 'Create activity', exact: true }).click();
+    await expect(pageA.getByRole('heading', { name: 'Bounded Switch Trip' })).toBeVisible();
+
+    await pageA.goto('/finance?trip=demo-science');
+    await expect(pageA.getByLabel('Selected activity')).toBeVisible();
+    await pageA.waitForLoadState('networkidle');
+    mark = snapshot();
+    await pageA.getByLabel('Selected activity').selectOption({ label: 'Bounded Switch Trip' });
+    await settleAndCheckDelta('switch to local trip', mark, {
+      dashboard: 0,
+      finance: 0,
+      audit: 0,
+    });
+    mark = snapshot();
+    await pageA.getByLabel('Selected activity').selectOption('demo-science');
+    await expect(pageA.getByText('$10.00 · Local regression grant')).toBeVisible();
+    await settleAndCheckDelta('switch back to canonical demo-science', mark, {
+      dashboard: 0,
+      finance: 1,
+      audit: 1,
+    });
+
+    // 8. Reset demo preview restores canonical metrics without triggering fetches.
+    mark = snapshot();
+    await pageA.getByRole('button', { name: 'Reset demo preview' }).click();
+    await expect(pageA.getByText('3 unresolved operation outcomes')).toBeVisible();
+    await expect(pageA.getByText('$157.70', { exact: true }).first()).toBeVisible();
+    await settleAndCheckDelta('reset demo preview', mark, {
+      dashboard: 0,
+      finance: 0,
+      audit: 0,
+    });
+
+    // 9. Context B still observes canonical Oakwood Academy values in isolation.
+    await loginDemo(pageB, 'Finance admin');
+    const canonicalDash = await (await pageB.request.get('/api/dashboard')).json();
+    expect(canonicalDash).toHaveLength(1);
+    expect(canonicalDash[0].totals).toMatchObject({
+      required: 69000,
+      gross: 55300,
+      fees: 2070,
+      net: 53230,
+      gap: 15770,
+      unresolved: 3,
+    });
+    await pageB.goto('/finance?trip=demo-science');
+    await expect(pageB.getByText('$157.70', { exact: true }).first()).toBeVisible();
+    await expect(pageB.getByText('Local regression grant')).toHaveCount(0);
+
+    // 10. Session replacement clears stale preview and sign-out clears sessionStorage.
+    await pageA.getByRole('button', { name: 'Run funded scenario' }).click();
+    await expect(pageA.getByText('0 unresolved operation outcomes')).toBeVisible();
+    await pageA.waitForLoadState('networkidle');
+    mark = snapshot();
+    const replaced = await pageA.request.post('/api/auth/login', {
+      headers: { Origin: base },
+      data: { mode: 'demo', role: 'admin' },
+    });
+    expect(replaced.ok()).toBe(true);
+    await pageA.goto('/dashboard');
+    await expect(pageA.getByText('$157.70 still to go.')).toBeVisible();
+    await settleAndCheckDelta('session replacement dashboard', mark, {
+      dashboard: 1,
+      finance: 0,
+      audit: 0,
+    });
+
+    mark = snapshot();
+    const replacedFinance = await pageA.request.post('/api/auth/login', {
+      headers: { Origin: base },
+      data: { mode: 'demo', role: 'finance' },
+    });
+    expect(replacedFinance.ok()).toBe(true);
+    await pageA.goto('/finance?trip=demo-science');
+    await expect(pageA.getByText('3 unresolved operation outcomes')).toBeVisible();
+    await settleAndCheckDelta('session replacement finance', mark, {
+      dashboard: 1,
+      finance: 1,
+      audit: 1,
+    });
+
+    await pageA.getByRole('button', { name: 'Sign out' }).click();
+    await expect(pageA).toHaveURL('/');
+    const cleared = await pageA.evaluate(() => ({
+      w: window.sessionStorage.getItem('ce_demo_workspace_v1'),
+      p: window.sessionStorage.getItem('ce_demo_parent_v1'),
+      s: window.sessionStorage.getItem('ce_demo_studio_report_v1'),
+    }));
+    expect(cleared).toEqual({ w: null, p: null, s: null });
+    expect(counts.rateLimited).toBe(0);
+  } finally {
+    await ctxA.close();
+    await ctxB.close();
+  }
+});
+
+test('M: rapid sandbox trip switching prevents stale finance responses from overwriting newer state while preserving explicit refresh', async ({
+  browser,
+}) => {
+  test.setTimeout(120000);
+  const ctx = await browser.newContext({ baseURL: base });
+  const page = await ctx.newPage();
+
+  try {
+    await loginSandbox(page, 'Finance admin');
+    const headers = { Origin: base };
+    const createTrip = async (name: string) => {
+      const res = await page.request.post('/api/trips', {
+        headers,
+        data: {
+          name,
+          destination: `${name} Destination`,
+          description: 'Synthetic trip to verify stale-response cancellation.',
+          date: '2026-12-12',
+          deadline: '2026-12-05',
+          capacity: 20,
+          tiers: [{ min: 1, cents: 2000 }],
+        },
+      });
+      expect(res.ok()).toBe(true);
+      return (await res.json()).id as string;
+    };
+
+    const tripAlphaId = await createTrip(`Alpha Switch ${Date.now()}`);
+    const tripBetaId = await createTrip(`Beta Switch ${Date.now()}`);
+
+    expect(
+      (
+        await page.request.post('/api/finance/contribution', {
+          headers,
+          data: {
+            tripId: tripAlphaId,
+            cents: 1000,
+            source: 'Alpha Stale Treasury',
+            evidence: `ALPHA-${tripAlphaId}`,
+          },
+        })
+      ).ok(),
+    ).toBe(true);
+    expect(
+      (
+        await page.request.post('/api/finance/contribution', {
+          headers,
+          data: {
+            tripId: tripBetaId,
+            cents: 2500,
+            source: 'Beta Fresh Treasury',
+            evidence: `BETA-${tripBetaId}`,
+          },
+        })
+      ).ok(),
+    ).toBe(true);
+
+    let releaseAlpha!: () => void;
+    const alphaGate = new Promise<void>((resolve) => {
+      releaseAlpha = resolve;
+    });
+    let alphaIntercepted!: () => void;
+    const alphaSeen = new Promise<void>((resolve) => {
+      alphaIntercepted = resolve;
+    });
+
+    await page.route(`**/api/trips/${tripAlphaId}/finance`, async (route) => {
+      alphaIntercepted();
+      await alphaGate;
+      try {
+        await route.continue();
+      } catch {
+        // Request may already be aborted by AbortController on trip switch.
+      }
+    });
+
+    await page.goto(`/finance?trip=${tripAlphaId}`);
+    await alphaSeen;
+
+    await page.getByLabel('Selected activity').selectOption(tripBetaId);
+    await expect(page.getByText('$25.00 · Beta Fresh Treasury')).toBeVisible({ timeout: 30000 });
+
+    // Release delayed Trip Alpha response and ensure it never overwrites Trip Beta.
+    releaseAlpha();
+    await page.waitForTimeout(500);
+    await page.unroute(`**/api/trips/${tripAlphaId}/finance`);
+    await expect(page.getByText('$25.00 · Beta Fresh Treasury')).toBeVisible();
+    await expect(page.getByText('Alpha Stale Treasury')).toHaveCount(0);
+
+    // Explicit operation refresh (`run()`) and manual Refresh button still refresh Sandbox state.
+    await page.getByLabel('USD amount', { exact: true }).fill('5.00');
+    await page.getByLabel('Funding source', { exact: true }).fill('Beta Followup Grant');
+    await page
+      .getByLabel('Authorization / receipt reference', { exact: true })
+      .fill(`BETA-FOLLOWUP-${tripBetaId}`);
+    await page.getByRole('button', { name: 'Record authorized contribution' }).click();
+    await expect(page.getByText('Authorized contribution and audit recorded.')).toBeVisible();
+    await expect(page.getByText('$5.00 · Beta Followup Grant')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Refresh' }).click();
+    await expect(page.getByText('Financial records refreshed.')).toBeVisible();
+
+    // Rapid route change cancels in-flight finance fetch cleanly without surfacing an error.
+    let releaseRouteAlpha!: () => void;
+    const routeAlphaGate = new Promise<void>((resolve) => {
+      releaseRouteAlpha = resolve;
+    });
+    let routeAlphaSeenResolve!: () => void;
+    const routeAlphaSeen = new Promise<void>((resolve) => {
+      routeAlphaSeenResolve = resolve;
+    });
+    await page.route(`**/api/trips/${tripAlphaId}/finance`, async (route) => {
+      routeAlphaSeenResolve();
+      await routeAlphaGate;
+      try {
+        await route.continue();
+      } catch {
+        // Request is expected to abort on route transition.
+      }
+    });
+    await page.getByLabel('Selected activity').selectOption(tripAlphaId);
+    await routeAlphaSeen;
+    await page.getByRole('link', { name: 'Registrations', exact: true }).click();
+    await expect(page).toHaveURL(/\/registrations/);
+    await expect(page.getByRole('heading', { name: /Ready for discovery/ })).toBeVisible();
+    releaseRouteAlpha();
+    await page.waitForTimeout(300);
+    await page.unroute(`**/api/trips/${tripAlphaId}/finance`);
+    await expect(page.locator('.notice.error')).toHaveCount(0);
+  } finally {
+    await ctx.close();
   }
 });
