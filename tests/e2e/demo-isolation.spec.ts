@@ -1,8 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const base = process.env.E2E_BASE_URL || 'http://localhost:3000';
-const sandboxPassword =
-  process.env.ADMIN_PASSWORD || 'synthetic-ci-admin-password-for-tests';
 
 async function loginDemo(page: Page, role: 'School admin' | 'Finance admin' | 'Teacher' | 'Parent' = 'School admin') {
   await page.goto('/login');
@@ -12,10 +10,12 @@ async function loginDemo(page: Page, role: 'School admin' | 'Finance admin' | 'T
 }
 
 async function loginSandbox(page: Page, role: 'School admin' | 'Finance admin' | 'Teacher' = 'School admin') {
+  const sandboxPassword = process.env.ADMIN_PASSWORD;
+  expect(sandboxPassword, 'ADMIN_PASSWORD must be configured for sandbox E2E tests').toBeTruthy();
   await page.goto('/login');
   await page.getByRole('button', { name: 'Sandbox workspace' }).click();
   await page.getByRole('button', { name: new RegExp(role) }).click();
-  await page.getByLabel('Sandbox administrator password').fill(sandboxPassword);
+  await page.getByLabel('Sandbox administrator password').fill(sandboxPassword!);
   await page.getByRole('button', { name: 'Open sandbox workspace' }).click();
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 30000 });
 }

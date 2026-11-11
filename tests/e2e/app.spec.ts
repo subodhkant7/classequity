@@ -7,12 +7,12 @@ async function login(page: import('@playwright/test').Page, role = 'School admin
   await expect(page).toHaveURL(role === 'Parent' ? /\/parent/ : /\/dashboard/, { timeout: 30000 });
 }
 async function loginSandbox(page: import('@playwright/test').Page, role = 'School admin') {
+  const password = process.env.ADMIN_PASSWORD;
+  expect(password, 'ADMIN_PASSWORD must be configured for sandbox E2E tests').toBeTruthy();
   await page.goto('/login');
   await page.getByRole('button', { name: 'Sandbox workspace' }).click();
   await page.getByRole('button', { name: new RegExp(role) }).click();
-  await page
-    .getByLabel('Sandbox administrator password')
-    .fill(process.env.ADMIN_PASSWORD || 'synthetic-ci-admin-password-for-tests');
+  await page.getByLabel('Sandbox administrator password').fill(password!);
   await page.getByRole('button', { name: 'Open sandbox workspace' }).click();
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 30000 });
 }
