@@ -28,7 +28,7 @@ const systems = [
     name: 'Gemini',
     icon: Sparkles,
     tag: 'Local generation verified',
-    copy: 'Hosted verification confirmed English/Hindi parent assistance in the restricted sandbox. Local verification covered PDF quotation extraction and aggregate financial intelligence; hosted PDF extraction and Studio generation remain unverified. Extraction requires human review, and Gemini has no payment or eligibility authority.',
+    copy: 'Hosted verification confirmed English/Hindi parent assistance (gemini-2.5-flash-lite) in the restricted sandbox. Local verification covered PDF quotation extraction and aggregate financial intelligence; hosted PDF extraction and Studio generation remain unverified. Extraction requires human review, and Gemini has no payment or eligibility authority.',
     source: 'src/server/integrations/gemini.ts',
     doc: 'ARCHITECTURE.md',
   },
