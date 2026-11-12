@@ -87,7 +87,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
             Hosted WhatsApp callbacks remain unverified.
           </p>
           <a href="https://github.com/subodhkant7/classequity" target="_blank" rel="noreferrer">
-            Private source & documentation <ArrowUpRight size={13} />
+            Public source & documentation <ArrowUpRight size={13} />
           </a>
         </div>
         <div className="footer-bottom">
