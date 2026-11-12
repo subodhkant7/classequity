@@ -112,14 +112,14 @@ export default function Technology() {
               <span className="local-label">{s.tag}</span>
               <p>{s.copy}</p>
               <a
-                href={`https://github.com/subodhkant7/classequity/blob/codex/hosted-webhook-verification/${s.source}`}
+                href={`https://github.com/subodhkant7/classequity/blob/main/${s.source}`}
                 target="_blank"
                 rel="noreferrer"
               >
                 Source: <code>{s.source}</code> ↗
               </a>
               <a
-                href={`https://github.com/subodhkant7/classequity/blob/codex/hosted-webhook-verification/docs/${s.doc}`}
+                href={`https://github.com/subodhkant7/classequity/blob/main/docs/${s.doc}`}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -129,8 +129,8 @@ export default function Technology() {
           ))}
         </div>
         <p className="fine-print">
-          Source links require access to the private repository. Names identify the integrations; no
-          endorsement or independent licensing rights are implied.
+          Source code and implementation documentation are publicly available on GitHub. Names
+          identify the integrations; no endorsement or independent licensing rights are implied.
         </p>
       </section>
       <section id="boundaries" className="public-wrap boundary-panel">
